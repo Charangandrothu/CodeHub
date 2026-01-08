@@ -1,67 +1,183 @@
-const Hero = () => {
+import React from 'react';
+// eslint-disable-next-line no-unused-vars
+import { motion } from 'framer-motion';
+import { ArrowRight, CheckCircle2, Code2, Trophy, BarChart3 } from 'lucide-react';
+import { Button } from './ui/Button';
+
+const ProgressRow = ({ label, current, total, color = "blue" }) => {
+  const percentage = (current / total) * 100;
+
   return (
-    <section className="mt-24 grid grid-cols-1 lg:grid-cols-2 gap-20 items-center px-8">
-
-      {/* LEFT CONTENT */}
-      <div>
-        <h1 className="text-6xl font-bold leading-tight tracking-tight">
-          Structured <br />
-          Placement <br />
-          Preparation.
-        </h1>
-
-        <p className="mt-6 text-gray-300 max-w-lg leading-relaxed">
-          CodeHub helps you master Coding, Aptitude, and Core CS
-          through a structured learn–practice–test system
-          with clear progress tracking.
-        </p>
-
-        <div className="mt-10 flex gap-4">
-          <button className="px-8 py-3 rounded-full bg-orange-500 hover:bg-orange-600 transition shadow-lg shadow-orange-500/20">
-            Start Preparing for Free
-          </button>
-          <button className="px-8 py-3 rounded-full border border-white/20 hover:bg-white/10 transition">
-            Explore Platform
-          </button>
-        </div>
+    <div className="mb-4 last:mb-0 group">
+      <div className="flex justify-between text-xs mb-1.5">
+        <span className="text-gray-400 font-medium group-hover:text-gray-300 transition-colors">{label}</span>
+        <span className="text-gray-500 font-mono group-hover:text-gray-400 transition-colors">{current} / {total}</span>
       </div>
-
-      {/* RIGHT CONTENT – FLOATING GLASS CARDS */}
-      <div className="relative h-[420px]">
-        <GlassCard />
-        <GlassCard className="absolute top-20 left-24 scale-95" />
-      </div>
-
-    </section>
-  );
-};
-
-/* GLASS CARD */
-const GlassCard = ({ className = "" }) => {
-  return (
-    <div
-      className={`w-80 p-6 rounded-2xl 
-      bg-white/10 backdrop-blur-xl 
-      border border-white/20 
-      shadow-[0_0_40px_rgba(255,140,0,0.15)]
-      ${className}`}
-    >
-      <h3 className="font-semibold mb-4 text-lg">DSA Progress</h3>
-
-      <div className="space-y-3 text-sm text-gray-200">
-        <Progress label="Arrays" value="12 / 30" />
-        <Progress label="Binary Search" value="6 / 15" />
-        <Progress label="Strings" value="4 / 12" />
+      <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: `${percentage}%` }}
+          transition={{ duration: 1, ease: "easeOut", delay: 0.5 }}
+          className={`h-full rounded-full ${color === 'blue' ? 'bg-blue-500' :
+            color === 'purple' ? 'bg-purple-500' : 'bg-emerald-500'
+            }`}
+        />
       </div>
     </div>
   );
 };
 
-const Progress = ({ label, value }) => (
-  <div className="flex justify-between items-center">
-    <span>{label}</span>
-    <span className="text-gray-400">{value}</span>
-  </div>
-);
+const Hero = () => {
+  return (
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[#0a0a0a] px-4 sm:px-6 lg:px-8">
+      {/* Ambient Background */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+        <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-purple-900/10 rounded-full blur-[120px]" />
+        <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-blue-900/5 rounded-full blur-[100px]" />
+      </div>
+
+      <div className="container max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center relative z-10">
+
+        {/* Left Content */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="text-left"
+        >
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 mb-6"
+          >
+            <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span className="text-xs font-medium text-gray-300 uppercase tracking-wide">New Batch Starting Soon</span>
+          </motion.div>
+
+          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-white tracking-tight leading-[1.1] mb-6">
+            Structured <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-500">
+              Placement Prep
+            </span>
+          </h1>
+
+          <p className="text-lg text-gray-400 mb-8 max-w-xl leading-relaxed">
+            Master Coding, Aptitude, and Core CS through a structured learn-practice-test system with clear progress tracking and real-world projects.
+          </p>
+
+          <div className="flex flex-wrap gap-4">
+            <Button variant="primary" icon={ArrowRight}>
+              Start Preparing for Free
+            </Button>
+            <Button variant="secondary">
+              Explore Platform
+            </Button>
+          </div>
+
+          <div className="mt-12 flex items-center gap-8 text-gray-500 text-sm">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+              <span>DSA & System Design</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+              <span>Mock Interviews</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+              <span>100% Placement Support</span>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Right Visual */}
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+          className="relative hidden lg:block h-[600px] w-full"
+        >
+          {/* Main Dashboard Card */}
+          <motion.div
+            initial={{ y: 20 }}
+            animate={{ y: [0, -10, 0] }}
+            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md glass-card rounded-2xl p-6 shadow-2xl shadow-black/50"
+          >
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400">
+                  <Code2 size={20} />
+                </div>
+                <div>
+                  <h3 className="text-white font-semibold text-sm">DSA Progress</h3>
+                  <p className="text-xs text-gray-500">Daily Streak: 12 Days</p>
+                </div>
+              </div>
+              <div className="text-xs px-2 py-1 rounded bg-white/5 border border-white/10 text-gray-300">
+                Premium
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <ProgressRow label="Arrays & Hashing" current={12} total={30} color="blue" />
+              <ProgressRow label="Binary Search" current={8} total={15} color="purple" />
+              <ProgressRow label="Dynamic Programming" current={6} total={12} color="emerald" />
+              <ProgressRow label="Graphs" current={3} total={25} color="blue" />
+            </div>
+
+            <div className="mt-6 pt-4 border-t border-white/5 flex justify-between items-center">
+              <div className="flex -space-x-2">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="w-8 h-8 rounded-full border-2 border-[#1a1a1a] bg-gray-800 flex items-center justify-center text-[10px] text-white">
+                    U{i}
+                  </div>
+                ))}
+                <div className="w-8 h-8 rounded-full border-2 border-[#1a1a1a] bg-gray-900 flex items-center justify-center text-[10px] text-gray-400">
+                  +42
+                </div>
+              </div>
+              <p className="text-xs text-gray-500">Students Active Now</p>
+            </div>
+          </motion.div>
+
+          {/* Floating Widget 1 - Top Left */}
+          <motion.div
+            initial={{ y: 40, opacity: 0 }}
+            animate={{ y: [0, 15, 0], opacity: 1 }}
+            transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+            className="absolute top-20 left-0 glass-card p-4 rounded-xl flex items-center gap-3 w-48 z-0"
+          >
+            <div className="w-10 h-10 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+              <Trophy size={18} />
+            </div>
+            <div>
+              <p className="text-xs text-gray-500">Weekly Rank</p>
+              <p className="text-white font-bold text-sm">Top 5%</p>
+            </div>
+          </motion.div>
+
+          {/* Floating Widget 2 - Bottom Right */}
+          <motion.div
+            initial={{ y: -40, opacity: 0 }}
+            animate={{ y: [0, -15, 0], opacity: 1 }}
+            transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+            className="absolute bottom-32 right-[-20px] glass-card p-4 rounded-xl flex items-center gap-3 w-52 z-20"
+          >
+            <div className="w-10 h-10 rounded-full bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
+              <BarChart3 size={18} />
+            </div>
+            <div>
+              <p className="text-xs text-gray-500">Problem Solved</p>
+              <p className="text-white font-bold text-sm">450+</p>
+            </div>
+          </motion.div>
+
+        </motion.div>
+      </div>
+    </section>
+  );
+};
 
 export default Hero;

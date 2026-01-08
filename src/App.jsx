@@ -1,7 +1,11 @@
-import LandingPage from "./pages/LandingPage";
+import Hero from './components/Hero'
 
 function App() {
-  return <LandingPage />;
+  return (
+    <div className="bg-[#0a0a0a] min-h-screen text-white">
+      <Hero />
+    </div>
+  )
 }
 
-export default App;
+export default App
