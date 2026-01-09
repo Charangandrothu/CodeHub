@@ -1,26 +1,37 @@
+import React from 'react';
+import { Button } from './ui/Button';
+
 const Navbar = () => {
   return (
-    <>
-      <nav className="flex items-center justify-between px-6 py-6 max-w-7xl mx-auto">
+    <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 border-b border-white/5 bg-[#0a0a0a]/60 backdrop-blur-md">
+      <div className="max-w-7xl mx-auto w-full flex items-center justify-between">
         {/* Logo */}
-        <div className="text-xl font-semibold tracking-wide">
-          CodeHub
+        <div className="flex items-center gap-2 cursor-pointer">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-blue-500/20">
+            C
+          </div>
+          <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
+            CodeHub
+          </span>
         </div>
 
-        {/* Right buttons */}
-        <div className="flex items-center gap-4">
-          <button className="px-5 py-2 rounded-full border border-white/20 text-sm hover:bg-white/10 transition">
-            Login
-          </button>
-          <button className="px-6 py-2 rounded-full bg-orange-500 text-sm hover:bg-orange-600 transition shadow-lg shadow-orange-500/20">
-            Sign Up
-          </button>
-        </div>
-      </nav>
+        {/* Navigation */}
+        <div className="flex items-center gap-8">
+          <a href="#" className="hidden sm:block text-sm text-gray-400 hover:text-white transition-colors">
+            Home
+          </a>
 
-      {/* Subtle glowing divider */}
-      <div className="h-px max-w-7xl mx-auto bg-gradient-to-r from-transparent via-orange-500/40 to-transparent" />
-    </>
+          <div className="flex items-center gap-3">
+            <button className="text-sm font-medium text-gray-300 hover:text-white px-4 py-2 transition-colors">
+              Login
+            </button>
+            <Button variant="primary" className="!py-2 !px-5 text-sm shadow-blue-500/25">
+              Sign Up
+            </Button>
+          </div>
+        </div>
+      </div>
+    </nav>
   );
 };
 

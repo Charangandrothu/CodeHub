@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 // eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
-import { ArrowRight, CheckCircle2, Code2, Trophy, BarChart3 } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Code2, Trophy } from 'lucide-react';
 import { Button } from './ui/Button';
+import pythonGlass from '../assets/pythonglass.png';
+import javaGlass from '../assets/javaglass.png';
 
 const ProgressRow = ({ label, current, total, color = "blue" }) => {
   const percentage = (current / total) * 100;
@@ -28,6 +30,7 @@ const ProgressRow = ({ label, current, total, color = "blue" }) => {
 };
 
 const Hero = () => {
+  const [isHovered, setIsHovered] = useState(false);
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[#0a0a0a] px-4 sm:px-6 lg:px-8">
       {/* Ambient Background */}
@@ -158,19 +161,63 @@ const Hero = () => {
             </div>
           </motion.div>
 
-          {/* Floating Widget 2 - Bottom Right */}
+          {/* Floating Widget 2 - Bottom Right - Dual Icon Swap */}
           <motion.div
             initial={{ y: -40, opacity: 0 }}
-            animate={{ y: [0, -15, 0], opacity: 1 }}
-            transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-            className="absolute bottom-32 right-[-20px] glass-card p-4 rounded-xl flex items-center gap-3 w-52 z-20"
+            animate={{ y: [0, -10, 0], opacity: 1 }}
+            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+            className="absolute bottom-20 right-[-20px] w-48 h-48 rounded-3xl glass-card flex items-center justify-center z-20 cursor-pointer group hover:shadow-2xl hover:shadow-blue-500/10 transition-shadow duration-500"
+            onHoverStart={() => setIsHovered(true)}
+            onHoverEnd={() => setIsHovered(false)}
           >
-            <div className="w-10 h-10 rounded-full bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
-              <BarChart3 size={18} />
-            </div>
-            <div>
-              <p className="text-xs text-gray-500">Problem Solved</p>
-              <p className="text-white font-bold text-sm">450+</p>
+            {/* Ambient Glow */}
+            <div className="absolute inset-0 bg-gradient-to-tr from-blue-500/5 to-purple-500/5 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+            {/* Icons Container */}
+            <div className="relative w-full h-full">
+
+              {/* Java Icon - Starts Top Right */}
+              <motion.div
+                className="absolute top-5 right-5 z-10"
+                animate={{
+                  x: isHovered ? -90 : 0,
+                  y: isHovered ? 90 : 0,
+                  scale: isHovered ? 1.2 : 1,
+                  zIndex: isHovered ? 10 : 20,
+                  filter: isHovered ? "drop-shadow(0 0 20px rgba(255,100,100,0.5))" : "drop-shadow(0 0 0 rgba(0,0,0,0))"
+                }}
+                transition={{ duration: 0.6, ease: "easeInOut" }}
+              >
+                {/* Independent Floating Motion */}
+                <motion.div
+                  animate={{ y: [0, -6, 0] }}
+                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                >
+                  <img src={javaGlass} alt="Java" className="w-14 h-14 object-contain drop-shadow-md" />
+                </motion.div>
+              </motion.div>
+
+              {/* Python Icon - Starts Bottom Left */}
+              <motion.div
+                className="absolute bottom-5 left-5 z-20"
+                animate={{
+                  x: isHovered ? 90 : 0,
+                  y: isHovered ? -90 : 0,
+                  scale: isHovered ? 1.2 : 1,
+                  zIndex: isHovered ? 20 : 10,
+                  filter: isHovered ? "drop-shadow(0 0 20px rgba(50,150,255,0.5))" : "drop-shadow(0 0 0 rgba(0,0,0,0))"
+                }}
+                transition={{ duration: 0.6, ease: "easeInOut" }}
+              >
+                {/* Independent Floating Motion */}
+                <motion.div
+                  animate={{ y: [0, 6, 0] }}
+                  transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+                >
+                  <img src={pythonGlass} alt="Python" className="w-14 h-14 object-contain drop-shadow-md" />
+                </motion.div>
+              </motion.div>
+
             </div>
           </motion.div>
 
