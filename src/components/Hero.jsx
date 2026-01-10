@@ -51,11 +51,11 @@ const Hero = () => {
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
+            transition={{ delay: 0.1 }}
             className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 mb-6"
           >
-            <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span className="text-xs font-medium text-gray-300 uppercase tracking-wide">New Batch Starting Soon</span>
+            <span className="flex h-2 w-2 rounded-full bg-emerald-300 animate-pulse"></span>
+            <span className="text-xs font-medium text-gray-300 uppercase tracking-wide">Start Your Journey</span>
           </motion.div>
 
           <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-white tracking-tight leading-[1.1] mb-6">
@@ -124,7 +124,7 @@ const Hero = () => {
             </div>
 
             <div className="space-y-1">
-              <ProgressRow label="Arrays & Hashing" current={12} total={30} color="blue" />
+              <ProgressRow label="Arrays & Hashing" current={30} total={30} color="blue" />
               <ProgressRow label="Binary Search" current={8} total={15} color="purple" />
               <ProgressRow label="Dynamic Programming" current={6} total={12} color="emerald" />
               <ProgressRow label="Graphs" current={3} total={25} color="blue" />
@@ -166,7 +166,7 @@ const Hero = () => {
             initial={{ y: -40, opacity: 0 }}
             animate={{ y: [0, -10, 0], opacity: 1 }}
             transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-            className="absolute bottom-20 right-[-20px] w-48 h-48 rounded-3xl glass-card flex items-center justify-center z-20 cursor-pointer group hover:shadow-2xl hover:shadow-blue-500/10 transition-shadow duration-500"
+            className="absolute bottom-20 right-[-20px] w-60 h-60 rounded-3xl flex items-center justify-center z-20 cursor-pointer group hover:shadow-2xl hover:shadow-blue-500/10 transition-shadow duration-500"
             onHoverStart={() => setIsHovered(true)}
             onHoverEnd={() => setIsHovered(false)}
           >
@@ -174,7 +174,7 @@ const Hero = () => {
             <div className="absolute inset-0 bg-gradient-to-tr from-blue-500/5 to-purple-500/5 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
             {/* Icons Container */}
-            <div className="relative w-full h-full">
+            <div className="relative w-full h-full overflow-visible">
 
               {/* Java Icon - Starts Top Right */}
               <motion.div
@@ -193,7 +193,7 @@ const Hero = () => {
                   animate={{ y: [0, -6, 0] }}
                   transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
                 >
-                  <img src={javaGlass} alt="Java" className="w-14 h-14 object-contain drop-shadow-md" />
+                  <img src={javaGlass} alt="Java" className="w-28 h-28 object-contain drop-shadow-md" />
                 </motion.div>
               </motion.div>
 
@@ -214,7 +214,7 @@ const Hero = () => {
                   animate={{ y: [0, 6, 0] }}
                   transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
                 >
-                  <img src={pythonGlass} alt="Python" className="w-14 h-14 object-contain drop-shadow-md" />
+                  <img src={pythonGlass} alt="Python" className="w-28 h-28 object-contain drop-shadow-md" />
                 </motion.div>
               </motion.div>
 
