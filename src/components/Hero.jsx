@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 // eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import { ArrowRight, CheckCircle2, Code2, Trophy } from 'lucide-react';
@@ -31,6 +32,16 @@ const ProgressRow = ({ label, current, total, color = "blue" }) => {
 
 const Hero = () => {
   const [isHovered, setIsHovered] = useState(false);
+  const navigate = useNavigate();
+
+  const handleStartPreparing = () => {
+    navigate('/login');
+  };
+
+  const handleExplore = () => {
+    navigate('/login');
+  };
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[#0a0a0a] px-4 sm:px-6 lg:px-8">
       {/* Ambient Background */}
@@ -70,10 +81,10 @@ const Hero = () => {
           </p>
 
           <div className="flex flex-wrap gap-4">
-            <Button variant="primary" icon={ArrowRight}>
+            <Button variant="primary" icon={ArrowRight} onClick={handleStartPreparing}>
               Start Preparing for Free
             </Button>
-            <Button variant="secondary">
+            <Button variant="secondary" onClick={handleExplore}>
               Explore Platform
             </Button>
           </div>
@@ -85,11 +96,11 @@ const Hero = () => {
             </div>
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-              <span>Mock Interviews</span>
+              <span>Mock Tests</span>
             </div>
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-              <span>100% Placement Support</span>
+              <span>Aptitude and reasoning</span>
             </div>
           </div>
         </motion.div>
