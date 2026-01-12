@@ -39,3 +39,7 @@ body {
     -webkit-text-fill-color: transparent;
   }
 }
+
+#root {
+  width: 100%;
+}
