@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { motion, useMotionValue, useTransform, useSpring } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
-import { Mail, Lock, ArrowRight, Loader2 } from 'lucide-react'
+import { Mail, Lock, ArrowRight, Loader2, Eye, EyeOff } from 'lucide-react'
 import pythonGlass from '../assets/pythonglass.png'
 import javaGlass from '../assets/javaglass.png'
 
@@ -9,6 +9,7 @@ const Login = () => {
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [focusedField, setFocusedField] = useState(null)
 
@@ -51,6 +52,9 @@ const Login = () => {
       navigate('/')
     }, 1500)
   }
+  const handleSignup = () => {
+    navigate('/Signup');
+  };
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[#0a0a0a] px-4 sm:px-6 lg:px-8 pt-20">
@@ -141,8 +145,8 @@ const Login = () => {
                     onChange={(e) => setEmail(e.target.value)}
                     onFocus={() => setFocusedField('email')}
                     onBlur={() => setFocusedField(null)}
-                    placeholder="name@example.com"
-                    className="w-full bg-transparent border-none text-white placeholder-gray-500 px-4 py-3.5 focus:ring-0 text-sm"
+                    placeholder="name@gmail.com"
+                    className="w-full bg-transparent border-none text-white placeholder-gray-500 px-4 py-3.5 focus:ring-0 focus:outline-none text-sm"
                     required
                   />
                 </div>
@@ -166,15 +170,22 @@ const Login = () => {
                     <Lock size={18} />
                   </div>
                   <input
-                    type="password"
+                    type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     onFocus={() => setFocusedField('password')}
                     onBlur={() => setFocusedField(null)}
                     placeholder="••••••••"
-                    className="w-full bg-transparent border-none text-white placeholder-gray-500 px-4 py-3.5 focus:ring-0 text-sm"
+                    className="w-full bg-transparent border-none text-white placeholder-gray-500 px-4 py-3.5 focus:ring-0 focus:outline-none text-sm"
                     required
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="pr-4 text-gray-400 hover:text-white transition-colors cursor-pointer"
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
                 </div>
               </div>
             </motion.div>
@@ -200,7 +211,7 @@ const Login = () => {
               <button
                 type="button"
                 onClick={handleLogin}
-                className="group relative w-full flex items-center justify-center gap-2 bg-white text-black font-semibold py-3.5 rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden cursor-pointer"
+                className="group relative w-full flex items-center justify-center gap-2 bg-white text-black font-semibold py-3.5 rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden cursor-pointer active:cursor-grabbing"
               >
                 {/* Sweep Gradient */}
                 <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:animate-[sweep_1.5s_ease-in-out_infinite]" />
@@ -238,9 +249,11 @@ const Login = () => {
           >
             <p className="text-gray-400 text-sm">
               Don't have an account?{' '}
-              <a href="#" className="text-white font-medium hover:underline decoration-blue-500 decoration-2 underline-offset-4 transition-all">
+              <button
+                type="button"
+                onClick={handleSignup} className="text-white font-medium transition-all duration-200 hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r hover:from-blue-400 hover:to-purple-500">
                 Sign up now
-              </a>
+              </button>
             </p>
           </motion.div>
         </motion.div>

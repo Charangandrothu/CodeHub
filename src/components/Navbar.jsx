@@ -20,18 +20,22 @@ const Navbar = () => {
 
         {/* Navigation */}
         <div className="flex items-center gap-8">
-          <a href="#" className="hidden sm:block text-sm text-gray-400 hover:text-white transition-colors">
-            Home
-          </a>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate('/')}
+              className="hidden sm:block text-sm text-gray-400 hover:text-white transition-colors cursor-pointer active:cursor-grabbing">
+              Home
+            </button>
+          </div>
 
           <div className="flex items-center gap-3">
-            <button 
+            <button
               onClick={() => navigate('/login')}
-              className="text-sm font-medium text-gray-300 hover:text-white px-4 py-2 transition-colors"
+              className="text-sm font-medium text-gray-300 hover:text-white px-4 py-2 transition-colors cursor-pointer active:cursor-grabbing"
             >
               Login
             </button>
-            <Button variant="primary" className="!py-2 !px-5 text-sm shadow-blue-500/25">
+            <Button onClick={()=> navigate('/Signup')} variant="primary" className="!py-2 !px-5 text-sm shadow-blue-500/25">
               Sign Up
             </Button>
           </div>

@@ -41,6 +41,7 @@ const Hero = () => {
   const handleExplore = () => {
     navigate('/login');
   };
+  
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[#0a0a0a] px-4 sm:px-6 lg:px-8">
