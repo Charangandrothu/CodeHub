@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react'
 import { motion, useMotionValue, useTransform, useSpring } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { Mail, Lock, ArrowRight, Loader2, Eye, EyeOff } from 'lucide-react'
+import { signInWithEmailAndPassword } from 'firebase/auth'
+import { auth } from '../firebase'
 import pythonGlass from '../assets/pythonglass.png'
 import javaGlass from '../assets/javaglass.png'
 
@@ -42,18 +44,23 @@ const Login = () => {
     return () => window.removeEventListener('mousemove', handleMouseMove)
   }, [mouseX, mouseY])
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault()
     setIsLoading(true)
-    // Simulate login delay
-    setTimeout(() => {
-      console.log('Login attempt:', { email, password })
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password)
+      console.log('Login success:', userCredential.user)
       setIsLoading(false)
       navigate('/')
-    }, 1500)
+    } catch (error) {
+      console.error('Login error:', error)
+      alert(error.message)
+      setIsLoading(false)
+    }
   }
+
   const handleSignup = () => {
-    navigate('/Signup');
+    navigate('/signup');
   };
 
   return (
@@ -65,7 +72,7 @@ const Login = () => {
         <div className="absolute top-[40%] left-[30%] w-[500px] h-[500px] bg-emerald-900/5 rounded-full blur-[100px]" />
       </div>
 
-      <div className="relative w-full max-w-[400px] z-10 perspective-1000">
+      <div className="relative w-full max-w-[350px] z-10 perspective-1000">
 
         {/* Floating Icons with Parallax */}
         <motion.div
@@ -102,14 +109,16 @@ const Login = () => {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
           style={{ x: cardX, y: cardY }}
-          className="relative z-10 bg-black/40 backdrop-blur-xl border border-white/10 rounded-3xl p-6 sm:p-8 shadow-2xl shadow-black/80"
+          className="relative z-10 bg-black/40 backdrop-blur-2xl border border-white/10 rounded-3xl p-5 sm:p-6 shadow-2xl shadow-black/80 group/card"
         >
+          {/* Animated Gradient Border */}
+          <div className="absolute inset-0 -z-10 rounded-3xl p-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity duration-500 animate-[text_3s_ease-in-out_infinite]" />
           {/* Subtle Border Glow */}
           <div className="absolute inset-0 rounded-3xl z-0 pointer-events-none ring-1 ring-inset ring-white/10" />
           <div className="absolute -inset-[1px] rounded-3xl z-0 bg-gradient-to-b from-white/10 to-transparent opacity-50 pointer-events-none" />
 
           {/* Header */}
-          <div className="relative z-10 mb-8 text-center">
+          <div className="relative z-10 mb-5 text-center">
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -122,7 +131,7 @@ const Login = () => {
             </motion.div>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-6 relative z-10">
+          <form onSubmit={handleLogin} className="space-y-4 relative z-10">
             {/* Email Field with Glow Effect */}
             <motion.div
               initial={{ opacity: 0, x: -20 }}
@@ -146,7 +155,7 @@ const Login = () => {
                     onFocus={() => setFocusedField('email')}
                     onBlur={() => setFocusedField(null)}
                     placeholder="name@gmail.com"
-                    className="w-full bg-transparent border-none text-white placeholder-gray-500 px-4 py-3.5 focus:ring-0 focus:outline-none text-sm"
+                    className="w-full bg-transparent border-none text-white placeholder-gray-500 px-4 py-3 focus:ring-0 focus:outline-none text-sm"
                     required
                   />
                 </div>
@@ -176,7 +185,7 @@ const Login = () => {
                     onFocus={() => setFocusedField('password')}
                     onBlur={() => setFocusedField(null)}
                     placeholder="••••••••"
-                    className="w-full bg-transparent border-none text-white placeholder-gray-500 px-4 py-3.5 focus:ring-0 focus:outline-none text-sm"
+                    className="w-full bg-transparent border-none text-white placeholder-gray-500 px-4 py-3 focus:ring-0 focus:outline-none text-sm"
                     required
                   />
                   <button
@@ -209,8 +218,7 @@ const Login = () => {
               transition={{ delay: 0.6 }}
             >
               <button
-                type="button"
-                onClick={handleLogin}
+                type="submit"
                 className="group relative w-full flex items-center justify-center gap-2 bg-white text-black font-semibold py-3.5 rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden cursor-pointer active:cursor-grabbing"
               >
                 {/* Sweep Gradient */}
@@ -233,7 +241,7 @@ const Login = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.7 }}
-            className="my-8 flex items-center gap-4"
+            className="my-4 flex items-center gap-4"
           >
             <div className="h-px bg-white/10 flex-1" />
             <span className="text-gray-500 text-xs uppercase tracking-wider">Or</span>
