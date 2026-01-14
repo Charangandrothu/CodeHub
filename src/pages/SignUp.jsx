@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { createUserWithEmailAndPassword, updateProfile, signOut } from "firebase/auth";
 import { setDoc, doc } from "firebase/firestore";
 import { auth, db } from '../firebase';
 import { motion, useMotionValue, useTransform, useSpring } from 'framer-motion'
@@ -81,6 +81,7 @@ const SignUp = () => {
       }
 
       console.log("User created:", user);
+      await signOut(auth); // Force logout so user has to sign in manually
       navigate('/login');
     } catch (error) {
       console.error("Error during signup:", error);
