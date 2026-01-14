@@ -3,7 +3,7 @@ import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { setDoc, doc } from "firebase/firestore";
 import { auth, db } from '../firebase';
 import { motion, useMotionValue, useTransform, useSpring } from 'framer-motion'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { Mail, Lock, User, ArrowRight, Loader2, Eye, EyeOff } from 'lucide-react'
 import pythonGlass from '../assets/pythonglass.png'
 import javaGlass from '../assets/javaglass.png'
@@ -309,7 +309,7 @@ const SignUp = () => {
               Already have an account?{' '}
               <button
                 type="button"
-                onClick={handleLoginNav} className="text-white font-medium transition-all duration-200 hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r hover:from-blue-400 hover:to-purple-500">
+                onClick={handleLoginNav} className="text-white font-medium transition-all duration-200 hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r hover:from-blue-400 hover:to-purple-500 cursor-pointer relative z-20">
                 Log in
               </button>
             </p>

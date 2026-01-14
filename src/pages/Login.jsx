@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { motion, useMotionValue, useTransform, useSpring } from 'framer-motion'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { Mail, Lock, ArrowRight, Loader2, Eye, EyeOff } from 'lucide-react'
 import { signInWithEmailAndPassword } from 'firebase/auth'
 import { auth } from '../firebase'
@@ -14,6 +14,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [focusedField, setFocusedField] = useState(null)
+  const [error, setError] = useState('')
 
   // Mouse parallax effect
   const mouseX = useMotionValue(0)
@@ -47,6 +48,7 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault()
     setIsLoading(true)
+    setError('')
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password)
       console.log('Login success:', userCredential.user)
@@ -54,7 +56,12 @@ const Login = () => {
       navigate('/')
     } catch (error) {
       console.error('Login error:', error)
-      alert(error.message)
+      // Check for specific error codes or just generic failure
+      if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+        setError('Incorrect email or password')
+      } else {
+        setError('Failed to login. Please try again.')
+      }
       setIsLoading(false)
     }
   }
@@ -132,6 +139,17 @@ const Login = () => {
           </div>
 
           <form onSubmit={handleLogin} className="space-y-4 relative z-10">
+            {/* Error Message */}
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-200 text-sm text-center"
+              >
+                {error}
+              </motion.div>
+            )}
+
             {/* Email Field with Glow Effect */}
             <motion.div
               initial={{ opacity: 0, x: -20 }}
@@ -257,11 +275,12 @@ const Login = () => {
           >
             <p className="text-gray-400 text-sm">
               Don't have an account?{' '}
-              <button
-                type="button"
-                onClick={handleSignup} className="text-white font-medium transition-all duration-200 hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r hover:from-blue-400 hover:to-purple-500">
+              <Link
+                to="/signup"
+                className="text-white font-medium transition-all duration-200 hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r hover:from-blue-400 hover:to-purple-500 cursor-pointer relative z-20"
+              >
                 Sign up now
-              </button>
+              </Link>
             </p>
           </motion.div>
         </motion.div>
