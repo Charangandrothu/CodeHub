@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowRight, CheckCircle2, Code2, Trophy } from 'lucide-react';
 import { Button } from './ui/Button';
+import { useAuth } from '../context/AuthContext';
 import pythonGlass from '../assets/pythonglass.png';
 import javaGlass from '../assets/javaglass.png';
 
@@ -31,17 +32,26 @@ const ProgressRow = ({ label, current, total, color = "blue" }) => {
 };
 
 const Hero = () => {
+  const { currentUser } = useAuth();
   const [isHovered, setIsHovered] = useState(false);
   const navigate = useNavigate();
 
   const handleStartPreparing = () => {
-    navigate('/login');
+    if (currentUser) {
+      navigate('/dashboard');
+    } else {
+      navigate('/login');
+    }
   };
 
   const handleExplore = () => {
-    navigate('/login');
+    if (currentUser) {
+      navigate('/dashboard');
+    } else {
+      navigate('/login');
+    }
   };
-  
+
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[#0a0a0a] px-4 sm:px-6 lg:px-8">
