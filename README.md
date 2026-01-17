@@ -61,3 +61,25 @@ Strong visual identity
 Scalable frontend foundation
 
 Shareable project demo
+
+## Docker
+
+- **Build image:**
+
+```bash
+docker build -t codehub:latest .
+```
+
+- **Run container:**
+
+```bash
+docker run -p 5173:80 --rm codehub:latest
+```
+
+- **Using docker-compose:**
+
+```bash
+docker-compose up --build
+```
+
+The container serves the production build via nginx on port `80` inside the container; the compose file maps it to host port `5173`.
