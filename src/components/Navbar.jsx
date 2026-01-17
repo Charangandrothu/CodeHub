@@ -1,15 +1,27 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/Button';
 import { useAuth } from '../context/AuthContext';
 import { LogOut, User, Settings, LayoutDashboard, ChevronDown } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useScroll, useMotionValueEvent } from 'framer-motion';
 
 const Navbar = () => {
   const navigate = useNavigate();
   const { currentUser, logout } = useAuth();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [hidden, setHidden] = useState(false);
+  const { scrollY } = useScroll();
+  const [hoveredIndex, setHoveredIndex] = useState(null);
   const menuRef = useRef(null);
+
+  useMotionValueEvent(scrollY, "change", (latest) => {
+    const previous = scrollY.getPrevious() || 0;
+    if (latest > previous && latest > 150) {
+      setHidden(true);
+    } else {
+      setHidden(false);
+    }
+  });
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -18,11 +30,13 @@ const Navbar = () => {
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    if (showProfileMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, []);
+  }, [showProfileMenu]);
 
   const handleLogout = async () => {
     try {
@@ -34,37 +48,92 @@ const Navbar = () => {
     }
   };
 
+  const navLinks = [
+    { name: 'Home', path: '/' },
+    { name: 'DSA', path: '/dsa' },
+    { name: 'Mock Tests', path: '/mock-tests' },
+    { name: 'Aptitude', path: '/aptitude' },
+    { name: 'System Design', path: '/system-design' },
+  ];
+
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 border-b border-white/5 bg-[#0a0a0a]/60 backdrop-blur-md">
-      <div className="max-w-7xl mx-auto w-full flex items-center justify-between">
-        {/* Logo */}
-        <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-blue-500/20">
-            C
-          </div>
-          <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
-            CodeHub
-          </span>
+    <motion.nav
+      variants={{
+        visible: { y: 0 },
+        hidden: { y: -100 },
+      }}
+      animate={hidden ? "hidden" : "visible"}
+      transition={{ duration: 0.35, ease: "easeInOut" }}
+      className="fixed top-0 left-0 right-0 z-50 flex items-center justify-center px-4 sm:px-6 py-4"
+    >
+      {/* Glassmorphism Container */}
+      <div className="relative w-full max-w-7xl mx-auto flex items-center justify-between px-6 py-3 rounded-2xl border border-white/10 bg-[#0a0a0a]/70 backdrop-blur-xl shadow-lg shadow-black/20 overflow-visible">
+
+        {/* Shimmer/Reflection Effect */}
+        <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden rounded-2xl">
+          <motion.div
+            animate={{
+              x: ['-100%', '200%'],
+            }}
+            transition={{
+              duration: 8,
+              repeat: Infinity,
+              ease: "linear",
+              delay: 2
+            }}
+            className="absolute inset-0 w-1/2 h-full bg-gradient-to-r from-transparent via-white/5 to-transparent skew-x-12"
+          />
         </div>
 
-        {/* Navigation */}
-        <div className="flex items-center gap-8">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => navigate('/')}
-              className="hidden sm:block text-sm text-gray-400 hover:text-white transition-colors cursor-pointer active:cursor-grabbing">
-              Home
-            </button>
+        {/* Content */}
+        <div className="relative z-10 flex items-center justify-between w-full">
+          {/* Logo */}
+          <div
+            className="flex items-center gap-3 cursor-pointer group"
+            onClick={() => navigate('/')}
+          >
+            <div className="relative w-9 h-9 flex items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-purple-600 text-white font-bold text-lg shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform duration-300">
+              <div className="absolute inset-0 rounded-xl bg-white/20 blur opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              C
+            </div>
+            <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white via-gray-200 to-gray-400 tracking-tight">
+              CodeHub
+            </span>
           </div>
 
-          <div className="flex items-center gap-3">
+          {/* Center Navigation - Desktop */}
+          <div
+            className="hidden md:flex items-center gap-1 bg-white/5 p-1 rounded-full border border-white/5 backdrop-blur-sm"
+            onMouseLeave={() => setHoveredIndex(null)}
+          >
+            {navLinks.map((link, index) => (
+              <button
+                key={link.name}
+                onClick={() => navigate(link.path)}
+                onMouseEnter={() => setHoveredIndex(index)}
+                className="relative px-4 py-2 text-sm text-gray-400 font-medium transition-colors hover:text-white"
+              >
+                {hoveredIndex === index && (
+                  <motion.span
+                    layoutId="nav-hover-pill"
+                    className="absolute inset-0 rounded-full bg-white/10"
+                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                  />
+                )}
+                <span className="relative z-10">{link.name}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Right Actions */}
+          <div className="flex items-center gap-4">
             {currentUser ? (
               <div className="relative" ref={menuRef}>
                 <button
                   onClick={() => setShowProfileMenu(!showProfileMenu)}
-                  className="flex items-center gap-2 p-1.5 pr-3 rounded-full border border-white/5 hover:bg-white/5 transition-all duration-200 group"
+                  className="flex items-center gap-2 p-1 pl-2 pr-3 rounded-full border border-white/10 hover:bg-white/5 hover:border-white/20 transition-all duration-300 group"
                 >
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-blue-500/20 ring-2 ring-transparent group-hover:ring-white/10 transition-all">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-xs ring-2 ring-[#0a0a0a] group-hover:ring-purple-500/50 transition-all">
                     {currentUser.displayName ? currentUser.displayName[0].toUpperCase() : (currentUser.email ? currentUser.email[0].toUpperCase() : 'U')}
                   </div>
                   <ChevronDown
@@ -79,81 +148,67 @@ const Navbar = () => {
                       initial={{ opacity: 0, y: 10, scale: 0.95 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      transition={{ duration: 0.2, ease: "easeOut" }}
-                      className="absolute right-0 mt-3 w-72 bg-[#0a0a0a] border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-50 ring-1 ring-white/5"
+                      transition={{ duration: 0.2 }}
+                      className="absolute right-0 mt-4 w-64 bg-[#0a0a0a]/90 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-xl shadow-black/50 overflow-hidden z-50 origin-top-right"
                     >
-                      <div className="relative">
-                        {/* Blur background effect */}
-                        <div className="absolute inset-0 bg-white/5 backdrop-blur-xl pointer-events-none" />
-
-                        <div className="relative z-10">
-                          {/* User Header */}
-                          <div className="p-4 border-b border-white/5 bg-white/[0.02]">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg shadow-inner">
-                                {currentUser.displayName ? currentUser.displayName[0].toUpperCase() : (currentUser.email ? currentUser.email[0].toUpperCase() : 'U')}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-semibold text-white truncate">
-                                  {currentUser.displayName || 'User'}
-                                </p>
-                                <p className="text-xs text-gray-500 truncate font-mono">
-                                  {currentUser.email}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Menu Items */}
-                          <div className="p-2 space-y-1">
-                            <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-300 hover:text-white hover:bg-white/5 transition-colors group">
-                              <User size={16} className="text-gray-500 group-hover:text-blue-400 transition-colors" />
-                              My Profile
-                            </button>
-                            <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-300 hover:text-white hover:bg-white/5 transition-colors group">
-                              <LayoutDashboard size={16} className="text-gray-500 group-hover:text-purple-400 transition-colors" />
-                              Dashboard
-                            </button>
-                            <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-300 hover:text-white hover:bg-white/5 transition-colors group">
-                              <Settings size={16} className="text-gray-500 group-hover:text-emerald-400 transition-colors" />
-                              Settings
-                            </button>
-                          </div>
-
-                          {/* Footer / Logout */}
-                          <div className="p-2 border-t border-white/5 bg-red-500/[0.02]">
-                            <button
-                              onClick={handleLogout}
-                              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors group"
-                            >
-                              <LogOut size={16} className="text-red-500/50 group-hover:text-red-400 transition-colors" />
-                              Sign Out
-                            </button>
-                          </div>
-                        </div>
+                      <div className="p-4 border-b border-white/5">
+                        <p className="text-sm font-medium text-white truncate">{currentUser.displayName || 'User'}</p>
+                        <p className="text-xs text-gray-500 truncate mt-0.5">{currentUser.email}</p>
+                      </div>
+                      <div className="p-2 space-y-1">
+                        <MenuLink icon={User} label="My Profile" />
+                        <MenuLink icon={LayoutDashboard} label="Dashboard" />
+                        <MenuLink icon={Settings} label="Settings" />
+                      </div>
+                      <div className="p-2 border-t border-white/5">
+                        <button
+                          onClick={handleLogout}
+                          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-red-400 hover:bg-red-500/10 transition-colors"
+                        >
+                          <LogOut size={16} />
+                          Sign Out
+                        </button>
                       </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
               </div>
             ) : (
-              <>
-                <button
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="ghost"
                   onClick={() => navigate('/login')}
-                  className="text-sm font-medium text-gray-300 hover:text-white px-4 py-2 transition-colors cursor-pointer active:cursor-grabbing"
+                  className="text-gray-300 hover:text-white font-medium hover:bg-white/5 transition-all duration-300"
                 >
                   Login
-                </button>
-                <Button onClick={() => navigate('/Signup')} variant="primary" className="!py-2 !px-5 text-sm shadow-blue-500/25">
-                  Sign Up
                 </Button>
-              </>
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <Button
+                    variant="primary"
+                    onClick={() => navigate('/signup')}
+                    className="relative overflow-hidden !bg-white !text-black !border-0 font-semibold shadow-[0_0_20px_rgba(255,255,255,0.3)] hover:shadow-[0_0_25px_rgba(255,255,255,0.5)] transition-shadow duration-300"
+                  >
+                    <span className="relative z-10">Sign up</span>
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 opacity-0 hover:opacity-100 transition-opacity duration-300" />
+                  </Button>
+                </motion.div>
+              </div>
             )}
           </div>
         </div>
       </div>
-    </nav>
+    </motion.nav>
   );
 };
+
+const MenuLink = ({ icon: Icon, label }) => (
+  <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-300 hover:text-white hover:bg-white/5 transition-colors group">
+    <Icon size={16} className="text-gray-500 group-hover:text-white transition-colors" />
+    {label}
+  </button>
+);
 
 export default Navbar;
