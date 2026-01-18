@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from './ui/Button';
 import { useAuth } from '../context/AuthContext';
 import { LogOut, User, Settings, LayoutDashboard, ChevronDown } from 'lucide-react';
@@ -48,12 +48,19 @@ const Navbar = () => {
     }
   };
 
-  const navLinks = [
-    { name: 'Home', path: '/' },
+  const location = useLocation();
+
+  const navLinks = currentUser ? [
+    { name: 'Dashboard', path: '/' },
     { name: 'DSA', path: '/dsa' },
     { name: 'Mock Tests', path: '/mock-tests' },
     { name: 'Aptitude', path: '/aptitude' },
     { name: 'System Design', path: '/system-design' },
+  ] : [
+    { name: 'Home', path: '/' },
+    { name: 'Features', path: '/#features' },
+    { name: 'Pricing', path: '/#pricing' },
+    { name: 'About', path: '/#about' },
   ];
 
   return (
@@ -106,23 +113,47 @@ const Navbar = () => {
             className="hidden md:flex items-center gap-1 bg-white/5 p-1 rounded-full border border-white/5 backdrop-blur-sm"
             onMouseLeave={() => setHoveredIndex(null)}
           >
-            {navLinks.map((link, index) => (
-              <button
-                key={link.name}
-                onClick={() => navigate(link.path)}
-                onMouseEnter={() => setHoveredIndex(index)}
-                className="relative px-4 py-2 text-sm text-gray-400 font-medium transition-colors hover:text-white"
-              >
-                {hoveredIndex === index && (
-                  <motion.span
-                    layoutId="nav-hover-pill"
-                    className="absolute inset-0 rounded-full bg-white/10"
-                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                  />
-                )}
-                <span className="relative z-10">{link.name}</span>
-              </button>
-            ))}
+            {navLinks.map((link, index) => {
+              const isActive = location.pathname === link.path || (link.path !== '/' && location.pathname.startsWith(link.path));
+
+              return (
+                <button
+                  key={link.name}
+                  onClick={() => navigate(link.path)}
+                  onMouseEnter={() => setHoveredIndex(index)}
+                  className={`relative px-4 py-2 text-sm font-medium transition-all duration-300 ${isActive ? 'text-white' : 'text-gray-400 hover:text-white'}`}
+                >
+                  {/* Hover Effect */}
+                  {hoveredIndex === index && !isActive && (
+                    <motion.span
+                      layoutId="nav-hover-pill"
+                      className="absolute inset-0 rounded-full bg-white/5"
+                      transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                    />
+                  )}
+
+                  {/* Active State */}
+                  {isActive && (
+                    <motion.span
+                      layoutId="nav-active-pill"
+                      className="absolute inset-0 rounded-full bg-white/10 shadow-[0_0_15px_rgba(255,255,255,0.1)] border border-white/5"
+                      transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                    />
+                  )}
+
+                  <span className="relative z-10 flex items-center gap-2">
+                    {link.name}
+                    {isActive && (
+                      <motion.div
+                        layoutId="active-dot"
+                        className="w-1 h-1 rounded-full bg-blue-400 shadow-[0_0_10px_#60a5fa]"
+                        transition={{ duration: 0.3 }}
+                      />
+                    )}
+                  </span>
+                </button>
+              );
+            })}
           </div>
 
           {/* Right Actions */}
