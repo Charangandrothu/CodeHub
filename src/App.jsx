@@ -6,6 +6,7 @@ import SignUp from './pages/SignUp'
 import Dashboard from './pages/Dashboard'
 import DSA from './pages/DSA'
 import TopicPage from './pages/TopicPage'
+import QuestionPage from './pages/QuestionPage'
 import { useAuth } from './context/AuthContext'
 
 function AppRoutes() {
@@ -19,6 +20,7 @@ function AppRoutes() {
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/dsa" element={<DSA />} />
       <Route path="/dsa/:topicId" element={<DSA />} />
+      <Route path="/problem/:slug" element={<QuestionPage />} />
     </Routes>
   );
 }

@@ -55,7 +55,6 @@ const Navbar = () => {
     { name: 'DSA', path: '/dsa' },
     { name: 'Mock Tests', path: '/mock-tests' },
     { name: 'Aptitude', path: '/aptitude' },
-    { name: 'System Design', path: '/system-design' },
   ] : [
     { name: 'Home', path: '/' },
     { name: 'Features', path: '/#features' },
@@ -71,7 +70,7 @@ const Navbar = () => {
       }}
       animate={hidden ? "hidden" : "visible"}
       transition={{ duration: 0.35, ease: "easeInOut" }}
-      className="fixed top-0 left-0 right-0 z-50 flex items-center justify-center px-4 sm:px-6 py-4"
+      className={`fixed top-0 left-0 right-0 z-50 flex items-center justify-center px-4 sm:px-6 py-4 ${location.pathname.startsWith('/problem/') ? 'hidden' : ''}`}
     >
       {/* Glassmorphism Container */}
       <div className="relative w-full max-w-7xl mx-auto flex items-center justify-between px-6 py-3 rounded-2xl border border-white/10 bg-[#0a0a0a]/70 backdrop-blur-xl shadow-lg shadow-black/20 overflow-visible">

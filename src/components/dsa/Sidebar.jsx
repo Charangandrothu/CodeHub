@@ -3,7 +3,8 @@ import { Rocket, Box, GitMerge, Search, Layers, Database, Hash, Code, Cpu } from
 
 const TOPICS = [
     { id: 'beginner', label: 'Beginner', icon: Rocket },
-    { id: 'arrays-strings', label: 'Arrays & Strings', icon: Box },
+    { id: 'arrays', label: 'Arrays', icon: Box },
+    { id: 'strings', label: 'Strings', icon: Box },
     { id: 'binary-search', label: 'Binary Search', icon: Search },
     { id: 'recursion-backtracking', label: 'Recursion', icon: GitMerge },
     { id: 'linked-lists', label: 'Linked Lists', icon: Layers },
@@ -11,7 +12,6 @@ const TOPICS = [
     { id: 'hashing', label: 'Hashing', icon: Hash },
     { id: 'trees', label: 'Trees & Graphs', icon: GitMerge },
     { id: 'dp', label: 'Dynamic Programming', icon: Code },
-    { id: 'system-design', label: 'System Design', icon: Cpu },
 ];
 
 export default function Sidebar() {
