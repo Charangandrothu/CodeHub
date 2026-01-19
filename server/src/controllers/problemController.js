@@ -3,10 +3,18 @@ const Problem = require("../models/Problem");
 // GET /api/problems
 exports.getAllProblems = async (req, res) => {
   try {
-    const problems = await Problem.find().select("title slug difficulty tags");
+    const { topic } = req.query;
+    let query = {};
+
+    if (topic) {
+      query.topic = topic;
+    }
+
+    const problems = await Problem.find(query).select("title slug difficulty tags topic");
     res.json(problems);
   } catch (error) {
-    res.status(500).json({ message: "Server Error" });
+    console.error("Error fetching problems:", error);
+    res.status(500).json({ message: "Server Error", error: error.message });
   }
 };
 
@@ -20,5 +28,18 @@ exports.getProblemBySlug = async (req, res) => {
     res.json(problem);
   } catch (error) {
     res.status(500).json({ message: "Server Error" });
+  }
+};
+
+// POST /api/problems
+exports.createProblem = async (req, res) => {
+  try {
+    console.log("Received POST request body:", req.body);
+    const newProblem = new Problem(req.body);
+    const savedProblem = await newProblem.save();
+    res.status(201).json(savedProblem);
+  } catch (error) {
+    console.error("Error creating problem:", error);
+    res.status(500).json({ message: "Server Error", error: error.message });
   }
 };

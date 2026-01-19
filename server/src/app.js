@@ -5,6 +5,10 @@ const app=express();
 //Middleware
 app.use(cors());
 app.use(express.json());
+//Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ message: "Server is running" });
+});
 //Routes
 app.use('/api/problems',problemRoutes);
 module.exports=app;

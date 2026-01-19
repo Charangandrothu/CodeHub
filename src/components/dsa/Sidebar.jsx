@@ -1,5 +1,18 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import { dsaTopics } from '../../data/dsaMockData';
+import { Rocket, Box, GitMerge, Search, Layers, Database, Hash, Code, Cpu } from 'lucide-react';
+
+const TOPICS = [
+    { id: 'beginner', label: 'Beginner', icon: Rocket },
+    { id: 'arrays-strings', label: 'Arrays & Strings', icon: Box },
+    { id: 'binary-search', label: 'Binary Search', icon: Search },
+    { id: 'recursion-backtracking', label: 'Recursion', icon: GitMerge },
+    { id: 'linked-lists', label: 'Linked Lists', icon: Layers },
+    { id: 'stacks-queues', label: 'Stacks & Queues', icon: Database },
+    { id: 'hashing', label: 'Hashing', icon: Hash },
+    { id: 'trees', label: 'Trees & Graphs', icon: GitMerge },
+    { id: 'dp', label: 'Dynamic Programming', icon: Code },
+    { id: 'system-design', label: 'System Design', icon: Cpu },
+];
 
 export default function Sidebar() {
     const navigate = useNavigate();
@@ -14,7 +27,7 @@ export default function Sidebar() {
                     Topics
                 </h3>
                 <div className="space-y-1">
-                    {dsaTopics.map((topic) => {
+                    {TOPICS.map((topic) => {
                         const active = isActive(topic.id);
                         const Icon = topic.icon;
 

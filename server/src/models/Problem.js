@@ -11,6 +11,7 @@ const problemSchema = new mongoose.Schema(
     title: { type: String, required: true },
     slug: { type: String, required: true, unique: true },
     difficulty: { type: String, enum: ["Easy", "Medium", "Hard"] },
+    topic: { type: String, required: true }, // e.g., 'arrays-strings', 'beginner'
     tags: [String],
     description: String,
     examples: [exampleSchema],
