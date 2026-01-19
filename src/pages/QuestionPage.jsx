@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Play, Send, RefreshCw, AlertCircle, CheckCircle2, Copy } from 'lucide-react';
+import { ChevronLeft, Play, Send, RefreshCw, AlertCircle, CheckCircle2, Copy, FileText, LayoutList, History, Code2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function QuestionPage() {
@@ -139,17 +139,22 @@ export default function QuestionPage() {
                 >
                     {/* Tabs */}
                     <div className="flex items-center border-b border-[#262626] px-1 bg-[#1A1A1A]">
-                        {['Description', 'Editorial', 'Submissions'].map(tab => (
+                        {[
+                            { id: 'description', label: 'Description', icon: FileText, color: 'text-blue-400' },
+                            { id: 'editorial', label: 'Editorial', icon: LayoutList, color: 'text-yellow-400' },
+                            { id: 'submissions', label: 'Submissions', icon: History, color: 'text-green-400' }
+                        ].map((tab) => (
                             <button
-                                key={tab}
-                                onClick={() => setActiveTab(tab.toLowerCase())}
-                                className={`relative px-4 py-3 text-xs font-medium transition-colors ${activeTab === tab.toLowerCase()
+                                key={tab.id}
+                                onClick={() => setActiveTab(tab.id)}
+                                className={`relative px-4 py-3 text-xs font-medium transition-colors flex items-center gap-2 group ${activeTab === tab.id
                                     ? 'text-white'
                                     : 'text-[#737373] hover:text-[#a3a3a3]'
                                     }`}
                             >
-                                {tab}
-                                {activeTab === tab.toLowerCase() && (
+                                <tab.icon size={14} className={activeTab === tab.id ? tab.color : 'text-[#525252] group-hover:text-[#737373] transition-colors'} />
+                                {tab.label}
+                                {activeTab === tab.id && (
                                     <motion.div
                                         layoutId="activeTabProblem"
                                         className="absolute bottom-0 left-0 right-0 h-[2px] bg-white"
@@ -170,8 +175,8 @@ export default function QuestionPage() {
 
                             <div className="flex flex-wrap items-center gap-2 mb-6">
                                 <span className={`px-2 py-0.5 rounded text-[10px] font-medium border flex items-center gap-1.5 ${problem.difficulty === 'Easy' ? 'text-[#22c55e] bg-[#22c55e]/10 border-[#22c55e]/20' :
-                                        problem.difficulty === 'Medium' ? 'text-[#f59e0b] bg-[#f59e0b]/10 border-[#f59e0b]/20' :
-                                            'text-[#ef4444] bg-[#ef4444]/10 border-[#ef4444]/20'
+                                    problem.difficulty === 'Medium' ? 'text-[#f59e0b] bg-[#f59e0b]/10 border-[#f59e0b]/20' :
+                                        'text-[#ef4444] bg-[#ef4444]/10 border-[#ef4444]/20'
                                     }`}>
                                     {problem.difficulty}
                                 </span>
@@ -190,7 +195,12 @@ export default function QuestionPage() {
                                 <div className="space-y-3 mt-6">
                                     {problem.examples.map((ex, idx) => (
                                         <div key={idx} className="bg-[#141414] rounded-lg p-3 border border-[#262626]">
-                                            <h4 className="text-[11px] font-bold text-white mb-2">Example {idx + 1}</h4>
+                                            <h4 className="text-[11px] font-bold text-white mb-2 flex items-center gap-2">
+                                                <div className="p-0.5 rounded bg-purple-500/10 border border-purple-500/20">
+                                                    <Code2 size={12} className="text-purple-400" />
+                                                </div>
+                                                Example {idx + 1}
+                                            </h4>
 
                                             <div className="space-y-2 font-mono text-[11px] leading-relaxed">
                                                 <div className="flex gap-3">
