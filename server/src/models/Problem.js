@@ -20,6 +20,10 @@ const problemSchema = new mongoose.Schema(
       javascript: String,
       python: String,
     },
+    testCases: {
+      visible: [{ input: String, output: String }],
+      hidden: [{ input: String, output: String }],
+    },
   },
   { timestamps: true }
 );

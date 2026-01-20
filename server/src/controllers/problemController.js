@@ -48,9 +48,16 @@ exports.createProblem = async (req, res) => {
 // PUT /api/problems/:id
 exports.updateProblem = async (req, res) => {
   try {
+    const updates = { ...req.body };
+
+    // Prevent updating immutable fields
+    delete updates.slug;
+    delete updates._id;
+    delete updates.createdAt;
+
     const problem = await Problem.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      updates,
       { new: true, runValidators: true }
     );
 
@@ -61,6 +68,9 @@ exports.updateProblem = async (req, res) => {
     res.json(problem);
   } catch (error) {
     console.error("Error updating problem:", error);
+    if (error.code === 11000) {
+      return res.status(400).json({ message: "Duplicate key error", error: error.message });
+    }
     res.status(500).json({ message: "Server Error", error: error.message });
   }
 };

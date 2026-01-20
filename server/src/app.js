@@ -1,7 +1,7 @@
-const express =require('express');
-const cors=require('cors');
-const problemRoutes=require("./routes/problemRoutes");
-const app=express();
+const express = require('express');
+const cors = require('cors');
+const problemRoutes = require("./routes/problemRoutes");
+const app = express();
 //Middleware
 app.use(cors());
 app.use(express.json());
@@ -10,5 +10,7 @@ app.get('/api/health', (req, res) => {
   res.json({ message: "Server is running" });
 });
 //Routes
-app.use('/api/problems',problemRoutes);
-module.exports=app;
+const executeRoutes = require("./routes/execute");
+app.use('/api/problems', problemRoutes);
+app.use('/api/execute', executeRoutes);
+module.exports = app;
