@@ -44,7 +44,7 @@ const Pricing = () => {
                     <motion.h2
                         initial={{ opacity: 0, y: 30, filter: "blur(10px)" }}
                         whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                        viewport={{ once: true }}
+                        viewport={{ once: false, amount: 0.3 }}
                         transition={{ duration: 0.8, ease: "easeOut" }}
                         className="text-4xl md:text-5xl lg:text-6xl font-bold text-white tracking-tight"
                     >
@@ -56,7 +56,7 @@ const Pricing = () => {
                     <motion.p
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
+                        viewport={{ once: false, amount: 0.3 }}
                         transition={{ duration: 0.6, delay: 0.2 }}
                         className="text-gray-400 text-lg mt-6 max-w-2xl mx-auto"
                     >
@@ -78,7 +78,7 @@ const Pricing = () => {
                     <motion.div
                         initial={{ opacity: 0, x: -50 }}
                         whileInView={{ opacity: 1, x: 0 }}
-                        viewport={{ once: true }}
+                        viewport={{ once: false, amount: 0.3 }}
                         transition={{ duration: 0.8, delay: 0.1, ease: "easeOut" }}
                         className="relative bg-white/[0.02] backdrop-blur-xl border border-white/10 rounded-[2rem] p-8 md:p-10 flex flex-col hover:border-white/20 transition-colors group"
                     >
@@ -100,7 +100,7 @@ const Pricing = () => {
                         <motion.div
                             initial="hidden"
                             whileInView="visible"
-                            viewport={{ once: true }}
+                            viewport={{ once: false, amount: 0.3 }}
                             variants={{ visible: { transition: { staggerChildren: 0.05 } } }}
                             className="flex-1 space-y-4 mb-10"
                         >
@@ -122,7 +122,7 @@ const Pricing = () => {
                     <motion.div
                         initial={{ opacity: 0, x: 50, scale: 0.95 }}
                         whileInView={{ opacity: 1, x: 0, scale: 1 }}
-                        viewport={{ once: true }}
+                        viewport={{ once: false, amount: 0.3 }}
                         transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
                         className="relative bg-[#0f0f0f] border-2 border-purple-500/30 rounded-[2rem] p-8 md:p-12 flex flex-col shadow-2xl shadow-purple-900/20 lg:-my-8"
                     >
@@ -153,7 +153,7 @@ const Pricing = () => {
                         <motion.div
                             initial="hidden"
                             whileInView="visible"
-                            viewport={{ once: true }}
+                            viewport={{ once: false, amount: 0.3 }}
                             variants={{ visible: { transition: { staggerChildren: 0.05, delayChildren: 0.2 } } }}
                             className="flex-1 space-y-4 mb-10 relative z-10"
                         >
@@ -191,7 +191,7 @@ const Pricing = () => {
                 <motion.div
                     initial={{ opacity: 0, y: 30 }}
                     whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
+                    viewport={{ once: false, amount: 0.5 }}
                     transition={{ duration: 0.8, delay: 0.2 }}
                     className="mt-24 text-center pb-10"
                 >

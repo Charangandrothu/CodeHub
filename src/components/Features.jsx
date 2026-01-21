@@ -37,7 +37,7 @@ const Features = () => {
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
+                    viewport={{ once: false, amount: 0.3 }}
                     transition={{ duration: 0.6 }}
                 >
                     <span className="inline-block px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-sm font-semibold tracking-wide mb-6">
@@ -90,7 +90,7 @@ const Features = () => {
                             <motion.div
                                 initial="hidden"
                                 whileInView="visible"
-                                viewport={{ once: true }}
+                                viewport={{ once: false, amount: 0.3 }}
                                 variants={{
                                     visible: { transition: { staggerChildren: 0.1 } }
                                 }}
@@ -276,7 +276,7 @@ const FeatureSection = ({ title, description, icon: Icon, gradient, align, child
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, margin: "-100px" }}
+                    viewport={{ once: false, margin: "-50px" }}
                     transition={{ duration: 0.5, ease: "easeOut" }}
                 >
                     <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${gradient} p-[1px]`}>
@@ -289,7 +289,7 @@ const FeatureSection = ({ title, description, icon: Icon, gradient, align, child
                 <motion.div
                     initial={{ opacity: 0, x: align === 'right' ? 50 : -50 }}
                     whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true, margin: "-100px" }}
+                    viewport={{ once: false, margin: "-50px" }}
                     transition={{ duration: 0.6, delay: 0.1, ease: "easeOut" }}
                 >
                     <h3 className="text-3xl font-bold text-white mb-4">{title}</h3>
@@ -301,7 +301,7 @@ const FeatureSection = ({ title, description, icon: Icon, gradient, align, child
                 <motion.div
                     initial={{ opacity: 0, x: align === 'right' ? 40 : -40 }}
                     whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true, margin: "-100px" }}
+                    viewport={{ once: false, margin: "-50px" }}
                     transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
                     className="flex items-center gap-2 text-sm font-medium text-white/50 group cursor-pointer hover:text-white transition-colors"
                 >
@@ -314,7 +314,7 @@ const FeatureSection = ({ title, description, icon: Icon, gradient, align, child
             <motion.div
                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
                 whileInView={{ opacity: 1, scale: 1, y: 0 }}
-                viewport={{ once: true, margin: "-100px" }}
+                viewport={{ once: false, margin: "-50px" }}
                 transition={{ duration: 0.8, delay: 0.2, type: "spring", bounce: 0.2 }}
                 className="flex-1 w-full"
             >
@@ -333,7 +333,7 @@ const TopicCard = ({ name, count, color }) => (
     <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         whileInView={{ opacity: 1, scale: 1 }}
-        viewport={{ once: true }}
+        viewport={{ once: false, amount: 0.5 }}
         transition={{ duration: 0.5 }}
         className="flex-1 bg-white/5 rounded-lg p-3 border border-white/5 hover:bg-white/10 transition-colors"
     >
@@ -349,7 +349,7 @@ const LeaderboardRow = ({ rank, name, score, country }) => (
     <motion.div
         initial={{ opacity: 0, x: -10 }}
         whileInView={{ opacity: 1, x: 0 }}
-        viewport={{ once: true }}
+        viewport={{ once: false, amount: 0.5 }}
         transition={{ duration: 0.5, delay: rank * 0.1 }}
         className="flex items-center justify-between text-sm p-2 rounded hover:bg-white/5 transition-colors"
     >
