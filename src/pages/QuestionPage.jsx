@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Play, Send, RefreshCw, AlertCircle, CheckCircle2, Copy, FileText, LayoutList, History, Code2, Check, X, Zap, Clock, Cpu, TrendingUp } from 'lucide-react';
 import { motion } from 'framer-motion';
 import CodeEditor from '../components/dsa/CodeEditor';
+import logo_img from '../assets/logo_img.png';
 
 export default function QuestionPage() {
     const { slug } = useParams();
@@ -331,9 +332,11 @@ export default function QuestionPage() {
                     whileHover={{ scale: 1.01 }}
                     whileTap={{ scale: 0.99 }}
                 >
-                    <div className="relative w-8 h-8 flex items-center justify-center rounded-lg bg-[#262626] border border-[#333333] group-hover:border-[#404040] transition-all duration-300">
-                        <span className="text-white font-bold text-lg leading-none">C</span>
-                    </div>
+                    <img
+                        src={logo_img}
+                        alt="CodeHub"
+                        className="w-8 h-8 rounded-lg object-contain"
+                    />
                     <div className="flex flex-col">
                         <span className="text-sm font-semibold text-[#e5e5e5] tracking-tight group-hover:text-white transition-colors">CodeHub</span>
                     </div>

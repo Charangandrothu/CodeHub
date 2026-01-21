@@ -4,15 +4,41 @@ import { Button } from './ui/Button';
 import { useAuth } from '../context/AuthContext';
 import { LogOut, User, Settings, LayoutDashboard, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from 'framer-motion';
+import logo_img from '../assets/logo_img.png';
 
 const Navbar = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { currentUser, logout } = useAuth();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [hidden, setHidden] = useState(false);
   const { scrollY } = useScroll();
   const [hoveredIndex, setHoveredIndex] = useState(null);
+  const [activeSection, setActiveSection] = useState('home');
   const menuRef = useRef(null);
+
+  useEffect(() => {
+    const handleScrollSpy = () => {
+      if (location.pathname !== '/') return;
+
+      const sections = ['home', 'features', 'pricing'];
+      const scrollPosition = window.scrollY + 200; // Offset for better detection
+
+      for (const section of sections) {
+        const element = document.getElementById(section);
+        if (element) {
+          const offsetTop = element.offsetTop;
+          const offsetHeight = element.offsetHeight;
+          if (scrollPosition >= offsetTop && scrollPosition < offsetTop + offsetHeight) {
+            setActiveSection(section);
+          }
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScrollSpy);
+    return () => window.removeEventListener('scroll', handleScrollSpy);
+  }, [location.pathname]);
 
   useMotionValueEvent(scrollY, "change", (latest) => {
     const previous = scrollY.getPrevious() || 0;
@@ -48,7 +74,7 @@ const Navbar = () => {
     }
   };
 
-  const location = useLocation();
+
 
   const navLinks = currentUser ? [
     { name: 'Dashboard', path: '/' },
@@ -96,12 +122,19 @@ const Navbar = () => {
           {/* Logo */}
           <div
             className="flex items-center gap-3 cursor-pointer group"
-            onClick={() => navigate('/')}
+            onClick={() => {
+              if (location.pathname === '/') {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              } else {
+                navigate('/');
+              }
+            }}
           >
-            <div className="relative w-9 h-9 flex items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-purple-600 text-white font-bold text-lg shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform duration-300">
-              <div className="absolute inset-0 rounded-xl bg-white/20 blur opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              C
-            </div>
+            <img
+              src={logo_img}
+              alt="CodeHub Logo"
+              className="w-9 h-9 rounded-xl shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform duration-300 object-cover"
+            />
             <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white via-gray-200 to-gray-400 tracking-tight">
               CodeHub
             </span>
@@ -113,12 +146,50 @@ const Navbar = () => {
             onMouseLeave={() => setHoveredIndex(null)}
           >
             {navLinks.map((link, index) => {
-              const isActive = location.pathname === link.path || (link.path !== '/' && location.pathname.startsWith(link.path));
+              let isActive = false;
+              if (currentUser) {
+                isActive = location.pathname === link.path || (link.path !== '/' && location.pathname.startsWith(link.path));
+              } else {
+                if (location.pathname === '/') {
+                  if (link.path === '/') isActive = activeSection === 'home';
+                  else if (link.path.includes('#')) {
+                    const sectionId = link.path.split('#')[1];
+                    isActive = activeSection === sectionId;
+                  }
+                } else {
+                  const isHashLink = link.path.includes('#');
+                  isActive = isHashLink
+                    ? location.hash === link.path.substring(link.path.indexOf('#'))
+                    : location.pathname === link.path && location.hash === '';
+                }
+              }
 
               return (
                 <button
                   key={link.name}
-                  onClick={() => navigate(link.path)}
+                  onClick={() => {
+                    if (link.path === '/') {
+                      if (location.pathname === '/') {
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      } else {
+                        navigate(link.path);
+                      }
+                    } else if (link.path.startsWith('/#')) {
+                      const id = link.path.substring(2);
+                      const element = document.getElementById(id);
+                      if (element) {
+                        element.scrollIntoView({ behavior: 'smooth' });
+                      } else {
+                        navigate('/');
+                        setTimeout(() => {
+                          const element = document.getElementById(id);
+                          if (element) element.scrollIntoView({ behavior: 'smooth' });
+                        }, 100);
+                      }
+                    } else {
+                      navigate(link.path);
+                    }
+                  }}
                   onMouseEnter={() => setHoveredIndex(index)}
                   className={`relative px-4 py-2 text-sm font-medium transition-all duration-300 ${isActive ? 'text-white' : 'text-gray-400 hover:text-white'}`}
                 >

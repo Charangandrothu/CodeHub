@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
-import Hero from './components/Hero'
+import LandingPage from './pages/LandingPage'
 import Navbar from './components/Navbar'
 import Login from './pages/Login'
 import SignUp from './pages/SignUp'
@@ -14,7 +14,7 @@ function AppRoutes() {
 
   return (
     <Routes>
-      <Route path="/" element={currentUser ? <Dashboard /> : <Hero />} />
+      <Route path="/" element={currentUser ? <Dashboard /> : <LandingPage />} />
       <Route path="/login" element={currentUser ? <Navigate to="/" /> : <Login />} />
       <Route path="/signup" element={currentUser ? <Navigate to="/" /> : <SignUp />} />
       <Route path="/dashboard" element={<Dashboard />} />
