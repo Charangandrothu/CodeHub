@@ -7,8 +7,10 @@ exports.getAllProblems = async (req, res) => {
     let query = {};
 
     if (topic) {
-      // Case-insensitive match for the topic
-      query.topic = { $regex: new RegExp(`^${topic}$`, "i") };
+      // Create a regex that allows hyphens in the query to match spaces in the DB
+      // e.g., "binary-search" will match "Binary Search" or "Binary-Search"
+      const pattern = topic.split('-').join('[\\s-]');
+      query.topic = { $regex: new RegExp(`^${pattern}$`, "i") };
     }
 
     const problems = await Problem.find(query).select("title slug difficulty tags topic");

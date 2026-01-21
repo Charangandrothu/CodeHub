@@ -36,7 +36,16 @@ export default function QuestionPage() {
             });
 
             const data = await res.json();
-            setSubmissionResult(data);
+
+            if (!res.ok) {
+                setSubmissionResult({
+                    verdict: "Error",
+                    details: data.error || data.stderr || data.details || "An error occurred"
+                });
+            } else {
+                setSubmissionResult(data);
+            }
+
             setRunStatus("idle");
 
         } catch (err) {
@@ -123,7 +132,8 @@ export default function QuestionPage() {
 
             const data = await res.json();
             const actualOutput = data.stdout || "";
-            const rawError = data.stderr || data.compile_output || data.message || data.status;
+            // Fix: Don't treat 'Accepted' status as an error. Use stderr/compile_output primarily.
+            const rawError = data.stderr || data.compile_output;
 
             // Normalize for comparison
             const normalize = (str) => str ? str.trim().replace(/\r\n/g, "\n") : "";
@@ -188,6 +198,34 @@ export default function QuestionPage() {
             fetchProblem();
         }
     }, [slug, language]);
+
+    // Refs to hold latest runCode/submitCode functions to avoid stale closures in event listener
+    const runCodeRef = useRef(runCode);
+    const submitCodeRef = useRef(submitCode);
+
+    useEffect(() => {
+        runCodeRef.current = runCode;
+        submitCodeRef.current = submitCode;
+    }, [runCode, submitCode]);
+
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            // CTRL + '
+            if (e.ctrlKey && e.key === "'") {
+                e.preventDefault();
+                runCodeRef.current();
+            }
+
+            // CTRL + Enter
+            if (e.ctrlKey && e.key === "Enter") {
+                e.preventDefault();
+                submitCodeRef.current();
+            }
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, []);
 
     if (loading) {
         return (
@@ -527,9 +565,40 @@ export default function QuestionPage() {
                                                 </span>
                                             </div>
 
-                                            {submissionResult.details && (
-                                                <div className="bg-black/30 p-3 rounded border border-white/5 text-[#e5e5e5] whitespace-pre-wrap font-mono text-xs">
-                                                    {submissionResult.details}
+                                            {/* Structured Failed Test Case Display */}
+                                            {submissionResult.failedTestCase && (
+                                                <div className="flex flex-col gap-2 mt-2 w-full">
+                                                    <div className="text-xs font-semibold text-red-400">Failed Test Case:</div>
+                                                    <div className="bg-black/30 p-3 rounded border border-white/5 font-mono text-xs space-y-3 w-full">
+                                                        <div>
+                                                            <div className="text-gray-500 mb-1">Input</div>
+                                                            <div className="text-gray-300 bg-white/5 p-2 rounded border border-white/5 whitespace-pre-wrap">
+                                                                {submissionResult.failedTestCase.input}
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <div className="text-gray-500 mb-1">Expected Output</div>
+                                                            <div className="text-green-400/90 bg-white/5 p-2 rounded border border-white/5 whitespace-pre-wrap">
+                                                                {submissionResult.failedTestCase.expected}
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <div className="text-gray-500 mb-1">Actual Output</div>
+                                                            <div className="text-red-400/90 bg-white/5 p-2 rounded border border-white/5 whitespace-pre-wrap">
+                                                                {submissionResult.failedTestCase.actual}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Standard Details / Stderr Display */}
+                                            {(submissionResult.stderr || submissionResult.details) && (
+                                                <div className="w-full mt-2">
+                                                    {(submissionResult.stderr) && <div className="text-xs font-semibold text-gray-400 mb-1">Error Log:</div>}
+                                                    <div className="bg-black/30 p-3 rounded border border-white/5 text-[#e5e5e5] whitespace-pre-wrap font-mono text-xs">
+                                                        {submissionResult.stderr || submissionResult.details}
+                                                    </div>
                                                 </div>
                                             )}
                                         </motion.div>
