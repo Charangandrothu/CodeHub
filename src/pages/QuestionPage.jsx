@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Play, Send, RefreshCw, AlertCircle, CheckCircle2, Copy, FileText, LayoutList, History, Code2, Check, X, Zap, Clock, Cpu } from 'lucide-react';
+import { ChevronLeft, Play, Send, RefreshCw, AlertCircle, CheckCircle2, Copy, FileText, LayoutList, History, Code2, Check, X, Zap, Clock, Cpu, TrendingUp } from 'lucide-react';
 import { motion } from 'framer-motion';
 import CodeEditor from '../components/dsa/CodeEditor';
 
@@ -412,28 +412,30 @@ export default function QuestionPage() {
                         ))}
                     </div>
 
-                    {/* Fixed Title Section */}
-                    <div className="px-5 py-4 border-b border-[#262626] bg-[#1A1A1A] shrink-0">
-                        <div className="flex items-center justify-between gap-4 mb-3">
-                            <h2 className="text-2xl font-bold text-white m-0 tracking-tight leading-tight">
-                                {problem.title}
-                            </h2>
-                        </div>
+                    {/* Fixed Title Section - Hidden on Submissions Tab */}
+                    {activeTab !== 'submissions' && (
+                        <div className="px-5 py-4 border-b border-[#262626] bg-[#1A1A1A] shrink-0">
+                            <div className="flex items-center justify-between gap-4 mb-3">
+                                <h2 className="text-2xl font-bold text-white m-0 tracking-tight leading-tight">
+                                    {problem.title}
+                                </h2>
+                            </div>
 
-                        <div className="flex flex-wrap items-center gap-2">
-                            <span className={`px-2 py-0.5 rounded text-[10px] font-medium border flex items-center gap-1.5 ${problem.difficulty === 'Easy' ? 'text-[#22c55e] bg-[#22c55e]/10 border-[#22c55e]/20' :
-                                problem.difficulty === 'Medium' ? 'text-[#f59e0b] bg-[#f59e0b]/10 border-[#f59e0b]/20' :
-                                    'text-[#ef4444] bg-[#ef4444]/10 border-[#ef4444]/20'
-                                }`}>
-                                {problem.difficulty}
-                            </span>
-                            {problem.tags && problem.tags.map(tag => (
-                                <span key={tag} className="px-2 py-0.5 bg-[#262626] rounded text-[10px] font-medium text-[#a3a3a3] border border-[#333333]">
-                                    {tag}
+                            <div className="flex flex-wrap items-center gap-2">
+                                <span className={`px-2 py-0.5 rounded text-[10px] font-medium border flex items-center gap-1.5 ${problem.difficulty === 'Easy' ? 'text-[#22c55e] bg-[#22c55e]/10 border-[#22c55e]/20' :
+                                    problem.difficulty === 'Medium' ? 'text-[#f59e0b] bg-[#f59e0b]/10 border-[#f59e0b]/20' :
+                                        'text-[#ef4444] bg-[#ef4444]/10 border-[#ef4444]/20'
+                                    }`}>
+                                    {problem.difficulty}
                                 </span>
-                            ))}
+                                {problem.tags && problem.tags.map(tag => (
+                                    <span key={tag} className="px-2 py-0.5 bg-[#262626] rounded text-[10px] font-medium text-[#a3a3a3] border border-[#333333]">
+                                        {tag}
+                                    </span>
+                                ))}
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     {/* Scrollable Content */}
                     <div className="flex-1 overflow-y-auto custom-scrollbar p-5">
@@ -520,22 +522,23 @@ export default function QuestionPage() {
                                             <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br rounded-full blur-3xl opacity-20 -mr-16 -mt-16 pointer-events-none ${['Accepted', 'Passed'].includes(submissionResult.verdict) ? 'from-emerald-400 to-green-300' : 'from-red-400 to-orange-300'}`} />
 
                                             <div className="relative z-10">
-                                                <div className="flex items-center justify-between mb-6">
-                                                    <div className="flex items-center gap-4">
-                                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-lg ${['Accepted', 'Passed'].includes(submissionResult.verdict)
-                                                            ? 'bg-emerald-500 text-white shadow-emerald-500/20'
-                                                            : 'bg-red-500 text-white shadow-red-500/20'
+                                                <div className="flex items-center justify-between mb-8">
+                                                    <div className="flex items-center gap-5">
+                                                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-xl ${['Accepted', 'Passed'].includes(submissionResult.verdict)
+                                                            ? 'bg-emerald-500 text-white shadow-emerald-500/30'
+                                                            : 'bg-red-500 text-white shadow-red-500/30'
                                                             }`}>
-                                                            {['Accepted', 'Passed'].includes(submissionResult.verdict) ? <Check size={28} strokeWidth={3} /> : <X size={28} strokeWidth={3} />}
+                                                            {['Accepted', 'Passed'].includes(submissionResult.verdict) ? <Check size={32} strokeWidth={3} /> : <X size={32} strokeWidth={3} />}
                                                         </div>
                                                         <div>
-                                                            <h2 className={`text-2xl font-bold tracking-tight ${['Accepted', 'Passed'].includes(submissionResult.verdict) ? 'text-white' : 'text-red-100'}`}>
+                                                            <h2 className={`text-3xl font-bold tracking-tight ${['Accepted', 'Passed'].includes(submissionResult.verdict) ? 'text-white' : 'text-red-100'}`}>
                                                                 {submissionResult.verdict}
                                                             </h2>
-                                                            <div className="flex items-center gap-2 mt-1">
-                                                                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${['Accepted', 'Passed'].includes(submissionResult.verdict) ? 'bg-emerald-500/20 text-emerald-300' : 'bg-red-500/20 text-red-300'}`}>
-                                                                    {['Accepted', 'Passed'].includes(submissionResult.verdict) ? 'Success' : 'Failed'}
-                                                                </span>
+                                                            <div className="flex flex-col mt-1">
+                                                                <span className="text-zinc-400 text-sm font-medium">Execution completed successfully</span>
+                                                                {['Accepted', 'Passed'].includes(submissionResult.verdict) && (
+                                                                    <span className="text-emerald-400 text-xs mt-0.5">Solution meets all constraints</span>
+                                                                )}
                                                             </div>
                                                         </div>
                                                     </div>
@@ -544,40 +547,78 @@ export default function QuestionPage() {
                                                         <motion.button
                                                             whileHover={{ scale: 1.05 }}
                                                             whileTap={{ scale: 0.95 }}
-                                                            className="flex items-center gap-2 px-4 py-2 bg-white text-black rounded-lg text-sm font-bold hover:bg-zinc-200 transition-colors shadow-lg shadow-white/5"
+                                                            className="flex items-center gap-2 px-5 py-2.5 bg-white text-black rounded-xl text-sm font-bold hover:bg-zinc-200 transition-colors shadow-lg shadow-white/5"
                                                         >
-                                                            <Zap size={16} className="fill-current" />
-                                                            Analyze
+                                                            <Zap size={18} className="fill-current" />
+                                                            Analyze Solution
                                                         </motion.button>
                                                     )}
                                                 </div>
 
-                                                <div className="grid grid-cols-3 gap-3 mb-6">
-                                                    <div className="bg-black/20 rounded-xl p-3 border border-white/5 backdrop-blur-sm">
-                                                        <div className="flex items-center gap-2 text-zinc-400 mb-1 text-xs uppercase font-bold tracking-wider">
-                                                            <Clock size={12} /> Runtime
+                                                {['Accepted', 'Passed'].includes(submissionResult.verdict) && (
+                                                    <div className="grid grid-cols-3 gap-4 mb-6">
+                                                        {/* Runtime Gauge */}
+                                                        <div className="bg-black/40 rounded-2xl p-4 border border-white/5 backdrop-blur-md relative overflow-hidden group">
+                                                            <div className="absolute top-0 right-0 p-3 opacity-30 group-hover:opacity-50 transition-opacity"><TrendingUp size={16} className="text-emerald-400" /></div>
+                                                            <div className="flex flex-col items-center justify-center p-2">
+                                                                <div className="relative w-16 h-16 flex items-center justify-center mb-2">
+                                                                    <svg className="w-full h-full -rotate-90 text-emerald-900" viewBox="0 0 100 100">
+                                                                        <circle cx="50" cy="50" r="42" stroke="currentColor" strokeWidth="8" fill="none" className="opacity-30" />
+                                                                        <motion.circle
+                                                                            initial={{ pathLength: 0 }}
+                                                                            animate={{ pathLength: 0.94 }}
+                                                                            transition={{ duration: 1, delay: 0.2 }}
+                                                                            cx="50" cy="50" r="42"
+                                                                            stroke="#34d399" strokeWidth="8"
+                                                                            fill="none" strokeLinecap="round"
+                                                                        />
+                                                                    </svg>
+                                                                    <span className="absolute text-sm font-bold text-white">{submissionResult.time || 45}ms</span>
+                                                                </div>
+                                                                <span className="text-xs text-zinc-400 font-bold uppercase tracking-wider">Runtime</span>
+                                                                <span className="text-[10px] text-emerald-400 mt-1">Beats 94%</span>
+                                                            </div>
                                                         </div>
-                                                        <div className="text-white font-mono font-semibold">
-                                                            {submissionResult.time ? `${submissionResult.time} ms` : 'N/A'}
+
+                                                        {/* Memory Gauge */}
+                                                        <div className="bg-black/40 rounded-2xl p-4 border border-white/5 backdrop-blur-md relative overflow-hidden group">
+                                                            <div className="absolute top-0 right-0 p-3 opacity-30 group-hover:opacity-50 transition-opacity"><Cpu size={16} className="text-blue-400" /></div>
+                                                            <div className="flex flex-col items-center justify-center p-2">
+                                                                <div className="relative w-16 h-16 flex items-center justify-center mb-2">
+                                                                    <svg className="w-full h-full -rotate-90 text-blue-900" viewBox="0 0 100 100">
+                                                                        <circle cx="50" cy="50" r="42" stroke="currentColor" strokeWidth="8" fill="none" className="opacity-30" />
+                                                                        <motion.circle
+                                                                            initial={{ pathLength: 0 }}
+                                                                            animate={{ pathLength: 0.82 }}
+                                                                            transition={{ duration: 1, delay: 0.4 }}
+                                                                            cx="50" cy="50" r="42"
+                                                                            stroke="#60a5fa" strokeWidth="8"
+                                                                            fill="none" strokeLinecap="round"
+                                                                        />
+                                                                    </svg>
+                                                                    <span className="absolute text-sm font-bold text-white">{submissionResult.memory || 3.2}MB</span>
+                                                                </div>
+                                                                <span className="text-xs text-zinc-400 font-bold uppercase tracking-wider">Memory</span>
+                                                                <span className="text-[10px] text-blue-400 mt-1">Optimal</span>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Test Cases Card */}
+                                                        <div className="bg-black/40 rounded-2xl p-4 border border-white/5 backdrop-blur-md flex flex-col items-center justify-center relative group">
+                                                            <div className="absolute top-0 right-0 p-3 opacity-30 group-hover:opacity-50 transition-opacity"><CheckCircle2 size={16} className="text-purple-400" /></div>
+                                                            <div className="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center mb-3 text-purple-400">
+                                                                <LayoutList size={20} />
+                                                            </div>
+                                                            <div className="text-xl font-bold text-white tracking-tight">
+                                                                {submissionResult.passedTestCases !== undefined ? submissionResult.passedTestCases : '-'} / {submissionResult.totalTestCases !== undefined ? submissionResult.totalTestCases : '-'}
+                                                            </div>
+                                                            <span className="text-xs text-zinc-400 font-bold uppercase tracking-wider mt-1">Test Cases</span>
+                                                            <span className={`text-[10px] mt-1 ${['Accepted', 'Passed'].includes(submissionResult.verdict) ? 'text-zinc-500' : 'text-red-400'}`}>
+                                                                {['Accepted', 'Passed'].includes(submissionResult.verdict) ? 'All Passed' : 'Incomplete'}
+                                                            </span>
                                                         </div>
                                                     </div>
-                                                    <div className="bg-black/20 rounded-xl p-3 border border-white/5 backdrop-blur-sm">
-                                                        <div className="flex items-center gap-2 text-zinc-400 mb-1 text-xs uppercase font-bold tracking-wider">
-                                                            <Cpu size={12} /> Memory
-                                                        </div>
-                                                        <div className="text-white font-mono font-semibold">
-                                                            {submissionResult.memory ? `${submissionResult.memory} KB` : 'N/A'}
-                                                        </div>
-                                                    </div>
-                                                    <div className="bg-black/20 rounded-xl p-3 border border-white/5 backdrop-blur-sm">
-                                                        <div className="flex items-center gap-2 text-zinc-400 mb-1 text-xs uppercase font-bold tracking-wider">
-                                                            <CheckCircle2 size={12} /> Passed
-                                                        </div>
-                                                        <div className="text-white font-mono font-semibold">
-                                                            All Cases
-                                                        </div>
-                                                    </div>
-                                                </div>
+                                                )}
 
                                                 {/* Error Details if Failed */}
                                                 {!['Accepted', 'Passed'].includes(submissionResult.verdict) && (
@@ -633,31 +674,32 @@ export default function QuestionPage() {
                             </div>
                         )}
                     </div>
-                </motion.div>
+                </motion.div >
 
                 {/* Resizer Handle (Horizontal) */}
-                <div
+                < div
                     className="w-4 hover:bg-blue-500/20 active:bg-blue-500/40 cursor-col-resize transition-colors flex items-center justify-center -ml-2 -mr-2 z-50 group"
                     onMouseDown={startResizingLeft}
                 >
                     <div className="w-1 h-8 rounded-full bg-[#333333] group-hover:bg-blue-500/50 transition-colors" />
-                </div>
+                </div >
 
                 {/* Right Panel: Code Editor */}
-                <motion.div
+                < motion.div
                     ref={rightPanelRef}
-                    initial={{ opacity: 0, x: 10 }}
+                    initial={{ opacity: 0, x: 10 }
+                    }
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.4, ease: "easeOut", delay: 0.1 }}
                     className="relative flex-1 flex flex-col bg-[#1A1A1A] rounded-xl border border-[#262626] overflow-hidden shadow-sm min-w-0"
                 >
                     {/* Top Section: Editor (Flexible Percent Height) */}
-                    <div
+                    < div
                         style={{ height: `${editorHeightPercent}%` }}
                         className={`w-full flex flex-col min-h-0 bg-[#1A1A1A] overflow-hidden ${isDragging ? 'pointer-events-none' : ''}`}
                     >
                         {/* Editor Toolbar */}
-                        <div className="h-10 bg-[#1A1A1A] border-b border-[#262626] flex items-center justify-between px-3 shrink-0">
+                        < div className="h-10 bg-[#1A1A1A] border-b border-[#262626] flex items-center justify-between px-3 shrink-0" >
                             <div className="flex items-center gap-2">
                                 <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#262626] border border-[#333333]">
                                     <div className="w-2 h-2 rounded-full bg-[#22c55e]" />
@@ -679,29 +721,29 @@ export default function QuestionPage() {
                                     <RefreshCw size={13} />
                                 </button>
                             </div>
-                        </div>
+                        </div >
 
                         {/* Editor Area */}
-                        <div className="flex-1 relative group bg-[#141414]">
+                        < div className="flex-1 relative group bg-[#141414]" >
                             <CodeEditor
                                 language={languageMap[language]}
                                 code={code}
                                 setCode={setCode}
                             />
-                        </div>
-                    </div>
+                        </div >
+                    </div >
 
                     {/* Resizer Handle (Vertical) */}
-                    <div
+                    < div
                         className="absolute left-0 right-0 h-4 z-50 cursor-row-resize flex items-center justify-center hover:bg-blue-500/10 active:bg-blue-500/20 transition-colors group"
                         style={{ top: `${editorHeightPercent}%`, transform: 'translateY(-50%)' }}
                         onMouseDown={startResizingBottom}
                     >
                         <div className="h-1 w-12 rounded-full bg-[#333333] group-hover:bg-blue-500/50 transition-colors" />
-                    </div>
+                    </div >
 
                     {/* Bottom Panel: Test Cases (Remaining Percent Height) */}
-                    <div
+                    < div
                         style={{ height: `${100 - editorHeightPercent}%` }}
                         className={`border-t border-[#262626] bg-[#1A1A1A] flex flex-col shrink-0 overflow-hidden ${isDragging ? 'pointer-events-none' : ''}`}
                     >

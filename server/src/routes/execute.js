@@ -234,7 +234,9 @@ router.post("/submit", async (req, res) => {
                     verdict: "Compilation Error",
                     stdout: "",
                     stderr: result.compile_output || result.stderr,
-                    failedTestCase: null
+                    failedTestCase: null,
+                    totalTestCases: hiddenCases.length,
+                    passedTestCases: i
                 });
             }
 
@@ -247,7 +249,9 @@ router.post("/submit", async (req, res) => {
                         input: testCase.input,
                         expected: testCase.output,
                         actual: "Time Limit Exceeded"
-                    }
+                    },
+                    totalTestCases: hiddenCases.length,
+                    passedTestCases: i
                 });
             }
 
@@ -260,7 +264,9 @@ router.post("/submit", async (req, res) => {
                         input: testCase.input,
                         expected: testCase.output,
                         actual: "Runtime Error" // stderr describes the error
-                    }
+                    },
+                    totalTestCases: hiddenCases.length,
+                    passedTestCases: i
                 });
             }
 
@@ -275,7 +281,9 @@ router.post("/submit", async (req, res) => {
                         input: testCase.input,
                         expected: testCase.output,
                         actual: result.stdout || ""
-                    }
+                    },
+                    totalTestCases: hiddenCases.length,
+                    passedTestCases: i
                 });
             }
         }
@@ -284,7 +292,9 @@ router.post("/submit", async (req, res) => {
             verdict: "Accepted",
             stdout: "All test cases passed",
             stderr: "",
-            failedTestCase: null
+            failedTestCase: null,
+            totalTestCases: hiddenCases.length,
+            passedTestCases: hiddenCases.length
         });
 
     } catch (error) {
@@ -293,7 +303,9 @@ router.post("/submit", async (req, res) => {
             verdict: "Runtime Error",
             stdout: "",
             stderr: error.message,
-            failedTestCase: null
+            failedTestCase: null,
+            totalTestCases: 0,
+            passedTestCases: 0
         });
     }
 });
