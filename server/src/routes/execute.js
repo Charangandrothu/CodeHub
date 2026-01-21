@@ -54,13 +54,37 @@ const getFunctionSignature = (code, language) => {
 const generateDriverCode = (userCode, language, testCaseInput) => {
     const signature = getFunctionSignature(userCode, language);
 
-    // If no function found, run raw code (fallback for script-based submissions)
+    // If no function found, run raw code (fallback)
     if (!signature) return userCode;
 
     const { name, args } = signature;
 
+    // 1. Normalize Input: separate "var=val, var2=val2" into distinct lines
+    // Regex matches ", varname =" and replaces with "\nvarname ="
+    const normalizedInput = testCaseInput.replace(/,\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*=/g, '\n$1 =');
+
+    // 2. Extract Values: strip "var =" if present, keep just the value
+    const inputLines = normalizedInput.split('\n').filter(line => line.trim());
+    const inputValues = inputLines.map(line => {
+        // Match "var = value", capture value. If not match, return line as is.
+        // Be careful not to match inside strings/arrays if possible, but this simple regex looks provided assignments.
+        const match = line.match(/^\s*[a-zA-Z_][a-zA-Z0-9_]*\s*=\s*(.*)/);
+        return match ? match[1] : line.trim();
+    });
+
+    // 3. Map Values to Function Arguments
+    // We strictly assume input order matches argument order
+    // slice to safe bounds
+    const argDefinitions = args.map((arg, i) => {
+        const val = inputValues[i] || 'undefined'; // fallback
+        return { name: arg, value: val };
+    });
+
+
     if (language === 'python') {
-        // Prepend imports just in case
+        // Construct Python Definitions
+        const pythonDefs = argDefinitions.map(def => `${def.name} = ${def.value}`).join('\n');
+
         return `
 import sys
 import json
@@ -68,45 +92,37 @@ from typing import *
 
 ${userCode}
 
-# Driver Code Injected by Backend
+# Driver Code
 try:
-    # Prepare inputs directly from the string assignments
-${testCaseInput.split('\n').map(line => '    ' + line).join('\n')}
+    # Prepare inputs
+${pythonDefs.split('\n').map(l => '    ' + l).join('\n')}
     
-    # Call the solution function
+    # Call solution
     result = ${name}(${args.join(', ')})
     
-    # Print the result formatted as JSON-like string if complex, or direct str
-    # LeetCode usually prints formatted list/dict. 
-    # Valid output format for comparison:
-    if isinstance(result, (list, dict, tuple)):
-        print(str(result).replace(" ", "")) # Compact format for easier comparison
-    else:
+    # Print result using JSON for consistency
+    if isinstance(result, bool):
+         # JSON uses 'true'/'false', Python uses 'True'/'False'
+        print("true" if result else "false")
+    elif isinstance(result, str):
         print(result)
+    else:
+        # json.dumps handles lists, dicts, strings, and nums perfectly
+        print(json.dumps(result))
         
 except Exception as e:
     sys.stderr.write(str(e))
     exit(1)
 `;
     } else if (language === 'javascript') {
-        // Format input lines to be valid JS assignments if they aren't
-        // Assuming input is "varName = value"
-        // We add 'let' if it's not present to avoid strict mode errors, or just run it.
-        const formattedInput = testCaseInput.split('\n').map(line => {
-            if (!line.trim()) return '';
-            // If line starts with variable name and =, prepend let
-            if (/^[a-zA-Z_$][a-zA-Z0-9_$]*\s*=/.test(line)) {
-                return 'let ' + line + ';';
-            }
-            return line + ';';
-        }).join('\n');
+        const jsDefs = argDefinitions.map(def => `let ${def.name} = ${def.value};`).join('\n');
 
         return `
 ${userCode}
 
 // Driver Code
 try {
-    ${formattedInput}
+    ${jsDefs}
     
     const result = ${name}(${args.join(', ')});
     

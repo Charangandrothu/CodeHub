@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Play, Send, RefreshCw, AlertCircle, CheckCircle2, Copy, FileText, LayoutList, History, Code2 } from 'lucide-react';
+import { ChevronLeft, Play, Send, RefreshCw, AlertCircle, CheckCircle2, Copy, FileText, LayoutList, History, Code2, Check, X, Zap, Clock, Cpu } from 'lucide-react';
 import { motion } from 'framer-motion';
 import CodeEditor from '../components/dsa/CodeEditor';
 
@@ -11,48 +11,34 @@ export default function QuestionPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [activeTab, setActiveTab] = useState('description');
-    const [code, setCode] = useState('');
-    const [language, setLanguage] = useState('javascript');
+    const [language, setLanguage] = useState(() => localStorage.getItem("codehub-language") || "javascript");
+    const [code, setCode] = useState(() => {
+        if (!slug) return '';
+        const saved = localStorage.getItem(`codehub-code-${slug}-${localStorage.getItem("codehub-language") || "javascript"}`);
+        return saved || '';
+    });
     const [output, setOutput] = useState(null);
     const [runStatus, setRunStatus] = useState('idle');
     const [activeBottomTab, setActiveBottomTab] = useState('testcases');
     const [submissionResult, setSubmissionResult] = useState(null);
 
-    const submitCode = async () => {
-        setActiveBottomTab('console');
-        setOutput(null); // Clear previous output
-        setSubmissionResult(null); // Clear previous result
-        setRunStatus("running");
+    const handleLanguageChange = (e) => {
+        const newLang = e.target.value;
+        setLanguage(newLang);
 
-        try {
-            const res = await fetch("http://localhost:5000/api/execute/submit", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    code,
-                    language,
-                    problemId: problem._id
-                })
-            });
-
-            const data = await res.json();
-
-            if (!res.ok) {
-                setSubmissionResult({
-                    verdict: "Error",
-                    details: data.error || data.stderr || data.details || "An error occurred"
-                });
+        // Immediately load code for the new language to prevent saving old code to new language key
+        if (slug) {
+            const savedCode = localStorage.getItem(`codehub-code-${slug}-${newLang}`);
+            if (savedCode) {
+                setCode(savedCode);
+            } else if (problem && problem.starterCode) {
+                setCode(problem.starterCode[newLang] || problem.starterCode.javascript || '');
             } else {
-                setSubmissionResult(data);
+                setCode('');
             }
-
-            setRunStatus("idle");
-
-        } catch (err) {
-            setSubmissionResult({ verdict: "Error", details: err.message });
-            setRunStatus("idle");
         }
     };
+
 
     // --- Resizing Logic ---
     const [leftWidth, setLeftWidth] = useState(550); // Default approx 45%
@@ -153,15 +139,15 @@ export default function QuestionPage() {
                 details = `Input: ${problem?.examples?.[0]?.input}\nOutput: ${actualOutput}`;
             }
 
-            // Reuse the same submissionResult state for "Run" to get the premium UI
             setSubmissionResult({
-                verdict: verdict === "Accepted" ? "Passed" : verdict, // visual distinction for Run
+                verdict: verdict === "Accepted" ? "Passed" : verdict,
                 details: details,
-                type: 'run' // distinguish if needed used for styling nuance
+                type: 'run'
             });
 
-            setOutput(actualOutput); // Keep raw output available if needed
+            setOutput(actualOutput);
             setRunStatus("idle");
+            // If it's a run, stay on console.
 
         } catch (err) {
             setSubmissionResult({ verdict: "Error", details: "Execution failed: " + err.message });
@@ -169,10 +155,64 @@ export default function QuestionPage() {
         }
     };
 
+    const submitCode = async () => {
+        setRunStatus("submitting");
+        setActiveTab("submissions");
+        setSubmissionResult(null);
+
+        try {
+            const res = await fetch("http://localhost:5000/api/execute/submit", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    code,
+                    language,
+                    problemId: problem._id
+                })
+            });
+
+            const data = await res.json();
+
+            setSubmissionResult({
+                verdict: data.verdict,
+                details: data.stderr || "",
+                failedTestCase: data.failedTestCase,
+                time: "50", // Mock or from backend
+                memory: "3.2", // Mock or from backend
+                type: 'submit'
+            });
+
+            setRunStatus("idle");
+
+        } catch (err) {
+            setSubmissionResult({ verdict: "Error", details: err.message, type: 'submit' });
+            setRunStatus("idle");
+        }
+    };
+
+
+    // Save code and language changes
+    useEffect(() => {
+        if (slug) {
+            localStorage.setItem(`codehub-code-${slug}-${language}`, code);
+        }
+        localStorage.setItem("codehub-language", language);
+    }, [code, language, slug]);
 
     useEffect(() => {
         const fetchProblem = async () => {
             try {
+                // If we already have the problem and it matches the slug, just update code for language
+                if (problem && problem.slug === slug) {
+                    const savedCode = localStorage.getItem(`codehub-code-${slug}-${language}`);
+                    if (savedCode) {
+                        setCode(savedCode);
+                    } else if (problem.starterCode) {
+                        setCode(problem.starterCode[language] || problem.starterCode.javascript || '');
+                    }
+                    return;
+                }
+
                 setLoading(true);
                 const response = await fetch(`http://localhost:5000/api/problems/${slug}`);
 
@@ -183,8 +223,11 @@ export default function QuestionPage() {
                 const data = await response.json();
                 setProblem(data);
 
-                // Set starter code
-                if (data.starterCode) {
+                // Set code from storage or starter
+                const savedCode = localStorage.getItem(`codehub-code-${slug}-${language}`);
+                if (savedCode) {
+                    setCode(savedCode);
+                } else if (data.starterCode) {
                     setCode(data.starterCode[language] || data.starterCode.javascript || '');
                 }
             } catch (err) {
@@ -394,59 +437,201 @@ export default function QuestionPage() {
 
                     {/* Scrollable Content */}
                     <div className="flex-1 overflow-y-auto custom-scrollbar p-5">
-                        <div className="prose prose-invert max-w-none">
-                            <div className="text-[#d4d4d4] text-[15px] leading-relaxed space-y-4 font-normal">
-                                {problem.description}
-                            </div>
+                        {activeTab === 'description' && (
+                            <div className="prose prose-invert max-w-none">
+                                <div className="text-[#d4d4d4] text-[15px] leading-relaxed space-y-4 font-normal">
+                                    {problem.description}
+                                </div>
 
-                            {problem.examples && problem.examples.length > 0 && (
-                                <div className="space-y-4 mt-8">
-                                    {problem.examples.map((ex, idx) => (
-                                        <div key={idx} className="bg-[#141414] rounded-lg p-3 border border-[#262626]">
-                                            <h4 className="text-[11px] font-bold text-white mb-2 flex items-center gap-2">
-                                                <div className="p-0.5 rounded bg-purple-500/10 border border-purple-500/20">
-                                                    <Code2 size={12} className="text-purple-400" />
-                                                </div>
-                                                Example {idx + 1}
-                                            </h4>
+                                {problem.examples && problem.examples.length > 0 && (
+                                    <div className="space-y-4 mt-8">
+                                        {problem.examples.map((ex, idx) => (
+                                            <div key={idx} className="bg-[#141414] rounded-lg p-3 border border-[#262626]">
+                                                <h4 className="text-[11px] font-bold text-white mb-2 flex items-center gap-2">
+                                                    <div className="p-0.5 rounded bg-purple-500/10 border border-purple-500/20">
+                                                        <Code2 size={12} className="text-purple-400" />
+                                                    </div>
+                                                    Example {idx + 1}
+                                                </h4>
 
-                                            <div className="space-y-2 font-mono text-[11px] leading-relaxed">
-                                                <div className="flex gap-3">
-                                                    <span className="text-[#525252] w-12 font-semibold select-none">Input:</span>
-                                                    <span className="text-[#d4d4d4] flex-1">{ex.input}</span>
-                                                </div>
-                                                <div className="flex gap-3">
-                                                    <span className="text-[#525252] w-12 font-semibold select-none">Output:</span>
-                                                    <span className="text-[#d4d4d4] flex-1">{ex.output}</span>
-                                                </div>
-                                                {ex.explanation && (
+                                                <div className="space-y-2 font-mono text-[11px] leading-relaxed">
                                                     <div className="flex gap-3">
-                                                        <span className="text-[#525252] w-12 font-semibold select-none">Expl:</span>
-                                                        <span className="text-[#a3a3a3] flex-1 font-sans">{ex.explanation}</span>
+                                                        <span className="text-[#525252] w-12 font-semibold select-none">Input:</span>
+                                                        <span className="text-[#d4d4d4] flex-1">{ex.input}</span>
+                                                    </div>
+                                                    <div className="flex gap-3">
+                                                        <span className="text-[#525252] w-12 font-semibold select-none">Output:</span>
+                                                        <span className="text-[#d4d4d4] flex-1">{ex.output}</span>
+                                                    </div>
+                                                    {ex.explanation && (
+                                                        <div className="flex gap-3">
+                                                            <span className="text-[#525252] w-12 font-semibold select-none">Expl:</span>
+                                                            <span className="text-[#a3a3a3] flex-1 font-sans">{ex.explanation}</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {problem.constraints && problem.constraints.length > 0 && (
+                                    <div className="mt-10 pt-4 border-t border-[#262626]">
+                                        <h3 className="text-[11px] font-bold text-white mb-2 flex items-center gap-1.5">
+                                            Constraints
+                                        </h3>
+                                        <ul className="grid grid-cols-1 gap-1">
+                                            {problem.constraints.map((c, i) => (
+                                                <li key={i} className="bg-[#262626]/50 px-2 py-1.5 rounded text-[11px] font-mono text-[#a3a3a3] border border-[#262626] flex items-center gap-2">
+                                                    <div className="w-1 h-1 rounded-full bg-[#525252]" />
+                                                    {c}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {activeTab === 'submissions' && (
+                            <div className="h-full flex flex-col">
+                                {runStatus === 'submitting' ? (
+                                    <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
+                                        <div className="relative mb-6">
+                                            <div className="w-16 h-16 border-4 border-[#22c55e]/20 border-t-[#22c55e] rounded-full animate-spin" />
+                                            <div className="absolute inset-0 flex items-center justify-center">
+                                                <Zap size={20} className="text-[#22c55e] animate-pulse" />
+                                            </div>
+                                        </div>
+                                        <h3 className="text-white font-bold text-lg mb-2">Evaluating Submission</h3>
+                                        <p className="text-zinc-500 text-xs">Running your code against hidden test cases...</p>
+                                    </div>
+                                ) : submissionResult && submissionResult.type === 'submit' ? (
+                                    <motion.div
+                                        initial={{ opacity: 0, scale: 0.95 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        className="flex-1 flex flex-col"
+                                    >
+                                        <div className={`relative overflow-hidden rounded-2xl p-6 mb-6 border ${['Accepted', 'Passed'].includes(submissionResult.verdict)
+                                            ? 'bg-gradient-to-br from-emerald-500/10 to-emerald-900/5 border-emerald-500/20'
+                                            : 'bg-gradient-to-br from-red-500/10 to-red-900/5 border-red-500/20'
+                                            }`}>
+
+                                            <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br rounded-full blur-3xl opacity-20 -mr-16 -mt-16 pointer-events-none ${['Accepted', 'Passed'].includes(submissionResult.verdict) ? 'from-emerald-400 to-green-300' : 'from-red-400 to-orange-300'}`} />
+
+                                            <div className="relative z-10">
+                                                <div className="flex items-center justify-between mb-6">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-lg ${['Accepted', 'Passed'].includes(submissionResult.verdict)
+                                                            ? 'bg-emerald-500 text-white shadow-emerald-500/20'
+                                                            : 'bg-red-500 text-white shadow-red-500/20'
+                                                            }`}>
+                                                            {['Accepted', 'Passed'].includes(submissionResult.verdict) ? <Check size={28} strokeWidth={3} /> : <X size={28} strokeWidth={3} />}
+                                                        </div>
+                                                        <div>
+                                                            <h2 className={`text-2xl font-bold tracking-tight ${['Accepted', 'Passed'].includes(submissionResult.verdict) ? 'text-white' : 'text-red-100'}`}>
+                                                                {submissionResult.verdict}
+                                                            </h2>
+                                                            <div className="flex items-center gap-2 mt-1">
+                                                                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${['Accepted', 'Passed'].includes(submissionResult.verdict) ? 'bg-emerald-500/20 text-emerald-300' : 'bg-red-500/20 text-red-300'}`}>
+                                                                    {['Accepted', 'Passed'].includes(submissionResult.verdict) ? 'Success' : 'Failed'}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    {['Accepted', 'Passed'].includes(submissionResult.verdict) && (
+                                                        <motion.button
+                                                            whileHover={{ scale: 1.05 }}
+                                                            whileTap={{ scale: 0.95 }}
+                                                            className="flex items-center gap-2 px-4 py-2 bg-white text-black rounded-lg text-sm font-bold hover:bg-zinc-200 transition-colors shadow-lg shadow-white/5"
+                                                        >
+                                                            <Zap size={16} className="fill-current" />
+                                                            Analyze
+                                                        </motion.button>
+                                                    )}
+                                                </div>
+
+                                                <div className="grid grid-cols-3 gap-3 mb-6">
+                                                    <div className="bg-black/20 rounded-xl p-3 border border-white/5 backdrop-blur-sm">
+                                                        <div className="flex items-center gap-2 text-zinc-400 mb-1 text-xs uppercase font-bold tracking-wider">
+                                                            <Clock size={12} /> Runtime
+                                                        </div>
+                                                        <div className="text-white font-mono font-semibold">
+                                                            {submissionResult.time ? `${submissionResult.time} ms` : 'N/A'}
+                                                        </div>
+                                                    </div>
+                                                    <div className="bg-black/20 rounded-xl p-3 border border-white/5 backdrop-blur-sm">
+                                                        <div className="flex items-center gap-2 text-zinc-400 mb-1 text-xs uppercase font-bold tracking-wider">
+                                                            <Cpu size={12} /> Memory
+                                                        </div>
+                                                        <div className="text-white font-mono font-semibold">
+                                                            {submissionResult.memory ? `${submissionResult.memory} KB` : 'N/A'}
+                                                        </div>
+                                                    </div>
+                                                    <div className="bg-black/20 rounded-xl p-3 border border-white/5 backdrop-blur-sm">
+                                                        <div className="flex items-center gap-2 text-zinc-400 mb-1 text-xs uppercase font-bold tracking-wider">
+                                                            <CheckCircle2 size={12} /> Passed
+                                                        </div>
+                                                        <div className="text-white font-mono font-semibold">
+                                                            All Cases
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Error Details if Failed */}
+                                                {!['Accepted', 'Passed'].includes(submissionResult.verdict) && (
+                                                    <div className="space-y-4">
+                                                        {submissionResult.failedTestCase ? (
+                                                            <div className="bg-[#1A1A1A] rounded-xl border border-red-500/20 overflow-hidden">
+                                                                <div className="px-4 py-3 bg-red-500/5 border-b border-red-500/10 flex items-center gap-2">
+                                                                    <AlertCircle size={16} className="text-red-400" />
+                                                                    <h3 className="text-sm font-semibold text-red-200">Failed Input</h3>
+                                                                </div>
+                                                                <div className="p-4 space-y-4">
+                                                                    <div>
+                                                                        <div className="text-xs text-zinc-500 font-semibold mb-1.5 uppercase tracking-wider">Input</div>
+                                                                        <div className="bg-black/30 p-3 rounded-lg border border-white/5 font-mono text-sm text-zinc-300 whitespace-pre-wrap">
+                                                                            {submissionResult.failedTestCase.input}
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="grid grid-cols-2 gap-4">
+                                                                        <div>
+                                                                            <div className="text-xs text-zinc-500 font-semibold mb-1.5 uppercase tracking-wider">Expected</div>
+                                                                            <div className="bg-emerald-500/5 p-3 rounded-lg border border-emerald-500/20 font-mono text-sm text-emerald-400 whitespace-pre-wrap">
+                                                                                {submissionResult.failedTestCase.expected}
+                                                                            </div>
+                                                                        </div>
+                                                                        <div>
+                                                                            <div className="text-xs text-zinc-500 font-semibold mb-1.5 uppercase tracking-wider">Actual</div>
+                                                                            <div className="bg-red-500/5 p-3 rounded-lg border border-red-500/20 font-mono text-sm text-red-400 whitespace-pre-wrap">
+                                                                                {submissionResult.failedTestCase.actual}
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="bg-[#1A1A1A] rounded-xl border border-red-500/20 p-4">
+                                                                <div className="text-xs text-red-400 font-mono whitespace-pre-wrap">
+                                                                    {submissionResult.stderr || submissionResult.details || "Unknown Error"}
+                                                                </div>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 )}
                                             </div>
                                         </div>
-                                    ))}
-                                </div>
-                            )}
-
-                            {problem.constraints && problem.constraints.length > 0 && (
-                                <div className="mt-10 pt-4 border-t border-[#262626]">
-                                    <h3 className="text-[11px] font-bold text-white mb-2 flex items-center gap-1.5">
-                                        Constraints
-                                    </h3>
-                                    <ul className="grid grid-cols-1 gap-1">
-                                        {problem.constraints.map((c, i) => (
-                                            <li key={i} className="bg-[#262626]/50 px-2 py-1.5 rounded text-[11px] font-mono text-[#a3a3a3] border border-[#262626] flex items-center gap-2">
-                                                <div className="w-1 h-1 rounded-full bg-[#525252]" />
-                                                {c}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            )}
-                        </div>
+                                    </motion.div>
+                                ) : (
+                                    <div className="flex-1 flex flex-col items-center justify-center text-center text-zinc-500 p-8">
+                                        <History size={32} className="mb-3 opacity-20" />
+                                        <p className="text-sm font-medium">No submission selected</p>
+                                        <p className="text-xs mt-1">Submit your code to see the results here</p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </motion.div>
 
@@ -478,7 +663,7 @@ export default function QuestionPage() {
                                     <div className="w-2 h-2 rounded-full bg-[#22c55e]" />
                                     <select
                                         value={language}
-                                        onChange={(e) => setLanguage(e.target.value)}
+                                        onChange={handleLanguageChange}
                                         className="bg-transparent text-[11px] font-medium text-[#e5e5e5] focus:outline-none cursor-pointer"
                                     >
                                         <option value="javascript">JavaScript</option>
@@ -538,76 +723,55 @@ export default function QuestionPage() {
 
                         <div className="flex-1 p-4 overflow-y-auto custom-scrollbar">
                             {activeBottomTab === 'console' ? (
-                                <div className="font-mono text-[13px] h-full">
+                                <div className="h-full relative overflow-hidden flex flex-col">
                                     {runStatus === 'running' ? (
-                                        <div className="flex flex-col items-center justify-center h-full gap-3">
-                                            <div className="w-8 h-8 border-2 border-purple-500/30 border-t-purple-500 rounded-full animate-spin" />
-                                            <div className="text-[#a3a3a3] italic">Executing test cases...</div>
+                                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#111111] z-10 space-y-4">
+                                            <div className="relative">
+                                                <div className="w-16 h-16 border-4 border-purple-500/20 border-t-purple-500 rounded-full animate-spin" />
+                                                <div className="absolute inset-0 flex items-center justify-center">
+                                                    <Code2 size={20} className="text-purple-500 animate-pulse" />
+                                                </div>
+                                            </div>
+                                            <div className="text-center">
+                                                <p className="text-white font-medium mb-1">Running Code...</p>
+                                                <p className="text-zinc-500 text-xs">Analyzing complexity & correctness</p>
+                                            </div>
                                         </div>
                                     ) : submissionResult ? (
-                                        <motion.div
-                                            initial={{ opacity: 0, y: 10 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            className={`p-4 rounded-lg border flex flex-col gap-3 ${['Accepted', 'Passed'].includes(submissionResult.verdict)
-                                                ? 'bg-green-500/10 border-green-500/20'
-                                                : 'bg-red-500/10 border-red-500/20'
-                                                }`}
-                                        >
-                                            <div className="flex items-center gap-2">
-                                                {['Accepted', 'Passed'].includes(submissionResult.verdict) ? (
-                                                    <CheckCircle2 size={18} className="text-green-500" />
-                                                ) : (
-                                                    <AlertCircle size={18} className="text-red-500" />
-                                                )}
-                                                <span className={`text-lg font-bold ${['Accepted', 'Passed'].includes(submissionResult.verdict) ? 'text-green-400' : 'text-red-400'
-                                                    }`}>
+                                        <div className="font-mono text-sm space-y-4">
+                                            <div className={`p-3 rounded-lg border ${['Accepted', 'Passed'].includes(submissionResult.verdict) ? 'bg-green-500/10 border-green-500/20 text-green-400' : 'bg-red-500/10 border-red-500/20 text-red-400'}`}>
+                                                <div className="flex items-center gap-2 font-bold mb-1">
+                                                    {['Accepted', 'Passed'].includes(submissionResult.verdict) ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
                                                     {submissionResult.verdict}
-                                                </span>
+                                                </div>
+                                                {submissionResult.details && (
+                                                    <div className="text-xs text-[#e5e5e5] whitespace-pre-wrap mt-2 font-mono">
+                                                        {submissionResult.details}
+                                                    </div>
+                                                )}
                                             </div>
 
-                                            {/* Structured Failed Test Case Display */}
-                                            {submissionResult.failedTestCase && (
-                                                <div className="flex flex-col gap-2 mt-2 w-full">
-                                                    <div className="text-xs font-semibold text-red-400">Failed Test Case:</div>
-                                                    <div className="bg-black/30 p-3 rounded border border-white/5 font-mono text-xs space-y-3 w-full">
-                                                        <div>
-                                                            <div className="text-gray-500 mb-1">Input</div>
-                                                            <div className="text-gray-300 bg-white/5 p-2 rounded border border-white/5 whitespace-pre-wrap">
-                                                                {submissionResult.failedTestCase.input}
-                                                            </div>
-                                                        </div>
-                                                        <div>
-                                                            <div className="text-gray-500 mb-1">Expected Output</div>
-                                                            <div className="text-green-400/90 bg-white/5 p-2 rounded border border-white/5 whitespace-pre-wrap">
-                                                                {submissionResult.failedTestCase.expected}
-                                                            </div>
-                                                        </div>
-                                                        <div>
-                                                            <div className="text-gray-500 mb-1">Actual Output</div>
-                                                            <div className="text-red-400/90 bg-white/5 p-2 rounded border border-white/5 whitespace-pre-wrap">
-                                                                {submissionResult.failedTestCase.actual}
-                                                            </div>
-                                                        </div>
+                                            {output && !submissionResult.details?.includes(output) && (
+                                                <div className="space-y-1">
+                                                    <div className="text-xs text-zinc-500 font-semibold uppercase">Stdout</div>
+                                                    <div className="bg-black/30 p-3 rounded border border-white/5 text-[#e5e5e5] whitespace-pre-wrap">
+                                                        {output}
                                                     </div>
                                                 </div>
                                             )}
-
-                                            {/* Standard Details / Stderr Display */}
-                                            {(submissionResult.stderr || submissionResult.details) && (
-                                                <div className="w-full mt-2">
-                                                    {(submissionResult.stderr) && <div className="text-xs font-semibold text-gray-400 mb-1">Error Log:</div>}
-                                                    <div className="bg-black/30 p-3 rounded border border-white/5 text-[#e5e5e5] whitespace-pre-wrap font-mono text-xs">
-                                                        {submissionResult.stderr || submissionResult.details}
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </motion.div>
-                                    ) : (
-                                        <div className="text-[#525252] italic h-full flex items-center justify-center">
-                                            Run or Submit your code to see the output here.
                                         </div>
-                                    )}
-                                </div>
+
+                                    ) : (
+                                        <div className="flex-1 flex flex-col items-center justify-center text-center p-8 text-zinc-500">
+                                            <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center mb-4 transition-transform hover:scale-110">
+                                                <Play size={32} className="opacity-50" />
+                                            </div>
+                                            <p className="text-sm font-medium text-zinc-400">Ready to execute</p>
+                                            <p className="text-xs mt-1">Run or Submit your code to see the results here</p>
+                                        </div>
+                                    )
+                                    }
+                                </div >
                             ) : (
                                 problem.examples && problem.examples.length > 0 && (
                                     <div className="space-y-4">
@@ -637,12 +801,12 @@ export default function QuestionPage() {
                                             </div>
                                         </div>
                                     </div>
-                                ))
-                            }
-                        </div>
-                    </div>
-                </motion.div>
-            </div>
-        </div>
+                                )
+                            )}
+                        </div >
+                    </div >
+                </motion.div >
+            </div >
+        </div >
     );
 }

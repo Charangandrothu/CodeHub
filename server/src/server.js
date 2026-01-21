@@ -1,4 +1,4 @@
-import executeRoutes from "./routes/execute.js";
+const executeRoutes = require("./routes/execute");
 require("dotenv").config();
 const app = require("./app");
 const connectDB = require("./config/db");
