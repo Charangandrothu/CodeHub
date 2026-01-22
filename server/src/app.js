@@ -11,6 +11,10 @@ app.get('/api/health', (req, res) => {
 });
 //Routes
 const executeRoutes = require("./routes/execute");
+const userRoutes = require("./routes/userRoutes");
+
 app.use('/api/problems', problemRoutes);
 app.use('/api/execute', executeRoutes);
+app.use('/api/users', userRoutes);
+
 module.exports = app;

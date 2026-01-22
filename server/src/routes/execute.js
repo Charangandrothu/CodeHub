@@ -264,28 +264,48 @@ router.post("/submit", async (req, res) => {
             return res.status(400).json({ error: "No hidden test cases defined for this problem" });
         }
 
-        // Sequential execution
-        for (let i = 0; i < hiddenCases.length; i++) {
-            const testCase = hiddenCases[i];
-            const expectedOutput = normalizeOutput(testCase.output);
+        // Parallel Execution
+        console.log(`[EXECUTE] Starting parallel execution for ${hiddenCases.length} test cases...`);
 
+        const promises = hiddenCases.map(async (testCase, index) => {
             // Generate Driver Code wrapping the user's function
             const finalSourceCode = generateDriverCode(code, language, testCase.input);
-
             // Check if we modified the code (embedded input)
             const shouldUseStdin = (finalSourceCode === code);
 
-            // Execute with polling
-            const result = await executeWithPolling(
-                finalSourceCode,
-                languageIds[language],
-                shouldUseStdin ? testCase.input : ""
-            );
+            try {
+                const result = await executeWithPolling(
+                    finalSourceCode,
+                    languageIds[language],
+                    shouldUseStdin ? testCase.input : ""
+                );
+                return { index, result, testCase, success: true };
+            } catch (err) {
+                return { index, error: err.message, testCase, success: false };
+            }
+        });
 
-            console.log(`[EXECUTE] Test case ${i + 1}/${hiddenCases.length} executed.`);
+        const results = await Promise.all(promises);
+        console.log(`[EXECUTE] All test cases finished.`);
+
+        // Process Results
+        // Find first failure
+        for (const res of results) {
+            if (!res.success) {
+                return res.json({
+                    verdict: "Runtime Error",
+                    stdout: "",
+                    stderr: "Execution failed: " + res.error,
+                    failedTestCase: null,
+                    totalTestCases: hiddenCases.length,
+                    passedTestCases: 0
+                });
+            }
+
+            const { result, testCase, index } = res;
+            const expectedOutput = normalizeOutput(testCase.output);
             const statusId = result.status?.id;
 
-            // ... (Same verification logic as before)
             if (statusId === 6 || result.compile_output) {
                 return res.json({
                     verdict: "Compilation Error",
@@ -293,7 +313,7 @@ router.post("/submit", async (req, res) => {
                     stderr: result.compile_output || result.stderr,
                     failedTestCase: null,
                     totalTestCases: hiddenCases.length,
-                    passedTestCases: i
+                    passedTestCases: index // This is approximate in parallel
                 });
             }
 
@@ -308,7 +328,7 @@ router.post("/submit", async (req, res) => {
                         actual: "Time Limit Exceeded"
                     },
                     totalTestCases: hiddenCases.length,
-                    passedTestCases: i
+                    passedTestCases: index
                 });
             }
 
@@ -320,10 +340,10 @@ router.post("/submit", async (req, res) => {
                     failedTestCase: {
                         input: testCase.input,
                         expected: testCase.output,
-                        actual: "Runtime Error" // stderr describes the error
+                        actual: "Runtime Error"
                     },
                     totalTestCases: hiddenCases.length,
-                    passedTestCases: i
+                    passedTestCases: index
                 });
             }
 
@@ -340,7 +360,7 @@ router.post("/submit", async (req, res) => {
                         actual: result.stdout || ""
                     },
                     totalTestCases: hiddenCases.length,
-                    passedTestCases: i
+                    passedTestCases: index
                 });
             }
         }

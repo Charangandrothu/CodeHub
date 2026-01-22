@@ -9,7 +9,7 @@ import logo_img from '../assets/logo_img.png';
 export default function QuestionPage() {
     const { slug } = useParams();
     const navigate = useNavigate();
-    const { currentUser } = useAuth();
+    const { currentUser, userData } = useAuth(); // userData contains isPro status
     const [problem, setProblem] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -159,6 +159,12 @@ export default function QuestionPage() {
     };
 
     const submitCode = async () => {
+        // Optimistic Pro Check (Fast)
+        if (currentUser && userData && !userData.isPro) {
+            navigate('/pricing');
+            return;
+        }
+
         setRunStatus("submitting");
         setActiveTab("submissions");
         setSubmissionResult(null);
