@@ -144,7 +144,7 @@ const Pricing = () => {
 
                         <div className="mb-8 relative z-10">
                             <div className="flex items-end gap-2">
-                                <span className="text-5xl font-bold text-white">₹499</span>
+                                <span className="text-5xl font-bold text-white">₹99</span>
                                 <span className="text-gray-500 mb-1">/ month</span>
                             </div>
                             <p className="text-xs text-green-400 mt-2 font-medium">✨ 7-day money-back guarantee</p>

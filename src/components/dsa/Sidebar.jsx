@@ -1,7 +1,8 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Rocket, Box, GitMerge, Search, Layers, Database, Hash, Code, Cpu } from 'lucide-react';
+import { Rocket, Box, GitMerge, Search, Layers, Database, Hash, Code, Cpu, Puzzle } from 'lucide-react';
 
 const TOPICS = [
+    { id: 'patterns', label: 'Patterns', icon: Puzzle },
     { id: 'beginner', label: 'Beginner', icon: Rocket },
     { id: 'arrays', label: 'Arrays', icon: Box },
     { id: 'strings', label: 'Strings', icon: Box },

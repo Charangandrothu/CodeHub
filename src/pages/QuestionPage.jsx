@@ -790,18 +790,18 @@ export default function QuestionPage() {
                                                     {submissionResult.verdict}
                                                 </div>
                                                 {submissionResult.details && (
-                                                    <div className="text-xs text-[#e5e5e5] whitespace-pre-wrap mt-2 font-mono">
+                                                    <pre className="text-xs text-[#e5e5e5] whitespace-pre-wrap mt-2 font-mono overflow-x-auto">
                                                         {submissionResult.details}
-                                                    </div>
+                                                    </pre>
                                                 )}
                                             </div>
 
                                             {output && !submissionResult.details?.includes(output) && (
                                                 <div className="space-y-1">
                                                     <div className="text-xs text-zinc-500 font-semibold uppercase">Stdout</div>
-                                                    <div className="bg-black/30 p-3 rounded border border-white/5 text-[#e5e5e5] whitespace-pre-wrap">
+                                                    <pre className="bg-black/30 p-3 rounded border border-white/5 text-[#e5e5e5] whitespace-pre-wrap font-mono overflow-x-auto">
                                                         {output}
-                                                    </div>
+                                                    </pre>
                                                 </div>
                                             )}
                                         </div>

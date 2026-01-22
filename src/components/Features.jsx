@@ -165,7 +165,7 @@ const Features = () => {
                         <div className="flex justify-between items-start mb-4">
                             <div>
                                 <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">Mock Assessment</div>
-                                <h4 className="text-lg font-bold text-white">Full Stack Developer</h4>
+                                <h4 className="text-lg font-bold text-white">Aptitude & Logical Reasoning</h4>
                                 <div className="flex gap-2 mt-2">
                                     <span className="px-2 py-0.5 rounded text-[10px] bg-white/10 text-gray-300">Amazon Style</span>
                                     <span className="px-2 py-0.5 rounded text-[10px] bg-red-500/10 text-red-300">Hard</span>
