@@ -12,6 +12,7 @@ const languageIds = {
 };
 
 const Problem = require("../models/Problem");
+const User = require("../models/User");
 
 // Helper to normalize output for comparison
 const normalizeOutput = (str) => {
@@ -100,15 +101,16 @@ ${pythonDefs.split('\n').map(l => '    ' + l).join('\n')}
     # Call solution
     result = ${name}(${args.join(', ')})
     
-    # Print result using JSON for consistency
-    if isinstance(result, bool):
-         # JSON uses 'true'/'false', Python uses 'True'/'False'
-        print("true" if result else "false")
-    elif isinstance(result, str):
-        print(result)
-    else:
-        # json.dumps handles lists, dicts, strings, and nums perfectly
-        print(json.dumps(result))
+    # Print result ensuring no 'null' is printed if function returns None (e.g. implies void/print-based function)
+    if result is not None:
+        if isinstance(result, bool):
+             # JSON uses 'true'/'false', Python uses 'True'/'False'
+            print("true" if result else "false")
+        elif isinstance(result, str):
+            print(result)
+        else:
+            # json.dumps handles lists, dicts, strings, and nums perfectly
+            print(json.dumps(result))                                                                   
         
 except Exception as e:
     sys.stderr.write(str(e))
@@ -126,10 +128,12 @@ try {
     
     const result = ${name}(${args.join(', ')});
     
-    if (typeof result === 'object' && result !== null) {
-        console.log(JSON.stringify(result));
-    } else {
-        console.log(result);
+    if (result !== undefined) {
+        if (typeof result === 'object' && result !== null) {
+            console.log(JSON.stringify(result));
+        } else {
+            console.log(result);
+        }
     }
 } catch (error) {
     console.error(error.message);
@@ -140,9 +144,60 @@ try {
     return userCode;
 };
 
+// Helper: Execute with Optimized Polling (wait=true)
+const executeWithPolling = async (source_code, language_id, stdin) => {
+    try {
+        // 1. Create Submission with wait=true (tries to get result immediately)
+        const createRes = await axios.post(
+            "https://ce.judge0.com/submissions?base64_encoded=false&wait=true",
+            {
+                source_code,
+                language_id,
+                stdin
+            },
+            { headers: { "Content-Type": "application/json" } }
+        );
+
+        // If we got the result immediately, return it
+        if (createRes.data.status && createRes.data.status.id > 2) {
+            return createRes.data;
+        }
+
+        const token = createRes.data.token;
+        if (!token) throw new Error("Failed to get submission token from Judge0");
+
+        // 2. Poll for results (Fallback if wait=true timed out but returned token)
+        let attempts = 0;
+        const maxAttempts = 60; // 60 seconds max
+
+        while (attempts < maxAttempts) {
+            attempts++;
+            await new Promise(r => setTimeout(r, 200)); // Wait 200ms (faster polling)
+
+            const getRes = await axios.get(
+                `https://ce.judge0.com/submissions/${token}?base64_encoded=false&fields=stdout,stderr,status,compile_output`,
+                { headers: { "Content-Type": "application/json" } }
+            );
+
+            const statusId = getRes.data.status?.id;
+
+            // statusId 1 (In Queue) or 2 (Processing) -> continue polling
+            if (statusId && statusId > 2) {
+                return getRes.data; // Finished
+            }
+        }
+        throw new Error("Execution timed out (polling limit exceeded)");
+
+    } catch (err) {
+        throw new Error(`Judge0 Error: ${err.message}`);
+    }
+};
+
 // RUN Route - Executes code with given stdin
 router.post("/run", async (req, res) => {
     const { code, language, stdin } = req.body;
+    console.log(`[EXECUTE] Run request received for ${language}`);
+
 
     try {
         // Apply Driver Code logic if applicable
@@ -153,25 +208,20 @@ router.post("/run", async (req, res) => {
         // If raw code is returned, pass original stdin.
         const effectiveStdin = (finalSourceCode !== code) ? "" : (stdin || "");
 
-        const response = await axios.post(
-            "https://ce.judge0.com/submissions?wait=true",
-            {
-                source_code: finalSourceCode,
-                language_id: languageIds[language],
-                stdin: effectiveStdin
-            },
-            {
-                headers: {
-                    "Content-Type": "application/json"
-                }
-            }
+        // Execute with polling
+        const result = await executeWithPolling(
+            finalSourceCode,
+            languageIds[language],
+            effectiveStdin
         );
 
+        console.log(`[EXECUTE] Run response received from Judge0`);
+
         res.json({
-            stdout: response.data.stdout,
-            stderr: response.data.stderr,
-            status: response.data.status.description,
-            compile_output: response.data.compile_output
+            stdout: result.stdout,
+            stderr: result.stderr,
+            status: result.status?.description,
+            compile_output: result.compile_output
         });
 
     } catch (error) {
@@ -184,13 +234,25 @@ router.post("/run", async (req, res) => {
 
 // SUBMIT Route - Judges correctness
 router.post("/submit", async (req, res) => {
-    const { code, language, problemId } = req.body;
+    const { code, language, problemId, userId } = req.body;
+    console.log(`[EXECUTE] Submit request received for Problem ID: ${problemId} from User: ${userId}`);
 
-    if (!code || !language || !problemId) {
-        return res.status(400).json({ error: "Missing required fields" });
+
+    if (!code || !language || !problemId || !userId) {
+        return res.status(400).json({ error: "Missing required fields (including userId)" });
     }
 
     try {
+        // Check Pro Status
+        const user = await User.findOne({ uid: userId });
+        if (!user || (!user.isPro)) {
+            return res.status(403).json({
+                error: "Pro Subscription Required",
+                verdict: "Restricted",
+                details: "Only Pro members can submit solutions. Please upgrade to Pro."
+            });
+        }
+
         const problem = await Problem.findById(problemId);
         if (!problem) {
             return res.status(404).json({ error: "Problem not found" });
@@ -213,19 +275,14 @@ router.post("/submit", async (req, res) => {
             // Check if we modified the code (embedded input)
             const shouldUseStdin = (finalSourceCode === code);
 
-            const response = await axios.post(
-                "https://ce.judge0.com/submissions?wait=true",
-                {
-                    source_code: finalSourceCode,
-                    language_id: languageIds[language],
-                    stdin: shouldUseStdin ? testCase.input : ""
-                },
-                {
-                    headers: { "Content-Type": "application/json" }
-                }
+            // Execute with polling
+            const result = await executeWithPolling(
+                finalSourceCode,
+                languageIds[language],
+                shouldUseStdin ? testCase.input : ""
             );
 
-            const result = response.data;
+            console.log(`[EXECUTE] Test case ${i + 1}/${hiddenCases.length} executed.`);
             const statusId = result.status?.id;
 
             // ... (Same verification logic as before)
@@ -298,11 +355,10 @@ router.post("/submit", async (req, res) => {
         });
 
     } catch (error) {
-        console.error("Submission error:", error);
         res.status(500).json({
             verdict: "Runtime Error",
             stdout: "",
-            stderr: error.message,
+            stderr: "Execution timed out or server error: " + error.message,
             failedTestCase: null,
             totalTestCases: 0,
             passedTestCases: 0

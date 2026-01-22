@@ -1,8 +1,6 @@
-const executeRoutes = require("./routes/execute");
 require("dotenv").config();
 const app = require("./app");
 const connectDB = require("./config/db");
-app.use("/api/execute", executeRoutes);
 
 const PORT = process.env.PORT || 5000;
 

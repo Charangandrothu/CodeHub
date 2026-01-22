@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const problemRoutes = require("./routes/problemRoutes");
+const problemRoutes = require("./routes/ProblemRoutes");
 const app = express();
 //Middleware
 app.use(cors());

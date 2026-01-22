@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Play, Send, RefreshCw, AlertCircle, CheckCircle2, Copy, FileText, LayoutList, History, Code2, Check, X, Zap, Clock, Cpu, TrendingUp } from 'lucide-react';
+import { ChevronLeft, Play, Send, RefreshCw, AlertCircle, CheckCircle2, Copy, FileText, LayoutList, History, Code2, Check, X, Zap, Clock, Cpu, TrendingUp, Lock } from 'lucide-react';
 import { motion } from 'framer-motion';
 import CodeEditor from '../components/dsa/CodeEditor';
+import { useAuth } from '../context/AuthContext';
 import logo_img from '../assets/logo_img.png';
 
 export default function QuestionPage() {
     const { slug } = useParams();
     const navigate = useNavigate();
+    const { currentUser } = useAuth();
     const [problem, setProblem] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -168,11 +170,27 @@ export default function QuestionPage() {
                 body: JSON.stringify({
                     code,
                     language,
-                    problemId: problem._id
+                    problemId: problem._id,
+                    userId: currentUser?.uid // Pass Firebase UID
                 })
             });
 
             const data = await res.json();
+
+            if (!res.ok) {
+                // Handle Pro Restriction (403) or other errors
+                if (res.status === 403) {
+                    setSubmissionResult({
+                        verdict: "Restricted", // Custom verdict for UI
+                        details: data.details || data.error,
+                        type: 'submit'
+                    });
+                } else {
+                    setSubmissionResult({ verdict: "Error", details: data.error || "Submission failed", type: 'submit' });
+                }
+                setRunStatus("idle");
+                return;
+            }
 
             setSubmissionResult({
                 verdict: data.verdict,
@@ -461,12 +479,12 @@ export default function QuestionPage() {
 
                                                 <div className="space-y-2 font-mono text-[11px] leading-relaxed">
                                                     <div className="flex gap-3">
-                                                        <span className="text-[#525252] w-12 font-semibold select-none">Input:</span>
-                                                        <span className="text-[#d4d4d4] flex-1">{ex.input}</span>
+                                                        <span className="text-[#525252] w-12 font-semibold select-none pt-1">Input:</span>
+                                                        <pre className="text-[#d4d4d4] flex-1 font-mono whitespace-pre-wrap font-sans">{ex.input}</pre>
                                                     </div>
                                                     <div className="flex gap-3">
-                                                        <span className="text-[#525252] w-12 font-semibold select-none">Output:</span>
-                                                        <span className="text-[#d4d4d4] flex-1">{ex.output}</span>
+                                                        <span className="text-[#525252] w-12 font-semibold select-none pt-1">Output:</span>
+                                                        <pre className="text-[#d4d4d4] flex-1 font-mono whitespace-pre-wrap text-emerald-400">{ex.output}</pre>
                                                     </div>
                                                     {ex.explanation && (
                                                         <div className="flex gap-3">
@@ -655,6 +673,21 @@ export default function QuestionPage() {
                                                                     </div>
                                                                 </div>
                                                             </div>
+                                                        ) : submissionResult.verdict === 'Restricted' ? (
+                                                            <div className="bg-[#1A1A1A] rounded-xl border border-yellow-500/20 p-6 flex flex-col items-center justify-center text-center gap-4">
+                                                                <div className="w-16 h-16 rounded-full bg-yellow-500/10 flex items-center justify-center">
+                                                                    <Lock size={32} className="text-yellow-500" />
+                                                                </div>
+                                                                <div>
+                                                                    <h3 className="text-lg font-bold text-white mb-2">Pro Subscription Required</h3>
+                                                                    <p className="text-zinc-400 text-sm max-w-sm mx-auto mb-6">
+                                                                        {submissionResult.details || "Submissions are locked for free users."}
+                                                                    </p>
+                                                                    <button className="px-6 py-2 bg-yellow-500 text-black font-bold rounded-lg hover:bg-yellow-400 transition-colors">
+                                                                        Unlock Pro
+                                                                    </button>
+                                                                </div>
+                                                            </div>
                                                         ) : (
                                                             <div className="bg-[#1A1A1A] rounded-xl border border-red-500/20 p-4">
                                                                 <div className="text-xs text-red-400 font-mono whitespace-pre-wrap">
@@ -834,15 +867,15 @@ export default function QuestionPage() {
                                         <div className="space-y-3">
                                             <div className="space-y-1">
                                                 <label className="text-[10px] font-semibold text-[#737373] uppercase">Input</label>
-                                                <div className="bg-[#141414] rounded-md p-2 max-h-20 overflow-y-auto custom-scrollbar text-[11px] font-mono text-[#d4d4d4] border border-[#262626]">
+                                                <pre className="bg-[#141414] rounded-md p-2 max-h-20 overflow-y-auto custom-scrollbar text-[11px] font-mono text-[#d4d4d4] border border-[#262626] whitespace-pre-wrap">
                                                     {problem.examples[0].input}
-                                                </div>
+                                                </pre>
                                             </div>
                                             <div className="space-y-1">
                                                 <label className="text-[10px] font-semibold text-[#737373] uppercase">Expected Output</label>
-                                                <div className="bg-[#141414] rounded-md p-2 max-h-20 overflow-y-auto custom-scrollbar text-[11px] font-mono text-[#d4d4d4] border border-[#262626]">
+                                                <pre className="bg-[#141414] rounded-md p-2 max-h-20 overflow-y-auto custom-scrollbar text-[11px] font-mono text-emerald-400 border border-[#262626] whitespace-pre-wrap">
                                                     {problem.examples[0].output}
-                                                </div>
+                                                </pre>
                                             </div>
                                         </div>
                                     </div>
