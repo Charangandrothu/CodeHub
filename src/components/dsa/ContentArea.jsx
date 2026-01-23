@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { AlertCircle, CheckCircle2, FileCode2, Terminal, RefreshCw, ArrowRight } from 'lucide-react';
+import { API_URL } from '../../config';
 
 export default function ContentArea() {
     const { topicId } = useParams();
@@ -20,7 +21,7 @@ export default function ContentArea() {
             setLoading(true);
             setError(null);
             // Fetch problems filtered by topic
-            const response = await fetch(`http://localhost:5000/api/problems?topic=${activeTopicId}`);
+            const response = await fetch(`${API_URL}/api/problems?topic=${activeTopicId}`);
 
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);

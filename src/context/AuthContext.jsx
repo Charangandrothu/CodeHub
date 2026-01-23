@@ -2,6 +2,8 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from '../firebase';
 
+import { API_URL } from '../config';
+
 const AuthContext = createContext();
 
 export const useAuth = () => {
@@ -19,7 +21,7 @@ export const AuthProvider = ({ children }) => {
 
             if (user) {
                 try {
-                    const res = await fetch(`http://localhost:5000/api/users/${user.uid}`);
+                    const res = await fetch(`${API_URL}/api/users/${user.uid}`);
                     const data = await res.json();
                     setUserData(data);
                 } catch (err) {

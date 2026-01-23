@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import CodeEditor from '../components/dsa/CodeEditor';
 import { useAuth } from '../context/AuthContext';
 import logo_img from '../assets/logo_img.png';
+import { API_URL } from '../config';
 
 export default function QuestionPage() {
     const { slug } = useParams();
@@ -109,7 +110,7 @@ export default function QuestionPage() {
         setRunStatus("running");
 
         try {
-            const res = await fetch("http://localhost:5000/api/execute/run", {
+            const res = await fetch(`${API_URL}/api/execute/run`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -170,7 +171,7 @@ export default function QuestionPage() {
         setSubmissionResult(null);
 
         try {
-            const res = await fetch("http://localhost:5000/api/execute/submit", {
+            const res = await fetch(`${API_URL}/api/execute/submit`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -239,7 +240,7 @@ export default function QuestionPage() {
                 }
 
                 setLoading(true);
-                const response = await fetch(`http://localhost:5000/api/problems/${slug}`);
+                const response = await fetch(`${API_URL}/api/problems/${slug}`);
 
                 if (!response.ok) {
                     throw new Error('Problem not found');
