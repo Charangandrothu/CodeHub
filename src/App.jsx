@@ -8,6 +8,8 @@ import DSA from './pages/DSA'
 import TopicPage from './pages/TopicPage'
 import QuestionPage from './pages/QuestionPage'
 import Pricing from './pages/Pricing'
+import MockTests from './pages/MockTests'
+import Aptitude from './pages/Aptitude'
 
 import { useAuth } from './context/AuthContext'
 
@@ -24,6 +26,8 @@ function AppRoutes() {
       <Route path="/dsa" element={<DSA />} />
       <Route path="/dsa/:topicId" element={<DSA />} />
       <Route path="/problem/:slug" element={<QuestionPage />} />
+      <Route path="/mock-tests" element={<MockTests />} />
+      <Route path="/aptitude" element={<Aptitude />} />
     </Routes>
   );
 }

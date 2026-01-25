@@ -156,7 +156,7 @@ const Features = () => {
                 {/* 4. Mock Tests */}
                 <FeatureSection
                     title="Company-Specific Mock Tests"
-                    description="Simulate the actual placement drive environment. Full-stack tests including Coding, Aptitude, and MCQs tailored for specific companies."
+                    description="Simulate the actual placement drive environment. Focused tests on Aptitude and Reasoning tailored for specific companies."
                     icon={Target}
                     gradient="from-emerald-500 to-green-400"
                     align="right"
