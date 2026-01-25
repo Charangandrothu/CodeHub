@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
     Trophy,
@@ -18,7 +19,8 @@ import {
 import { Button } from '../components/ui/Button';
 
 const Dashboard = () => {
-    const { currentUser } = useAuth();
+    const { currentUser, userData } = useAuth();
+    const navigate = useNavigate();
 
     const containerVariants = {
         hidden: { opacity: 0 },
@@ -55,7 +57,7 @@ const Dashboard = () => {
                                 </div>
                                 <div className="px-2.5 py-0.5 rounded-full bg-orange-500/10 border border-orange-500/20 flex items-center gap-1.5">
                                     <Flame size={10} className="text-orange-500" />
-                                    <span className="text-[10px] font-semibold text-orange-400 uppercase tracking-wide">12 Day Streak</span>
+                                    <span className="text-[10px] font-semibold text-orange-400 uppercase tracking-wide">{userData?.stats?.streak || 0} Day Streak</span>
                                 </div>
                             </div>
                             <h1 className="text-2xl font-bold text-white tracking-tight">
@@ -68,7 +70,7 @@ const Dashboard = () => {
                             <div className="text-right">
                                 <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">Weekly Rank</p>
                                 <div className="flex items-end justify-end gap-2">
-                                    <span className="text-xl font-bold text-white">Top 5%</span>
+                                    <span className="text-xl font-bold text-white">{userData?.stats?.globalRank ? `#${userData.stats.globalRank}` : 'Unranked'}</span>
                                     <Trophy size={16} className="text-yellow-500 mb-1" />
                                 </div>
                             </div>
@@ -107,7 +109,11 @@ const Dashboard = () => {
                                     </div>
                                 </div>
 
-                                <Button className="shrink-0 w-full sm:w-auto" icon={ArrowRight}>
+                                <Button
+                                    className="shrink-0 w-full sm:w-auto"
+                                    icon={ArrowRight}
+                                    onClick={() => navigate('/dsa')}
+                                >
                                     Continue Practice
                                 </Button>
                             </div>
@@ -124,29 +130,29 @@ const Dashboard = () => {
                                     title="DSA Progress"
                                     icon={BrainCircuit}
                                     color="blue"
-                                    stats="42/150 Solved"
-                                    percentage={28}
+                                    stats={`${userData?.stats?.solvedProblems || 0}/${userData?.stats?.totalProblems || 150} Solved`}
+                                    percentage={Math.round(((userData?.stats?.solvedProblems || 0) / (userData?.stats?.totalProblems || 150)) * 100) || 0}
                                 />
                                 <DashboardCard
                                     title="Mock Tests"
                                     icon={Target}
                                     color="purple"
-                                    stats="3/10 Completed"
-                                    percentage={30}
+                                    stats="0/10 Completed"
+                                    percentage={0}
                                 />
                                 <DashboardCard
                                     title="Aptitude"
                                     icon={Zap}
                                     color="orange"
-                                    stats="15/50 Topics"
-                                    percentage={30}
+                                    stats="0/50 Topics"
+                                    percentage={0}
                                 />
                                 <DashboardCard
                                     title="System Design"
                                     icon={Layout}
                                     color="emerald"
-                                    stats="5/20 Concepts"
-                                    percentage={25}
+                                    stats="0/20 Concepts"
+                                    percentage={0}
                                 />
                             </div>
                         </motion.div>
@@ -165,28 +171,28 @@ const Dashboard = () => {
                                     color="text-orange-500"
                                     bg="bg-orange-500/10"
                                     label="Current Streak"
-                                    value="12 Days"
+                                    value={`${userData?.stats?.streak || 0} Days`}
                                 />
                                 <StatRow
                                     icon={CheckCircle2}
                                     color="text-green-500"
                                     bg="bg-green-500/10"
                                     label="Problems Solved"
-                                    value="148"
+                                    value={userData?.stats?.solvedProblems || 0}
                                 />
                                 <StatRow
                                     icon={Clock}
                                     color="text-blue-500"
                                     bg="bg-blue-500/10"
                                     label="Time Spent"
-                                    value="42h 15m"
+                                    value={userData?.stats?.timeSpent || "0h 0m"}
                                 />
                             </div>
 
                             <div className="mt-6 pt-5 border-t border-white/5">
                                 <div className="flex items-center justify-between text-sm">
                                     <span className="text-gray-500">Global Rank</span>
-                                    <span className="text-white font-mono font-medium">#1,248</span>
+                                    <span className="text-white font-mono font-medium">{userData?.stats?.globalRank ? `#${userData.stats.globalRank}` : 'Unranked'}</span>
                                 </div>
                             </div>
                         </div>

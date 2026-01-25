@@ -44,7 +44,7 @@ We will deploy the root React/Vite application.
 4.  **Environment Variables** (Crucial Step):
     - Add a new variable:
         - **Name**: `VITE_API_URL`
-        - **Value**: `https://codehub-backend.onrender.com` (The backend URL you copied from Render).
+    - **Value**: `https://codehub-jj1e.onrender.com` (Your actual Backend URL).
     - *Note: Do not add a trailing slash `/` to the URL.*
 5.  **Deploy**: Click **"Deploy"**.
 

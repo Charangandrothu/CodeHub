@@ -55,3 +55,4 @@ const results = await Promise.all(promises);
 | **Pro Submit** | Sum of all test cases (~15-20s) | Max of single test case (~3-5s) | **~500% Faster** |
 
 These changes ensure that CodeHub feels snappy and responsive for all users, regardless of their subscription tier.
+changed dashboard to dynamic from static
