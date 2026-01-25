@@ -132,6 +132,7 @@ const Dashboard = () => {
                                     color="blue"
                                     stats={`${userData?.stats?.solvedProblems || 0}/${userData?.stats?.totalProblems || 150} Solved`}
                                     percentage={Math.round(((userData?.stats?.solvedProblems || 0) / (userData?.stats?.totalProblems || 150)) * 100) || 0}
+                                    onClick={() => navigate('/dsa')}
                                 />
                                 <DashboardCard
                                     title="Mock Tests"
@@ -139,6 +140,7 @@ const Dashboard = () => {
                                     color="purple"
                                     stats="0/10 Completed"
                                     percentage={0}
+                                    onClick={() => navigate('/mock-tests')}
                                 />
                                 <DashboardCard
                                     title="Aptitude"
@@ -146,13 +148,7 @@ const Dashboard = () => {
                                     color="orange"
                                     stats="0/50 Topics"
                                     percentage={0}
-                                />
-                                <DashboardCard
-                                    title="System Design"
-                                    icon={Layout}
-                                    color="emerald"
-                                    stats="0/20 Concepts"
-                                    percentage={0}
+                                    onClick={() => navigate('/aptitude')}
                                 />
                             </div>
                         </motion.div>
@@ -213,7 +209,7 @@ const Dashboard = () => {
     );
 };
 
-const DashboardCard = ({ title, icon: Icon, color, stats, percentage }) => {
+const DashboardCard = ({ title, icon: Icon, color, stats, percentage, onClick }) => {
     const colors = {
         blue: "text-blue-400 group-hover:text-blue-300",
         purple: "text-purple-400 group-hover:text-purple-300",
@@ -229,7 +225,10 @@ const DashboardCard = ({ title, icon: Icon, color, stats, percentage }) => {
     };
 
     return (
-        <div className="group p-4 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] hover:border-white/10 transition-all duration-300 cursor-pointer">
+        <div
+            onClick={onClick}
+            className="group p-4 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] hover:border-white/10 transition-all duration-300 cursor-pointer"
+        >
             <div className="flex justify-between items-start mb-3">
                 <div className={`p-2 rounded-lg bg-white/5 ${colors[color]} transition-colors`}>
                     <Icon size={18} />
