@@ -365,6 +365,25 @@ router.post("/submit", async (req, res) => {
             }
         }
 
+
+        // Update User Solved Problems
+        try {
+            const userUpdate = await User.findOne({ uid: userId });
+            if (userUpdate) {
+                // Ensure stats object structure exists (just in case)
+                if (!userUpdate.stats) userUpdate.stats = {};
+                if (!userUpdate.stats.solvedProblemIds) userUpdate.stats.solvedProblemIds = [];
+
+                if (!userUpdate.stats.solvedProblemIds.includes(problemId)) {
+                    userUpdate.stats.solvedProblemIds.push(problemId);
+                    userUpdate.stats.solvedProblems = userUpdate.stats.solvedProblemIds.length;
+                    await userUpdate.save();
+                }
+            }
+        } catch (updateErr) {
+            console.error("Failed to update user stats:", updateErr);
+        }
+
         res.json({
             verdict: "Accepted",
             stdout: "All test cases passed",

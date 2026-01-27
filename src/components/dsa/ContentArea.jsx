@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { AlertCircle, CheckCircle2, FileCode2, Terminal, RefreshCw, ArrowRight } from 'lucide-react';
 import { API_URL } from '../../config';
+import { useAuth } from '../../context/AuthContext';
 
 export default function ContentArea() {
     const { topicId } = useParams();
+    const { userData } = useAuth();
     const [problems, setProblems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -48,6 +50,10 @@ export default function ContentArea() {
             default:
                 return 'text-slate-400 bg-slate-400/10 border-slate-400/20';
         }
+    };
+
+    const isProblemSolved = (problemId) => {
+        return userData?.stats?.solvedProblemIds?.includes(problemId);
     };
 
     if (loading) {
@@ -148,6 +154,12 @@ export default function ContentArea() {
                             </div>
 
                             <div className="flex items-center gap-4 sm:ml-6">
+                                {isProblemSolved(problem._id) && (
+                                    <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold animate-in fade-in duration-500">
+                                        <CheckCircle2 size={14} />
+                                        <span>Solved</span>
+                                    </div>
+                                )}
                                 <div className="flex -space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform translate-x-2 group-hover:translate-x-0">
                                     {/* Subtle avatar pile or similar visual for premium feel could go here */}
                                 </div>

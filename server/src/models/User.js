@@ -8,6 +8,7 @@ const userSchema = new mongoose.Schema({
     stats: {
         streak: { type: Number, default: 0 },
         solvedProblems: { type: Number, default: 0 },
+        solvedProblemIds: { type: [String], default: [] }, // Array of Problem IDs
         totalProblems: { type: Number, default: 150 },
         timeSpent: { type: String, default: "0h 0m" },
         globalRank: { type: Number, default: 0 }

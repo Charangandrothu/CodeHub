@@ -85,7 +85,7 @@ const Pricing = () => {
                         </div>
 
                         <div className="text-xl font-bold text-white mb-2">Pro</div>
-                        <div className="text-3xl font-bold text-white mb-6">$9<span className="text-sm font-normal text-gray-500">/mo</span></div>
+                        <div className="text-3xl font-bold text-white mb-6">₹99<span className="text-sm font-normal text-gray-500">/mo</span></div>
 
                         <button
                             className="w-full py-2.5 rounded-lg bg-white text-black text-sm font-bold mb-8 hover:bg-gray-100 transition-colors shadow-lg shadow-white/5"

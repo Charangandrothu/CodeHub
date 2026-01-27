@@ -10,7 +10,7 @@ import { API_URL } from '../config';
 export default function QuestionPage() {
     const { slug } = useParams();
     const navigate = useNavigate();
-    const { currentUser, userData } = useAuth(); // userData contains isPro status
+    const { currentUser, userData, refreshUserData } = useAuth(); // userData contains isPro status
     const [problem, setProblem] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -197,6 +197,11 @@ export default function QuestionPage() {
                 }
                 setRunStatus("idle");
                 return;
+            }
+
+            // If Accepted/Passed, refresh user data to update 'Solved' status in DSA page
+            if (['Accepted', 'Passed'].includes(data.verdict)) {
+                if (refreshUserData) refreshUserData();
             }
 
             setSubmissionResult({

@@ -42,10 +42,23 @@ export const AuthProvider = ({ children }) => {
         return signOut(auth);
     };
 
+    const refreshUserData = async () => {
+        if (currentUser) {
+            try {
+                const res = await fetch(`${API_URL}/api/users/${currentUser.uid}`);
+                const data = await res.json();
+                setUserData(data);
+            } catch (err) {
+                console.error("Failed to fetch user data:", err);
+            }
+        }
+    };
+
     const value = {
         currentUser,
         userData,
         logout,
+        refreshUserData
     };
 
     return (
