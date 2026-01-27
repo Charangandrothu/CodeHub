@@ -1,85 +1,141 @@
-# CodeHub
-A structured placement preparation platform that combines coding, aptitude, and core CS learning in one place, focusing on consistency, progress tracking, and test-driven preparation
+CodeHub
 
-📌 Phase 1: Home Page Development Roadmap
+CodeHub is a structured placement preparation platform that brings coding practice, aptitude, and core CS learning into one unified system — built to promote consistency, measurable progress, and test-driven preparation.
 
-Goal:
-Build a production-quality landing and dashboard-style home page that clearly communicates value, looks credible, and can scale into a full placement preparation platform.
+📌 Phase 1 — Home Page Development Roadmap
+✅ Goal
 
-Scope of Phase 1
+Build a production-quality landing + dashboard-style home page that:
 
-Professional landing page
+Clearly communicates the platform’s value
 
-Clear value proposition
+Looks credible and professional
 
-Modular structure for future features
+Is scalable for future feature expansions
 
-Ready for mentor and recruiter review
+Is ready for mentor and recruiter review
 
-Planned Sections
+✅ Phase 1 Scope
 
-Navigation (Home, Login/Register, Dashboard – future)
+Professional landing page experience
 
-Hero section with clear call-to-action
+Strong and clear value proposition
 
-Learning domains (Coding, OOPS, Aptitude, Core CS)
+Modular architecture for future sections
 
-Platform workflow (Learn → Practice → Test → Track)
+Clean UI foundation for building the full platform
 
-Key features (Progress tracking, Mock tests, Analytics, Streaks)
+🧩 Planned Sections
 
-Call-to-action and footer
+Navigation Bar
 
-Design & UX
+Home
 
-Dark theme
+Login / Register
 
-Minimal color palette
+Dashboard (future-ready)
 
-Clean typography
+Hero Section
 
-Responsive layout (Desktop, Tablet, Mobile)
+Clear headline
 
-Micro-interactions and hover states
+Short supporting description
 
-Implementation Plan
+Primary call-to-action button
+
+Learning Domains
+
+Coding
+
+OOPS
+
+Aptitude
+
+Core CS
+
+Platform Workflow
+
+Learn → Practice → Test → Track
+
+Core Features
+
+Progress Tracking
+
+Mock Tests
+
+Analytics
+
+Streak System
+
+Final CTA + Footer
+
+Strong “Get Started” section
+
+Footer with links and branding
+
+🎨 Design & UX Guidelines
+
+Dark Theme UI
+
+Minimal and consistent color palette
+
+Clean, readable typography
+
+Fully responsive layout
+
+Desktop
+
+Tablet
+
+Mobile
+
+Micro-interactions
+
+Hover effects
+
+Smooth transitions
+
+Active states
+
+🛠️ Tech Stack & Implementation Plan
 
 React + Tailwind CSS
 
-Component-based architecture
+Component-based structure for scalability
 
-Mobile-first responsiveness
+Mobile-first responsive development
 
-Performance and accessibility checks
+Performance optimization
 
-Deliverables After Phase 1
+Accessibility checks (basic A11y)
 
-Fully responsive home page
+✅ Phase 1 Deliverables
 
-Strong visual identity
+By the end of Phase 1, the platform will include:
 
-Scalable frontend foundation
+Fully responsive and professional home page
 
-Shareable project demo
+Strong visual identity and clean UI standard
 
-## Docker
+Scalable frontend base for upcoming modules
 
-- **Build image:**
+Shareable project demo for showcasing
 
-```bash
+🐳 Docker Setup
+
+The project supports Docker-based deployment for a clean and consistent production environment.
+
+✅ Build the Docker Image
 docker build -t codehub:latest .
-```
 
-- **Run container:**
+✅ Run the Container
+docker run --rm -p 5173:80 codehub:latest
 
-```bash
-docker run -p 5173:80 --rm codehub:latest
-```
 
-- **Using docker-compose:**
+The container serves the production build using Nginx on port 80, mapped to localhost:5173.
 
-```bash
+✅ Run Using Docker Compose
 docker-compose up --build
-```
 
-The container serves the production build via nginx on port `80` inside the container; the compose file maps it to host port `5173`.
+
+The compose setup runs the Nginx container on port 80 internally and maps it to host port 5173 for local access.
