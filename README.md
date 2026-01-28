@@ -3,7 +3,6 @@ CodeHub
 CodeHub is a structured placement preparation platform that brings coding practice, aptitude, and core CS learning into one unified system — built to promote consistency, measurable progress, and test-driven preparation.
 
 📌 Phase 1 — Home Page Development Roadmap
-✅ Goal
 
 Build a production-quality landing + dashboard-style home page that:
 
