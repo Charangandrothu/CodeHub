@@ -257,8 +257,15 @@ const Navbar = () => {
                         <p className="text-xs text-gray-500 truncate mt-0.5">{currentUser.email}</p>
                       </div>
                       <div className="p-2 space-y-1">
-                        <MenuLink icon={User} label="My Profile" />
-                        <MenuLink icon={LayoutDashboard} label="Dashboard" />
+                        <MenuLink
+                          icon={User}
+                          label="My Profile"
+                          onClick={() => {
+                            setShowProfileMenu(false);
+                            navigate('/profile');
+                          }}
+                        />
+                        <MenuLink icon={LayoutDashboard} label="Dashboard" onClick={() => navigate('/dashboard')} />
                         <MenuLink icon={Settings} label="Settings" />
                       </div>
                       <div className="p-2 border-t border-white/5">
@@ -305,8 +312,11 @@ const Navbar = () => {
   );
 };
 
-const MenuLink = ({ icon: Icon, label }) => (
-  <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-300 hover:text-white hover:bg-white/5 transition-colors group">
+const MenuLink = ({ icon: Icon, label, onClick }) => (
+  <button
+    onClick={onClick}
+    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-300 hover:text-white hover:bg-white/5 transition-colors group"
+  >
     <Icon size={16} className="text-gray-500 group-hover:text-white transition-colors" />
     {label}
   </button>

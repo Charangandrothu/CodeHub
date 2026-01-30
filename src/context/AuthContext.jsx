@@ -21,7 +21,16 @@ export const AuthProvider = ({ children }) => {
 
             if (user) {
                 try {
-                    const res = await fetch(`${API_URL}/api/users/${user.uid}`);
+                    const res = await fetch(`${API_URL}/api/users/sync`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            uid: user.uid,
+                            email: user.email,
+                            displayName: user.displayName,
+                            photoURL: user.photoURL
+                        })
+                    });
                     const data = await res.json();
                     setUserData(data);
                 } catch (err) {
