@@ -1,4 +1,6 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
 import {
     Code2,
@@ -269,6 +271,17 @@ const Features = () => {
 
 // Sub-components for cleaner code
 const FeatureSection = ({ title, description, icon: Icon, gradient, align, children }) => {
+    const navigate = useNavigate();
+    const { currentUser } = useAuth();
+
+    const handleLearnMore = () => {
+        if (currentUser) {
+            navigate('/dashboard');
+        } else {
+            navigate('/login');
+        }
+    };
+
     return (
         <div className={`flex flex-col lg:flex-row items-center gap-12 ${align === 'right' ? 'lg:flex-row-reverse' : ''}`}>
             {/* Text Content */}
@@ -304,6 +317,7 @@ const FeatureSection = ({ title, description, icon: Icon, gradient, align, child
                     viewport={{ once: false, margin: "-50px" }}
                     transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
                     className="flex items-center gap-2 text-sm font-medium text-white/50 group cursor-pointer hover:text-white transition-colors"
+                    onClick={handleLearnMore}
                 >
                     <span>Learn more</span>
                     <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
