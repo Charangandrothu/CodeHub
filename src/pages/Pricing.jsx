@@ -55,7 +55,7 @@ const Pricing = () => {
                     {/* Free Plan */}
                     <div className="bg-[#111] border border-[#262626] rounded-2xl p-8 relative opacity-50 hover:opacity-100 transition-opacity">
                         <div className="text-xl font-bold text-white mb-2">Free</div>
-                        <div className="text-3xl font-bold text-white mb-6">$0<span className="text-sm font-normal text-gray-500">/mo</span></div>
+                        <div className="text-3xl font-bold text-white mb-6">₹0<span className="text-sm font-normal text-gray-500">/mo</span></div>
                         <button disabled className="w-full py-2.5 rounded-lg bg-[#262626] text-gray-400 text-sm font-semibold mb-8 cursor-not-allowed">
                             Current Plan
                         </button>

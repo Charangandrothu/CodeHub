@@ -24,6 +24,6 @@ dist-ssr
 *.sw?
 .env
 .env.*
-!.env.example
+
 .md 
 .md*
