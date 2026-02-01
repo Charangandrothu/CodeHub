@@ -1,78 +1,128 @@
-import { CheckCircle2, Trophy, Flame, Rocket } from 'lucide-react';
+import React from 'react';
+import { CheckCircle2, Flame, Rocket, Star, Zap, Brain } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 export default function RightPanel() {
+    const { userData } = useAuth();
+
+    // Calculate daily progress
+    const dailyGoal = 3;
+    const today = new Date().toDateString();
+
+    const dailySolved = userData?.submissionHistory?.filter(sub =>
+        new Date(sub.submittedAt).toDateString() === today && sub.verdict === 'Accepted'
+    ).length || 0;
+
+    const progressPercentage = Math.min((dailySolved / dailyGoal) * 100, 100);
+
     return (
-        <div className="hidden xl:flex w-80 flex-shrink-0 flex-col gap-6 sticky top-24 h-[calc(100vh-100px)]">
+        <div className="hidden xl:flex w-80 flex-shrink-0 flex-col gap-6 sticky top-24 h-[calc(100vh-100px)] overflow-y-auto custom-scrollbar pb-10">
 
-            {/* Daily Goal Card */}
-            <div className="p-5 rounded-2xl bg-[#0a0a0a]/60 backdrop-blur-xl border border-white/10 shadow-lg relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-3 opacity-10">
-                    <Flame size={80} />
-                </div>
+            {/* Premium Daily Goal Card */}
+            <div className="relative p-6 rounded-3xl overflow-hidden border border-white/10 group flex-shrink-0">
+                {/* Background Gradients */}
+                <div className="absolute inset-0 bg-[#0a0a0a]/80 backdrop-blur-xl z-0" />
+                <div className="absolute -top-10 -right-10 w-32 h-32 bg-orange-500/20 blur-[60px] rounded-full" />
+                <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-purple-500/20 blur-[60px] rounded-full" />
+
                 <div className="relative z-10">
-                    <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-2">Daily Goal</h3>
-                    <div className="flex items-baseline gap-1 mb-2">
-                        <span className="text-3xl font-bold text-white">2</span>
-                        <span className="text-gray-500">/ 3 solved</span>
-                    </div>
-                    <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden mb-3">
-                        <div className="w-2/3 h-full bg-gradient-to-r from-orange-500 to-red-500 shadow-[0_0_8px_#f97316]" />
-                    </div>
-                    <p className="text-xs text-gray-400">Keep up the streak! 🔥 12 days</p>
-                </div>
-            </div>
-
-            {/* Beginner Progress Card */}
-            <div className="p-5 rounded-2xl bg-[#0a0a0a]/60 backdrop-blur-xl border border-white/10 shadow-lg flex flex-col gap-4">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
-                        <Rocket size={20} className="text-blue-400" />
-                    </div>
-                    <div>
-                        <h4 className="font-bold text-white text-sm">Beginner</h4>
-                        <span className="text-xs text-gray-400">8 / 10 Solved</span>
-                    </div>
-                </div>
-
-                {/* Compact List - Static Placeholder */}
-                <div className="space-y-3">
-                    <div className="flex items-center justify-between text-sm group cursor-pointer">
-                        <span className="text-gray-400 group-hover:text-gray-200 transition-colors truncate max-w-[180px]">Two Sum</span>
-                        <CheckCircle2 size={14} className="text-green-500 flex-shrink-0" />
-                    </div>
-                    <div className="flex items-center justify-between text-sm group cursor-pointer">
-                        <span className="text-gray-400 group-hover:text-gray-200 transition-colors truncate max-w-[180px]">Valid Anagram</span>
-                        <CheckCircle2 size={14} className="text-green-500 flex-shrink-0" />
-                    </div>
-                    <div className="flex items-center justify-between text-sm group cursor-pointer">
-                        <span className="text-gray-400 group-hover:text-gray-200 transition-colors truncate max-w-[180px]">Contains Duplicate</span>
-                        <div className="w-3.5 h-3.5 rounded-full border border-gray-600" />
-                    </div>
-                </div>
-
-                <button className="w-full py-2 bg-white/5 hover:bg-white/10 border border-white/5 rounded-lg text-xs font-medium text-gray-300 transition-all">
-                    View Detailed Stats
-                </button>
-            </div>
-
-            {/* Leaderboard Snippet */}
-            <div className="bg-[#0a0a0a]/60 backdrop-blur-xl border border-white/10 rounded-2xl p-5 overflow-hidden">
-                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Top Solvers</h3>
-                <div className="space-y-4">
-                    {[1, 2, 3].map((i) => (
-                        <div key={i} className="flex items-center gap-3">
-                            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${i === 1 ? 'bg-yellow-500 text-black shadow-yellow-500/50' :
-                                i === 2 ? 'bg-gray-300 text-black' : 'bg-amber-700 text-white'
-                                }`}>
-                                {i}
-                            </div>
-                            <div className="w-6 h-6 rounded-full bg-gray-700" />
-                            <span className="text-xs text-gray-300">User_{9000 + i}</span>
-                            <span className="ml-auto text-xs font-mono text-blue-400">{1500 - (i * 50)} XP</span>
+                    <div className="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 className="text-sm font-bold text-gray-300 uppercase tracking-wider mb-1">Daily Goal</h3>
+                            <p className="text-xs text-gray-500 font-medium">Solve {dailyGoal} problems today</p>
                         </div>
-                    ))}
+                        <div className="p-2.5 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-500">
+                            <Flame size={20} className={dailySolved >= dailyGoal ? "animate-pulse" : ""} />
+                        </div>
+                    </div>
+
+                    <div className="flex items-end gap-2 mb-3 whitespace-nowrap">
+                        <span className="text-3xl font-extrabold text-white tracking-tight">{dailySolved}</span>
+                        <span className="text-sm text-gray-500 mb-1.5 font-medium">/ {dailyGoal} Solved</span>
+                    </div>
+
+                    <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden mb-4 border border-white/5">
+                        <div
+                            className="h-full bg-gradient-to-r from-orange-500 to-red-500 shadow-[0_0_12px_rgba(249,115,22,0.4)] transition-all duration-1000 ease-out"
+                            style={{ width: `${progressPercentage}%` }}
+                        />
+                    </div>
+
+                    <div className="flex items-center gap-2 text-xs font-medium text-gray-400 whitespace-nowrap">
+                        <Zap size={14} className="text-yellow-500" />
+                        <span>Current Streak: <span className="text-white ml-1">{userData?.stats?.streak || 0} Days</span></span>
+                    </div>
                 </div>
             </div>
+
+            {/* Problem Sheets / Stats Cards */}
+            <div className="grid gap-3">
+                <div className="group cursor-pointer p-4 rounded-2xl bg-[#0a0a0a]/40 border border-white/10 hover:border-green-500/30 hover:bg-green-500/5 transition-all duration-300 backdrop-blur-md">
+                    <div className="flex justify-between items-center mb-1">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 rounded-lg bg-green-500/10 text-green-500">
+                                <Rocket size={18} />
+                            </div>
+                            <span className="font-semibold text-gray-200 group-hover:text-green-400 transition-colors">Beginner Friendly</span>
+                        </div>
+                        <span className="text-xs font-mono font-bold text-gray-500 bg-white/5 px-2 py-1 rounded-md">350</span>
+                    </div>
+                </div>
+
+                <div className="group cursor-pointer p-4 rounded-2xl bg-[#0a0a0a]/40 border border-white/10 hover:border-blue-500/30 hover:bg-blue-500/5 transition-all duration-300 backdrop-blur-md">
+                    <div className="flex justify-between items-center mb-1">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 rounded-lg bg-blue-500/10 text-blue-500">
+                                <Brain size={18} />
+                            </div>
+                            <span className="font-semibold text-gray-200 group-hover:text-blue-400 transition-colors">Intermediate</span>
+                        </div>
+                        <span className="text-xs font-mono font-bold text-gray-500 bg-white/5 px-2 py-1 rounded-md">250</span>
+                    </div>
+                </div>
+
+                <div className="group cursor-pointer p-4 rounded-2xl bg-[#0a0a0a]/40 border border-white/10 hover:border-purple-500/30 hover:bg-purple-500/5 transition-all duration-300 backdrop-blur-md">
+                    <div className="flex justify-between items-center mb-1">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 rounded-lg bg-purple-500/10 text-purple-500">
+                                <Star size={18} />
+                            </div>
+                            <span className="font-semibold text-gray-200 group-hover:text-purple-400 transition-colors">Advanced</span>
+                        </div>
+                        <span className="text-xs font-mono font-bold text-gray-500 bg-white/5 px-2 py-1 rounded-md">100</span>
+                    </div>
+                </div>
+            </div>
+
+            {/* Beginner Progress - Static List for now but styled better */}
+            {/* <div className="p-5 rounded-3xl bg-[#0a0a0a]/60 backdrop-blur-xl border border-white/10">
+                <div className="flex items-center justify-between mb-4">
+                    <h4 className="font-bold text-white text-sm">Suggested</h4>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-white/10 text-white">Next Up</span>
+                </div>
+
+                <div className="space-y-1">
+                    <div className="flex items-center justify-between p-2 rounded-lg hover:bg-white/5 cursor-pointer transition-colors group">
+                        <div className="flex items-center gap-3 overflow-hidden">
+                            <div className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-lg shadow-green-500/50" />
+                            <span className="text-sm text-gray-400 group-hover:text-white truncate">Two Sum</span>
+                        </div>
+                        <CheckCircle2 size={14} className="text-green-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
+                    <div className="flex items-center justify-between p-2 rounded-lg hover:bg-white/5 cursor-pointer transition-colors group">
+                        <div className="flex items-center gap-3 overflow-hidden">
+                            <div className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-lg shadow-green-500/50" />
+                            <span className="text-sm text-gray-400 group-hover:text-white truncate">Valid Anagram</span>
+                        </div>
+                    </div>
+                    <div className="flex items-center justify-between p-2 rounded-lg hover:bg-white/5 cursor-pointer transition-colors group">
+                        <div className="flex items-center gap-3 overflow-hidden">
+                            <div className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-lg shadow-green-500/50" />
+                            <span className="text-sm text-gray-400 group-hover:text-white truncate">Contains Duplicate</span>
+                        </div>
+                    </div>
+                </div>
+            </div> */}
 
         </div>
     );

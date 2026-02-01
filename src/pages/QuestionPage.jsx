@@ -24,6 +24,7 @@ export default function QuestionPage() {
     const [output, setOutput] = useState(null);
     const [runStatus, setRunStatus] = useState('idle');
     const [activeBottomTab, setActiveBottomTab] = useState('testcases');
+    const [activeTestCase, setActiveTestCase] = useState(0);
     const [submissionResult, setSubmissionResult] = useState(null);
 
     const handleLanguageChange = (e) => {
@@ -865,13 +866,17 @@ export default function QuestionPage() {
                             ) : (
                                 problem.examples && problem.examples.length > 0 && (
                                     <div className="space-y-4">
-                                        {/* Example Tabs (Visual Only for now) */}
+                                        {/* Example Tabs */}
                                         {problem.examples.length > 1 && (
                                             <div className="flex gap-2 mb-2">
                                                 {problem.examples.map((_, i) => (
-                                                    <div key={i} className={`px-3 py-1 border rounded-md text-[10px] font-medium cursor-pointer transition-colors ${i === 0 ? 'bg-[#262626] border-[#333333] text-white' : 'border-transparent hover:bg-[#262626] text-[#737373]'}`}>
+                                                    <button
+                                                        key={i}
+                                                        onClick={() => setActiveTestCase(i)}
+                                                        className={`px-3 py-1 border rounded-md text-[10px] font-medium cursor-pointer transition-colors ${i === activeTestCase ? 'bg-[#262626] border-[#333333] text-white' : 'border-transparent hover:bg-[#262626] text-[#737373]'}`}
+                                                    >
                                                         Case {i + 1}
-                                                    </div>
+                                                    </button>
                                                 ))}
                                             </div>
                                         )}
@@ -880,13 +885,13 @@ export default function QuestionPage() {
                                             <div className="space-y-1">
                                                 <label className="text-[10px] font-semibold text-[#737373] uppercase">Input</label>
                                                 <pre className="bg-[#141414] rounded-md p-2 max-h-20 overflow-y-auto custom-scrollbar text-[11px] font-mono text-[#d4d4d4] border border-[#262626] whitespace-pre-wrap">
-                                                    {problem.examples[0].input}
+                                                    {problem.examples[activeTestCase]?.input || ""}
                                                 </pre>
                                             </div>
                                             <div className="space-y-1">
                                                 <label className="text-[10px] font-semibold text-[#737373] uppercase">Expected Output</label>
                                                 <pre className="bg-[#141414] rounded-md p-2 max-h-20 overflow-y-auto custom-scrollbar text-[11px] font-mono text-emerald-400 border border-[#262626] whitespace-pre-wrap">
-                                                    {problem.examples[0].output}
+                                                    {problem.examples[activeTestCase]?.output || ""}
                                                 </pre>
                                             </div>
                                         </div>
