@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -36,6 +36,34 @@ const Dashboard = () => {
         hidden: { opacity: 0, y: 10 },
         visible: { opacity: 1, y: 0 }
     };
+
+    // Calculate Dynamic Recommendation
+    const upcomingTask = useMemo(() => {
+        const solvedCount = userData?.stats?.solvedProblems || 0;
+
+        // Define simple roadmap milestones
+        const roadmap = [
+            { count: 0, title: "Welcome to DSA", topic: "Basics of Programming", time: "10 mins" },
+            { count: 5, title: "Pattern Problems", topic: "Loops & Patterns", time: "25 mins" },
+            { count: 15, title: "Arrays & Hashing", topic: "Binary Search", time: "30 mins" },
+            { count: 30, title: "Linked Lists", topic: "Two Pointer Technique", time: "40 mins" },
+            { count: 50, title: "Stacks & Queues", topic: "Data Structures", time: "45 mins" },
+            { count: 75, title: "Trees & Graphs", topic: "Advanced Traversal", time: "60 mins" }
+        ];
+
+        // Find the next milestone based on solved count covers
+        // If solvedCount is 2, it falls before count:5, so return count:5 item as next goal.
+        // If solvedCount is 90, return the last advanced item.
+        const nextMilestone = roadmap.find(milestone => solvedCount < milestone.count) || roadmap[roadmap.length - 1];
+
+        // Special case for absolute beginners (0 solved)
+        if (solvedCount === 0) {
+            return roadmap[0];
+        }
+
+        return nextMilestone;
+    }, [userData]);
+
 
     return (
         <div className="min-h-screen bg-[#0a0a0a] pt-24 pb-12 px-4 sm:px-6 lg:px-8 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/10 via-[#0a0a0a] to-[#0a0a0a]">
@@ -97,11 +125,11 @@ const Dashboard = () => {
                                     </div>
                                     <div>
                                         <p className="text-xs text-blue-400 font-medium uppercase tracking-wider mb-1">Coming Next</p>
-                                        <h3 className="text-lg font-bold text-white mb-1 group-hover:text-blue-300 transition-colors">Arrays & Hashing</h3>
+                                        <h3 className="text-lg font-bold text-white mb-1 group-hover:text-blue-300 transition-colors">{upcomingTask.title}</h3>
                                         <p className="text-sm text-gray-400 mb-2 flex items-center gap-2">
-                                            <span>Topic: Binary Search</span>
+                                            <span>Topic: {upcomingTask.topic}</span>
                                             <span className="w-1 h-1 rounded-full bg-gray-600" />
-                                            <span>25 mins remaining</span>
+                                            <span>{upcomingTask.time} remaining</span>
                                         </p>
                                         <div className="w-48 h-1 bg-white/10 rounded-full overflow-hidden">
                                             <div className="h-full w-[65%] bg-blue-500 rounded-full" />

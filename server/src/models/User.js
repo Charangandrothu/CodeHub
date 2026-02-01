@@ -13,6 +13,22 @@ const userSchema = new mongoose.Schema({
         timeSpent: { type: String, default: "0h 0m" },
         globalRank: { type: Number, default: 0 }
     },
+    submissionHistory: [{
+        problemId: String,
+        problemTitle: String,
+        verdict: String,
+        submittedAt: { type: Date, default: Date.now }
+    }],
+    // Profile Details
+    role: { type: String, default: "Full Stack Developer" },
+    college: { type: String, default: "" },
+    portfolio: { type: String, default: "" },
+    github: { type: String, default: "" },
+    linkedin: { type: String, default: "" },
+    leetcode: { type: String, default: "" }, // Added
+    codeforces: { type: String, default: "" }, // Added
+    skills: { type: [String], default: [] },
+
     // Subscription Details
     plan: { type: String, default: 'FREE' }, // 'FREE' or 'PRO'
     paymentStatus: { type: String, default: 'inactive' },

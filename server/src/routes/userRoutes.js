@@ -60,4 +60,51 @@ router.get('/:uid', async (req, res) => {
     }
 });
 
+// Update User Profile
+router.put('/:uid', async (req, res) => {
+    try {
+        const { role, college, portfolio, github, linkedin, leetcode, codeforces, skills, email } = req.body;
+
+        console.log(`Updating profile for UID: ${req.params.uid}`);
+
+        const updatedUser = await User.findOneAndUpdate(
+            { uid: req.params.uid },
+            {
+                $set: {
+                    ...(email && { email }), // Only update email if provided (it should be)
+                    role,
+                    college,
+                    portfolio,
+                    github,
+                    linkedin,
+                    leetcode,
+                    codeforces,
+                    skills,
+                    updatedAt: new Date()
+                },
+                $setOnInsert: {
+                    isPro: false,
+                    stats: {
+                        streak: 0,
+                        solvedProblems: 0,
+                        solvedProblemIds: [],
+                        totalProblems: 150,
+                        timeSpent: "0h 0m",
+                        globalRank: 0
+                    }
+                }
+            },
+            { new: true, upsert: true, setDefaultsOnInsert: true } // Create if not exists
+        );
+
+        if (!updatedUser) {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        res.json(updatedUser);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 module.exports = router;

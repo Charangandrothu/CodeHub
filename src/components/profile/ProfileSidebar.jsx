@@ -6,6 +6,8 @@ import {
     Link as LinkIcon,
     Github,
     Linkedin,
+    Code2,
+    Terminal,
     Edit3
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
@@ -22,6 +24,8 @@ const ProfileSidebar = ({
         portfolioUrl: "alexdev.io",
         github: "alexcode",
         linkedin: "alex-professional",
+        leetcode: "alexlc",
+        codeforces: "alexcf",
         skills: ["React", "Node.js", "TypeScript", "GraphQL", "AWS"]
     },
     theme = {
@@ -30,7 +34,8 @@ const ProfileSidebar = ({
     cta = {
         editProfileText: "Edit Profile"
     },
-    className
+    className,
+    onEdit
 }) => {
     return (
         <aside className={cn(
@@ -98,107 +103,111 @@ const ProfileSidebar = ({
 
                     <div
                         className="mt-3 px-3 py-1 rounded-full text-xs font-semibold tracking-wide uppercase border bg-white/5 border-white/10"
-                        style={{
-                            color: theme.accentColor,
-                            borderColor: `${theme.accentColor}33`,
-                            boxShadow: `0 0 20px -10px ${theme.accentColor}`
-                        }}
+                        style={{ color: theme.accentColor, borderColor: `${theme.accentColor}33` }}
                     >
                         {user.status}
                     </div>
                 </div>
 
-                {/* Primary Action */}
-                <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="w-full py-3 rounded-xl font-semibold text-sm transition-all duration-300 relative overflow-hidden group border border-white/10"
-                    style={{
-                        background: `linear-gradient(90deg, ${theme.accentColor}1a, transparent)`,
-                        color: theme.accentColor
-                    }}
-                >
-                    <span className="relative z-10 flex items-center justify-center gap-2">
-                        <Edit3 size={16} />
-                        {cta.editProfileText}
-                    </span>
-                    <div
-                        className="absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-300"
-                        style={{ background: theme.accentColor }}
-                    />
-                </motion.button>
-
-                {/* Info Rows */}
-                <div className="space-y-4 pt-2">
-                    <InfoRow icon={GraduationCap} text={user.college} />
-                    {user.portfolioUrl && (
-                        <InfoRow
-                            icon={LinkIcon}
-                            text={user.portfolioUrl}
-                            href={`https://${user.portfolioUrl}`}
-                            color="#3b82f6"
-                        />
-                    )}
-                    {user.github && (
-                        <InfoRow
-                            icon={Github}
-                            text={user.github}
-                            href={`https://github.com/${user.github}`}
-                        />
-                    )}
-                    {user.linkedin && (
-                        <InfoRow
-                            icon={Linkedin}
-                            text={user.linkedin}
-                            href={`https://linkedin.com/in/${user.linkedin}`}
-                            color="#0a66c2"
-                        />
+                {/* Info List */}
+                <div className="space-y-4">
+                    {user.college && (
+                        <div className="flex items-center gap-3 text-sm text-gray-300">
+                            <div className="p-2 rounded-lg bg-white/5">
+                                <GraduationCap size={18} className="text-gray-400" />
+                            </div>
+                            <span>{user.college}</span>
+                        </div>
                     )}
                 </div>
 
-                {/* Skills Section */}
-                {user.skills && user.skills.length > 0 && (
-                    <div className="pt-2">
-                        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 pl-1">
-                            Top Skills
-                        </h3>
-                        <div className="flex flex-wrap gap-2">
-                            {user.skills.map((skill, index) => (
-                                <span
-                                    key={index}
-                                    className="px-3 py-1.5 rounded-lg text-xs font-medium text-gray-300 bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/20 transition-colors duration-200 cursor-default"
-                                >
-                                    {skill}
-                                </span>
-                            ))}
-                        </div>
+                {/* Social Links Row */}
+                <div className="flex items-center justify-center gap-3 py-2">
+                    {user.github && (
+                        <a
+                            href={user.github.startsWith('http') ? user.github : `https://github.com/${user.github}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-all"
+                            title="GitHub"
+                        >
+                            <Github size={20} />
+                        </a>
+                    )}
+                    {user.linkedin && (
+                        <a
+                            href={user.linkedin.startsWith('http') ? user.linkedin : `https://linkedin.com/in/${user.linkedin}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-blue-400 transition-all"
+                            title="LinkedIn"
+                        >
+                            <Linkedin size={20} />
+                        </a>
+                    )}
+                    {user.leetcode && (
+                        <a
+                            href={user.leetcode.startsWith('http') ? user.leetcode : `https://leetcode.com/${user.leetcode}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-yellow-500 transition-all"
+                            title="LeetCode"
+                        >
+                            <Code2 size={20} />
+                        </a>
+                    )}
+                    {user.codeforces && (
+                        <a
+                            href={user.codeforces.startsWith('http') ? user.codeforces : `https://codeforces.com/profile/${user.codeforces}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-red-500 transition-all"
+                            title="CodeForces"
+                        >
+                            <Terminal size={20} />
+                        </a>
+                    )}
+                    {user.portfolioUrl && (
+                        <a
+                            href={user.portfolioUrl.startsWith('http') ? user.portfolioUrl : `https://${user.portfolioUrl}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-green-400 transition-all"
+                            title="Portfolio"
+                        >
+                            <LinkIcon size={20} />
+                        </a>
+                    )}
+                </div>
+
+
+                {/* Skills Tags */}
+                <div className="pt-2 border-t border-white/10">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Skills</p>
+                    <div className="flex flex-wrap gap-2">
+                        {user.skills.slice(0, 6).map((skill, i) => (
+                            <span
+                                key={i}
+                                className="px-2.5 py-1 rounded-md text-xs font-medium bg-white/5 text-gray-300 border border-white/5 hover:bg-white/10 transition-colors"
+                            >
+                                {skill}
+                            </span>
+                        ))}
                     </div>
-                )}
+                </div>
+
+                {/* Edit Button */}
+                <Button
+                    onClick={onEdit}
+                    className="w-full gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 border-none shadow-lg shadow-blue-500/20"
+                >
+                    <Edit3 size={16} />
+                    {cta.editProfileText}
+                </Button>
 
             </div>
         </aside>
     );
-};
-
-const InfoRow = ({ icon: Icon, text, href, color }) => {
-    const content = (
-        <div className="flex items-center gap-3 group text-gray-400 hover:text-white transition-colors duration-200">
-            <div className="p-2 rounded-lg bg-white/5 group-hover:bg-white/10 transition-colors">
-                <Icon size={16} style={{ color: color }} className={!color ? "text-gray-400 group-hover:text-white" : ""} />
-            </div>
-            <span className="text-sm truncate">{text}</span>
-        </div>
-    );
-
-    if (href) {
-        return (
-            <a href={href} target="_blank" rel="noopener noreferrer" className="block">
-                {content}
-            </a>
-        );
-    }
-
-    return content;
 };
 
 export default ProfileSidebar;
