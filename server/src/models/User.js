@@ -12,7 +12,12 @@ const userSchema = new mongoose.Schema({
         totalProblems: { type: Number, default: 150 },
         timeSpent: { type: String, default: "0h 0m" },
         globalRank: { type: Number, default: 0 }
-    }
+    },
+    // Subscription Details
+    plan: { type: String, default: 'FREE' }, // 'FREE' or 'PRO'
+    paymentStatus: { type: String, default: 'inactive' },
+    subscriptionId: { type: String },
+    updatedAt: { type: Date, default: Date.now }
 });
 
 module.exports = mongoose.model('User', userSchema);

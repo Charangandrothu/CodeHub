@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Check, X, Zap } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import SubscriptionButton from '../components/SubscriptionButton';
 
 const Pricing = () => {
     const navigate = useNavigate();
@@ -87,12 +88,9 @@ const Pricing = () => {
                         <div className="text-xl font-bold text-white mb-2">Pro</div>
                         <div className="text-3xl font-bold text-white mb-6">₹99<span className="text-sm font-normal text-gray-500">/mo</span></div>
 
-                        <button
-                            className="w-full py-2.5 rounded-lg bg-white text-black text-sm font-bold mb-8 hover:bg-gray-100 transition-colors shadow-lg shadow-white/5"
-                            onClick={() => alert('Payment Integration coming soon!')}
-                        >
-                            Upgrade Now
-                        </button>
+                        <div className="mb-8">
+                            <SubscriptionButton />
+                        </div>
 
                         <ul className="space-y-4">
                             {features.map((feature, i) => (

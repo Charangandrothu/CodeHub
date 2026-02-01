@@ -17,4 +17,7 @@ app.use('/api/problems', problemRoutes);
 app.use('/api/execute', executeRoutes);
 app.use('/api/users', userRoutes);
 
+const paymentRoutes = require("./routes/paymentRoutes");
+app.use('/api/payment', paymentRoutes);
+
 module.exports = app;
