@@ -211,4 +211,31 @@ router.post('/update-time', async (req, res) => {
     }
 });
 
+// Update User Preferences (Settings)
+router.put('/preferences/:uid', async (req, res) => {
+    try {
+        const { preferences } = req.body;
+        console.log(`Updating preferences for UID: ${req.params.uid}`, preferences);
+
+        const user = await User.findOne({ uid: req.params.uid });
+        if (!user) return res.status(404).json({ error: "User not found" });
+
+        // Deep merge logic (or simple overwrite if structure matches)
+        user.preferences = { ...user.preferences, ...preferences };
+
+        // Ensure notifications object is merged correctly 
+        if (preferences.notifications) {
+            user.preferences.notifications = {
+                ...user.preferences.notifications,
+                ...preferences.notifications
+            };
+        }
+
+        await user.save();
+        res.json(user);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 module.exports = router;

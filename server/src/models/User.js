@@ -31,6 +31,22 @@ const userSchema = new mongoose.Schema({
     codeforces: { type: String, default: "" }, // Added
     skills: { type: [String], default: [] },
 
+    // User Preferences
+    preferences: {
+        goal: { type: String, default: "Placements" },
+        difficulty: { type: String, default: "Medium" },
+        topics: { type: [String], default: ["DSA", "Aptitude"] },
+        dailyTarget: { type: Number, default: 3 },
+        notifications: {
+            dailyReminder: { type: Boolean, default: true },
+            weeklyReport: { type: Boolean, default: true },
+            newProblems: { type: Boolean, default: true },
+            marketing: { type: Boolean, default: false }
+        },
+        theme: { type: String, default: "system" },
+        language: { type: String, default: "English (United States)" }
+    },
+
     // Subscription Details
     plan: { type: String, default: 'FREE' }, // 'FREE' or 'PRO'
     paymentStatus: { type: String, default: 'inactive' },
