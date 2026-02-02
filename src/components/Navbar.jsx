@@ -143,11 +143,11 @@ const Navbar = () => {
           >
             <img
               src={logo_img}
-              alt="CodeHub Logo"
+              alt="CodeHubx Logo"
               className="w-9 h-9 rounded-xl shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform duration-300 object-cover"
             />
             <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white via-gray-200 to-gray-400 tracking-tight">
-              CodeHub
+              CodeHubx
             </span>
           </div>
 

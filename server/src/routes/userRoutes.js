@@ -36,6 +36,57 @@ router.post('/sync', async (req, res) => {
     }
 });
 
+// Helper to calculate streak dynamically from history
+const calculateStreak = (history) => {
+    if (!history || history.length === 0) return 0;
+
+    // Get unique normalized dates (Midnight timestamp)
+    const uniqueDays = new Set();
+    history.forEach(sub => {
+        const d = new Date(sub.submittedAt);
+        d.setHours(0, 0, 0, 0); // Normalize to midnight
+        uniqueDays.add(d.getTime());
+    });
+
+    const sortedDays = Array.from(uniqueDays).sort((a, b) => b - a); // Descending (Newest first)
+
+    if (sortedDays.length === 0) return 0;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayTime = today.getTime();
+
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayTime = yesterday.getTime();
+
+    const lastActiveDay = sortedDays[0];
+
+    // If last active day is older than yesterday, streak is broken
+    if (lastActiveDay < yesterdayTime) {
+        return 0;
+    }
+
+    let streak = 0;
+    let currentCheck = lastActiveDay;
+
+    // Count consecutive days backward
+    for (let day of sortedDays) {
+        if (day === currentCheck) {
+            streak++;
+            // Move expectation to previous day
+            const prev = new Date(currentCheck);
+            prev.setDate(prev.getDate() - 1);
+            currentCheck = prev.getTime();
+        } else {
+            // Gap found
+            break;
+        }
+    }
+
+    return streak;
+};
+
 // Get User Status
 router.get('/:uid', async (req, res) => {
     try {
@@ -47,13 +98,24 @@ router.get('/:uid', async (req, res) => {
                 stats: {
                     streak: 0,
                     solvedProblems: 0,
-                    solvedProblemIds: [], // Added missing field
+                    solvedProblemIds: [],
                     totalProblems: 150,
                     timeSpent: "0h 0m",
-                    globalRank: 0
+                    globalRank: 0,
+                    lastSolvedDate: null
                 }
             });
         }
+
+        // Recalculate Streak Dynamically to ensure consistency
+        const dynamicStreak = calculateStreak(user.submissionHistory);
+
+        // Update if different
+        if (user.stats.streak !== dynamicStreak) {
+            user.stats.streak = dynamicStreak;
+            await user.save();
+        }
+
         res.json(user);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -103,6 +165,48 @@ router.put('/:uid', async (req, res) => {
 
         res.json(updatedUser);
     } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Update User Time Spent
+router.post('/update-time', async (req, res) => {
+    const { uid, minutes } = req.body;
+
+    if (!uid || !minutes) {
+        return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    try {
+        const user = await User.findOne({ uid });
+        if (!user) {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        // Initialize totalMinutes if it doesn't exist
+        if (typeof user.stats.totalMinutes !== 'number') {
+            user.stats.totalMinutes = 0;
+            // Try to parse existing string fallback (optional, but good for migration)
+            // Assuming "Xh Ym" format
+            const match = user.stats.timeSpent.match(/(\d+)h (\d+)m/);
+            if (match) {
+                user.stats.totalMinutes = parseInt(match[1]) * 60 + parseInt(match[2]);
+            }
+        }
+
+        // Add new minutes
+        user.stats.totalMinutes += parseInt(minutes);
+
+        // Format to "Xh Ym"
+        const h = Math.floor(user.stats.totalMinutes / 60);
+        const m = user.stats.totalMinutes % 60;
+        user.stats.timeSpent = `${h}h ${m}m`;
+
+        await user.save();
+
+        res.json({ success: true, timeSpent: user.stats.timeSpent });
+    } catch (error) {
+        console.error("Time update error:", error);
         res.status(500).json({ error: error.message });
     }
 });

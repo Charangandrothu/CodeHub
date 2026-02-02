@@ -44,7 +44,7 @@ const SubscriptionButton = () => {
             const options = {
                 key: keyId,
                 subscription_id: subscriptionId,
-                name: "CodeHub Pro",
+                name: "CodeHubx Pro",
                 description: "Monthly Pro Subscription",
                 image: "https://codehub-jj1e.onrender.com/logo.png", // Replace with your logo
                 handler: async function (response) {
@@ -63,7 +63,7 @@ const SubscriptionButton = () => {
                     const verificationData = await verificationRes.json();
 
                     if (verificationData.success) {
-                        toast.success("Welcome to CodeHub Pro!");
+                        toast.success("Welcome to CodeHubx Pro!");
                         await refreshUserData(); // Update context
                     } else {
                         toast.error("Payment verification failed!");

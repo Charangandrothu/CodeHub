@@ -154,7 +154,7 @@ const SignUp = () => {
               transition={{ delay: 0.2 }}
             >
               <h1 className="text-3xl font-bold text-white tracking-tight mb-2">
-                Join <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">CodeHub</span>
+                Join <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">CodeHubx</span>
               </h1>
               <p className="text-gray-400 text-sm">Start your placement preparation journey</p>
             </motion.div>

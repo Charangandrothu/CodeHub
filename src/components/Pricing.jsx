@@ -138,7 +138,7 @@ const Pricing = () => {
                             <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center mb-6 shadow-lg shadow-purple-500/30">
                                 <Crown className="text-white fill-white" size={28} />
                             </div>
-                            <h3 className="text-3xl font-bold text-white mb-2">CodeHub <span className="text-purple-400">Pro</span></h3>
+                            <h3 className="text-3xl font-bold text-white mb-2">CodeHubx <span className="text-purple-400">Pro</span></h3>
                             <p className="text-gray-400">Complete placement preparation suite.</p>
                         </div>
 

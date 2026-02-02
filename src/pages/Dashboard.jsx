@@ -37,31 +37,45 @@ const Dashboard = () => {
         visible: { opacity: 1, y: 0 }
     };
 
-    // Calculate Dynamic Recommendation
-    const upcomingTask = useMemo(() => {
+    // Calculate Dynamic Dashboard State
+    const dashboardState = useMemo(() => {
         const solvedCount = userData?.stats?.solvedProblems || 0;
+        const isNewUser = solvedCount === 0;
 
-        // Define simple roadmap milestones
-        const roadmap = [
-            { count: 0, title: "Welcome to DSA", topic: "Basics of Programming", time: "10 mins" },
-            { count: 5, title: "Pattern Problems", topic: "Loops & Patterns", time: "25 mins" },
-            { count: 15, title: "Arrays & Hashing", topic: "Binary Search", time: "30 mins" },
-            { count: 30, title: "Linked Lists", topic: "Two Pointer Technique", time: "40 mins" },
-            { count: 50, title: "Stacks & Queues", topic: "Data Structures", time: "45 mins" },
-            { count: 75, title: "Trees & Graphs", topic: "Advanced Traversal", time: "60 mins" }
-        ];
-
-        // Find the next milestone based on solved count covers
-        // If solvedCount is 2, it falls before count:5, so return count:5 item as next goal.
-        // If solvedCount is 90, return the last advanced item.
-        const nextMilestone = roadmap.find(milestone => solvedCount < milestone.count) || roadmap[roadmap.length - 1];
-
-        // Special case for absolute beginners (0 solved)
-        if (solvedCount === 0) {
-            return roadmap[0];
+        // Condition 1: New User
+        if (isNewUser) {
+            return {
+                isNewUser: true,
+                title: "Start Learning",
+                subtitle: "Begin your placement journey with structured patterns",
+                buttonText: "Start Learning",
+                roadmapPreview: ["Arrays & Hashing", "Two Pointers", "Sliding Window", "Stacks", "Binary Search"]
+            };
         }
 
-        return nextMilestone;
+        // Condition 2: Existing User - Roadmap Logic
+        const roadmap = [
+            { threshold: 5, section: "Arrays & Hashing", topic: "Basics & Arrays", time: "30 mins" },
+            { threshold: 10, section: "Arrays & Hashing", topic: "Hash Maps & Sets", time: "25 mins" },
+            { threshold: 20, section: "Two Pointers", topic: "String Manipulation", time: "30 mins" },
+            { threshold: 30, section: "Sliding Window", topic: "Dynamic Windows", time: "40 mins" },
+            { threshold: 45, section: "Stack", topic: "LIFO Operations", time: "35 mins" },
+            { threshold: 60, section: "Binary Search", topic: "Search Spaces", time: "45 mins" },
+            { threshold: 80, section: "Linked List", topic: "Pointer Management", time: "50 mins" },
+            { threshold: 100, section: "Trees", topic: "DFS & BFS", time: "60 mins" },
+            { threshold: 150, section: "Graphs", topic: "Advanced Traversal", time: "90 mins" }
+        ];
+
+        // Find next milestone
+        const nextMilestone = roadmap.find(milestone => solvedCount < milestone.threshold) || roadmap[roadmap.length - 1];
+
+        return {
+            isNewUser: false,
+            section: nextMilestone.section,
+            topic: nextMilestone.topic,
+            time: nextMilestone.time,
+            buttonText: "Continue Practice"
+        };
     }, [userData]);
 
 
@@ -85,11 +99,13 @@ const Dashboard = () => {
                                 </div>
                                 <div className="px-2.5 py-0.5 rounded-full bg-orange-500/10 border border-orange-500/20 flex items-center gap-1.5">
                                     <Flame size={10} className="text-orange-500" />
-                                    <span className="text-[10px] font-semibold text-orange-400 uppercase tracking-wide">{userData?.stats?.streak || 0} Day Streak</span>
+                                    <span className="text-[10px] font-semibold text-orange-400 uppercase tracking-wide">
+                                        {userData?.stats?.streak > 0 ? `${userData.stats.streak} Day Streak` : "0 Day Streak"}
+                                    </span>
                                 </div>
                             </div>
                             <h1 className="text-2xl font-bold text-white tracking-tight">
-                                Welcome back, <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">{currentUser?.displayName || 'Developer'}</span> 👋
+                                {dashboardState.isNewUser ? "Welcome" : "Welcome back"}, <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">{currentUser?.displayName || 'Developer'}</span> 👋
                             </h1>
                             <p className="text-gray-400 text-sm mt-1">Continue your structured placement preparation</p>
                         </div>
@@ -111,39 +127,61 @@ const Dashboard = () => {
                     {/* Main Content Area (2 Cols) */}
                     <div className="lg:col-span-2 space-y-6">
 
-                        {/* Continue Learning CTA - Primary Focus */}
+                        {/* Dynamic Main Action Card */}
                         <motion.div
                             variants={itemVariants}
-                            className="group relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-blue-900/10 via-white/[0.02] to-transparent p-6 hover:border-blue-500/30 transition-all duration-300"
+                            className={`group relative overflow-hidden rounded-2xl border ${dashboardState.isNewUser ? 'border-purple-500/30' : 'border-white/10'} bg-gradient-to-br from-blue-900/10 via-white/[0.02] to-transparent p-6 hover:border-blue-500/30 transition-all duration-300`}
                         >
                             <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
-                            <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-                                <div className="flex items-start gap-4">
-                                    <div className="p-3.5 rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-500/20">
-                                        <Code2 size={24} />
-                                    </div>
-                                    <div>
-                                        <p className="text-xs text-blue-400 font-medium uppercase tracking-wider mb-1">Coming Next</p>
-                                        <h3 className="text-lg font-bold text-white mb-1 group-hover:text-blue-300 transition-colors">{upcomingTask.title}</h3>
-                                        <p className="text-sm text-gray-400 mb-2 flex items-center gap-2">
-                                            <span>Topic: {upcomingTask.topic}</span>
-                                            <span className="w-1 h-1 rounded-full bg-gray-600" />
-                                            <span>{upcomingTask.time} remaining</span>
-                                        </p>
-                                        <div className="w-48 h-1 bg-white/10 rounded-full overflow-hidden">
-                                            <div className="h-full w-[65%] bg-blue-500 rounded-full" />
+                            <div className="relative z-10 flex flex-col gap-6">
+                                <div className="flex flex-col sm:flex-row w-full items-start sm:items-center justify-between gap-6">
+                                    <div className="flex items-start gap-4">
+                                        <div className={`p-3.5 rounded-xl ${dashboardState.isNewUser ? 'bg-gradient-to-br from-purple-600 to-blue-600' : 'bg-gradient-to-br from-blue-600 to-blue-700'} text-white shadow-lg shadow-blue-500/20 shrink-0`}>
+                                            <Code2 size={24} />
+                                        </div>
+                                        <div className="space-y-1">
+                                            {dashboardState.isNewUser ? (
+                                                <>
+                                                    <h3 className="text-xl font-bold text-white">Start Learning</h3>
+                                                    <p className="text-sm text-gray-400 mb-3">Begin your placement journey with structured patterns</p>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {dashboardState.roadmapPreview.map((tag, i) => (
+                                                            <span key={i} className="text-[10px] px-2 py-1 rounded-md bg-white/5 border border-white/10 text-gray-400">
+                                                                {tag}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <p className="text-xs text-blue-400 font-medium uppercase tracking-wider mb-1">COMING NEXT</p>
+                                                    <h3 className="text-lg font-bold text-white mb-1 group-hover:text-blue-300 transition-colors">{dashboardState.section}</h3>
+                                                    <p className="text-sm text-gray-400 mb-2 flex items-center gap-2">
+                                                        <span>Topic: {dashboardState.topic}</span>
+                                                        <span className="w-1 h-1 rounded-full bg-gray-600" />
+                                                        <span>{dashboardState.time} remaining</span>
+                                                    </p>
+                                                    <div className="w-48 h-1 bg-white/10 rounded-full overflow-hidden">
+                                                        <motion.div
+                                                            initial={{ width: 0 }}
+                                                            animate={{ width: "35%" }}
+                                                            className="h-full bg-blue-500 rounded-full"
+                                                        />
+                                                    </div>
+                                                </>
+                                            )}
                                         </div>
                                     </div>
-                                </div>
 
-                                <Button
-                                    className="shrink-0 w-full sm:w-auto"
-                                    icon={ArrowRight}
-                                    onClick={() => navigate('/dsa')}
-                                >
-                                    Continue Practice
-                                </Button>
+                                    <Button
+                                        className={`w-full sm:w-auto shrink-0 ${dashboardState.isNewUser ? 'bg-white text-black hover:bg-gray-100' : ''}`}
+                                        icon={ArrowRight}
+                                        onClick={() => navigate('/dsa')}
+                                    >
+                                        {dashboardState.buttonText}
+                                    </Button>
+                                </div>
                             </div>
                         </motion.div>
 
@@ -195,7 +233,7 @@ const Dashboard = () => {
                                     color="text-orange-500"
                                     bg="bg-orange-500/10"
                                     label="Current Streak"
-                                    value={`${userData?.stats?.streak || 0} Days`}
+                                    value={userData?.stats?.streak > 0 ? `${userData.stats.streak} Days` : "0 Days"}
                                 />
                                 <StatRow
                                     icon={CheckCircle2}

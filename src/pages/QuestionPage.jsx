@@ -302,6 +302,86 @@ export default function QuestionPage() {
         return () => window.removeEventListener("keydown", handleKeyDown);
     }, []);
 
+    // --- Server Wake-up & Time Tracking ---
+    useEffect(() => {
+        // 0. Wake up server immediately on load (Fire & Forget)
+        // This ensures Render/Heroku is awake by the time we need to sync data
+        fetch(`${API_URL}/api/health`).catch(() => { });
+
+        if (!currentUser) return;
+
+        const SYNC_INTERVAL = 5 * 60 * 1000; // Sync every 5 minutes
+        const ONE_MINUTE = 60 * 1000;
+
+        // Ref to track unsynced minutes locally
+        let unsyncedMinutes = 0;
+        let intervalId;
+
+        // Function to push data to server
+        const syncTime = async () => {
+            if (unsyncedMinutes > 0 && document.visibilityState === 'visible') {
+                const minutesToSend = unsyncedMinutes;
+                unsyncedMinutes = 0; // Reset immediately to avoid double sending
+
+                try {
+                    // Use fetch with keepalive for reliability on page exit
+                    fetch(`${API_URL}/api/users/update-time`, {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            uid: currentUser.uid,
+                            minutes: minutesToSend
+                        }),
+                        headers: { 'Content-Type': 'application/json' },
+                        keepalive: true
+                    });
+                } catch (err) {
+                    // If fail, add back (simple retry logic)
+                    unsyncedMinutes += minutesToSend;
+                    console.error("Failed to sync time:", err);
+                }
+            }
+        };
+
+        // 1. Tick every minute to update local counter
+        intervalId = setInterval(() => {
+            if (!document.hidden) {
+                unsyncedMinutes += 1;
+
+                // If we hit the batch size (5 mins), sync
+                if (unsyncedMinutes >= 5) {
+                    syncTime();
+                }
+            }
+        }, ONE_MINUTE);
+
+        // 2. Sync on tab close / navigation
+        const handleVisibilityChange = () => {
+            if (document.hidden) {
+                syncTime();
+            }
+        };
+
+        // 3. Sync on component unmount
+        return () => {
+            clearInterval(intervalId);
+            document.removeEventListener("visibilitychange", handleVisibilityChange);
+            syncTime(); // Final sync attempt
+        };
+    }, [currentUser]);
+
+    // Add listener separately to ensure clean mount/unmount logic for events
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            if (document.hidden) {
+                // We reference the logic inside the main effect via event listener, 
+                // but simpler to just auto-save on hide here if needed or let the main interval handle it.
+                // The main effect handles visibility logic via the interval check.
+            }
+        };
+        document.addEventListener("visibilitychange", handleVisibilityChange);
+        return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+    }, []);
+
     if (loading) {
         return (
             <div className="min-h-screen pt-20 flex items-center justify-center bg-[#0a0a0a]">
@@ -365,11 +445,11 @@ export default function QuestionPage() {
                 >
                     <img
                         src={logo_img}
-                        alt="CodeHub"
+                        alt="CodeHubx"
                         className="w-8 h-8 rounded-lg object-contain"
                     />
                     <div className="flex flex-col">
-                        <span className="text-sm font-semibold text-[#e5e5e5] tracking-tight group-hover:text-white transition-colors">CodeHub</span>
+                        <span className="text-sm font-semibold text-[#e5e5e5] tracking-tight group-hover:text-white transition-colors">CodeHubx</span>
                     </div>
                     <div className="h-4 w-[1px] bg-[#333333] mx-1" />
                     <span className="text-xs text-[#a3a3a3] font-medium transition-colors">Problem Solving</span>

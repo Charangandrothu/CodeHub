@@ -39,7 +39,7 @@ const Pricing = () => {
                         transition={{ delay: 0.1 }}
                         className="text-4xl md:text-5xl font-bold text-white mb-6 tracking-tight"
                     >
-                        Upgrade to <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">CodeHub Pro</span>
+                        Upgrade to <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">CodeHubx Pro</span>
                     </motion.h1>
                     <motion.p
                         initial={{ opacity: 0, y: 20 }}

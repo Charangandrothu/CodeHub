@@ -11,7 +11,9 @@ const userSchema = new mongoose.Schema({
         solvedProblemIds: { type: [String], default: [] }, // Array of Problem IDs
         totalProblems: { type: Number, default: 150 },
         timeSpent: { type: String, default: "0h 0m" },
-        globalRank: { type: Number, default: 0 }
+        totalMinutes: { type: Number, default: 0 }, // For easier calculation
+        globalRank: { type: Number, default: 0 },
+        lastSolvedDate: { type: Date, default: null } // Track last solved date for streak
     },
     submissionHistory: [{
         problemId: String,

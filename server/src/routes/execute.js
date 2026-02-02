@@ -386,9 +386,33 @@ router.post("/submit", async (req, res) => {
                     userUpdate.stats.solvedProblemIds.push(problemId);
                     userUpdate.stats.solvedProblems = userUpdate.stats.solvedProblemIds.length;
 
-                    // Simple streak logic (if last submission wasn't today, increment streak)
-                    // This is a naive implementation; for production, check dates properly
-                    userUpdate.stats.streak = (userUpdate.stats.streak || 0) + 1;
+                    // Advanced Streak Logic
+                    const now = new Date();
+                    const lastDate = userUpdate.stats.lastSolvedDate ? new Date(userUpdate.stats.lastSolvedDate) : null;
+
+                    // Reset time to midnight for accurate day comparison
+                    const todayMid = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                    const lastMid = lastDate ? new Date(lastDate.getFullYear(), lastDate.getMonth(), lastDate.getDate()) : null;
+
+                    if (!lastMid) {
+                        // First problem ever solved
+                        userUpdate.stats.streak = 1;
+                    } else {
+                        const diffTime = Math.abs(todayMid - lastMid);
+                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                        if (diffDays === 1) {
+                            // Solved yesterday -> Increment streak
+                            userUpdate.stats.streak = (userUpdate.stats.streak || 0) + 1;
+                        } else if (diffDays > 1) {
+                            // Missed one or more days -> Reset streak to 1 (for today)
+                            userUpdate.stats.streak = 1;
+                        }
+                        // If diffDays === 0 (solved previously today), do NOT increment
+                    }
+
+                    // Update last solved date to now
+                    userUpdate.stats.lastSolvedDate = now;
                 }
 
                 await userUpdate.save();
