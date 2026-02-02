@@ -382,12 +382,34 @@ export default function QuestionPage() {
         return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
     }, []);
 
+    // --- Smart Loading State ---
+    const [longLoading, setLongLoading] = useState(false);
+
+    useEffect(() => {
+        let timer;
+        if (loading) {
+            timer = setTimeout(() => setLongLoading(true), 3000); // If loading > 3s, show "Waking up"
+        } else {
+            setLongLoading(false);
+        }
+        return () => clearTimeout(timer);
+    }, [loading]);
+
     if (loading) {
         return (
-            <div className="min-h-screen pt-20 flex items-center justify-center bg-[#0a0a0a]">
-                <div className="flex flex-col items-center gap-4">
-                    <div className="w-12 h-12 border-4 border-purple-500/30 border-t-purple-500 rounded-full animate-spin" />
-                    <p className="text-gray-400 font-medium">Loading problem...</p>
+            <div className="min-h-screen pt-20 flex flex-col items-center justify-center bg-[#0a0a0a] gap-4">
+                <div className="w-12 h-12 border-4 border-purple-500/30 border-t-purple-500 rounded-full animate-spin" />
+                <div className="text-center">
+                    <p className="text-gray-300 font-medium text-lg">Loading problem...</p>
+                    {longLoading && (
+                        <motion.p
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            className="text-gray-500 text-sm mt-2 max-w-xs mx-auto"
+                        >
+                            Server is waking up from sleep mode.<br />This may take up to 60 seconds.
+                        </motion.p>
+                    )}
                 </div>
             </div>
         );
