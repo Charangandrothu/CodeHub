@@ -19,7 +19,7 @@
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "firebase": "^12.7.0",
-    "framer-motion": "^12.24.10",
+    "framer-motion": "^12.30.0",
     "lucide-react": "^0.562.0",
     "mongoose": "^9.1.5",
     "razorpay": "^2.9.6",

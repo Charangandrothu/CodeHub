@@ -43,7 +43,7 @@ const LoadingScreen = () => {
                 </div>
 
                 <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent mb-6">
-                    CodeHub
+                    CodeHubx
                 </h2>
 
                 <div className="min-h-[60px] flex flex-col items-center justify-center w-full">

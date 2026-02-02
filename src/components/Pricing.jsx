@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
 import { Check, X, Zap, Crown, Sparkles, Box, Rocket } from 'lucide-react';
 
@@ -17,6 +19,16 @@ const Pricing = () => {
     ];
 
     const [isYearly, setIsYearly] = useState(false);
+    const { currentUser } = useAuth();
+    const navigate = useNavigate();
+
+    const handleGetStarted = () => {
+        if (currentUser) {
+            navigate('/dashboard');
+        } else {
+            navigate('/login');
+        }
+    };
 
     return (
         <section id="pricing" className="relative min-h-screen bg-[#0a0a0a] py-24 sm:py-32 overflow-hidden">
@@ -113,7 +125,9 @@ const Pricing = () => {
                             <FeatureRow text="Community Discussions" icon={Check} disabled={false} />
                         </motion.div>
 
-                        <button className="w-full py-4 rounded-xl border border-white/10 text-white font-semibold hover:bg-white/5 hover:border-white/20 transition-all flex items-center justify-center gap-2 group-hover:tracking-wide">
+                        <button
+                            onClick={handleGetStarted}
+                            className="w-full py-4 rounded-xl border border-white/10 text-white font-semibold hover:bg-white/5 hover:border-white/20 transition-all flex items-center justify-center gap-2 group-hover:tracking-wide">
                             Start for Free
                         </button>
                     </motion.div>
@@ -168,6 +182,7 @@ const Pricing = () => {
                         </motion.div>
 
                         <motion.button
+                            onClick={handleGetStarted}
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                             className="relative z-10 w-full py-4 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold text-lg shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-shadow flex items-center justify-center gap-2"
@@ -197,6 +212,7 @@ const Pricing = () => {
                 >
                     <h3 className="text-2xl font-bold text-white mb-6">Crack Placements with Confidence 🚀</h3>
                     <motion.button
+                        onClick={handleGetStarted}
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         animate={{ boxShadow: ["0 0 0 0 rgba(255, 255, 255, 0)", "0 0 0 10px rgba(255, 255, 255, 0)"] }}

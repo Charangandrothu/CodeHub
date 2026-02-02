@@ -88,7 +88,7 @@ const Navbar = () => {
   };
 
   const navLinks = currentUser ? [
-    { name: 'Dashboard', path: '/' },
+    { name: 'Dashboard', path: '/dashboard' },
     { name: 'DSA', path: '/dsa' },
     { name: 'Mock Tests', path: '/mock-tests' },
     { name: 'Aptitude', path: '/aptitude' },
@@ -134,10 +134,20 @@ const Navbar = () => {
           <div
             className="flex items-center gap-3 cursor-pointer group"
             onClick={() => {
-              if (location.pathname === '/') {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              } else {
+              // Hierarchical Navigation Logic
+              if (location.pathname === '/dashboard') {
+                // Should go "back" to Landing Page
                 navigate('/');
+              } else if (currentUser && location.pathname !== '/') {
+                // If on any other internal page (DSA, etc.), go to Dashboard
+                navigate('/dashboard');
+              } else {
+                // Determine scrolling or standard home nav
+                if (location.pathname === '/') {
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else {
+                  navigate('/');
+                }
               }
             }}
           >
@@ -324,7 +334,7 @@ const Navbar = () => {
                             navigate('/profile');
                           }}
                         />
-                        <MenuLink icon={LayoutDashboard} label="Dashboard" onClick={() => navigate('/')} />
+                        <MenuLink icon={LayoutDashboard} label="Dashboard" onClick={() => navigate('/dashboard')} />
                         <MenuLink
                           icon={Settings}
                           label="Settings"
