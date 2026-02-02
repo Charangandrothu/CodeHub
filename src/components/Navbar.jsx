@@ -325,7 +325,14 @@ const Navbar = () => {
                           }}
                         />
                         <MenuLink icon={LayoutDashboard} label="Dashboard" onClick={() => navigate('/')} />
-                        <MenuLink icon={Settings} label="Settings" />
+                        <MenuLink
+                          icon={Settings}
+                          label="Settings"
+                          onClick={() => {
+                            setShowProfileMenu(false);
+                            navigate('/settings');
+                          }}
+                        />
                       </div>
                       <div className="p-2 border-t border-white/5">
                         <button

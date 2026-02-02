@@ -11,6 +11,7 @@ import Pricing from './pages/Pricing'
 import MockTests from './pages/MockTests'
 import Aptitude from './pages/Aptitude'
 import Profile from './pages/Profile'
+import Settings from './pages/Settings'
 
 import { useAuth } from './context/AuthContext'
 
@@ -30,6 +31,7 @@ function AppRoutes() {
       <Route path="/mock-tests" element={<MockTests />} />
       <Route path="/aptitude" element={<Aptitude />} />
       <Route path="/profile" element={<Profile />} />
+      <Route path="/settings" element={<Settings />} />
     </Routes>
   );
 }
