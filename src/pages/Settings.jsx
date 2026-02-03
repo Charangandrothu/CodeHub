@@ -131,12 +131,12 @@ const Settings = () => {
                         <div className="relative">
                             <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 p-[2px]">
                                 <img
-                                    src={currentUser?.photoURL || `https://ui-avatars.com/api/?name=${currentUser?.displayName}&background=0D8ABC&color=fff`}
+                                    src={userData?.photoURL || currentUser?.photoURL || `https://ui-avatars.com/api/?name=${currentUser?.displayName}&background=0D8ABC&color=fff`}
                                     alt="Profile"
                                     className="w-full h-full rounded-full object-cover border-2 border-[#1a1a1a]"
                                 />
                             </div>
-                            <button className="absolute bottom-0 right-0 p-1 rounded-full bg-white text-black hover:bg-gray-200 transition-colors">
+                            <button className="absolute bottom-0 right-0 p-1 rounded-full bg-white text-black hover:bg-gray-200 transition-colors" onClick={() => window.location.href = '/profile'}>
                                 <Camera size={10} />
                             </button>
                         </div>

@@ -17,6 +17,7 @@ router.post('/sync', async (req, res) => {
             user = new User({
                 uid,
                 email,
+                photoURL: photoURL || "",
                 isPro: false,
                 stats: {
                     streak: 0,
@@ -28,6 +29,12 @@ router.post('/sync', async (req, res) => {
                 }
             });
             await user.save();
+        } else {
+            // Optional: Update photoURL on sync if it changes from provider (commented out to prefer manual selection)
+            // if (photoURL && user.photoURL !== photoURL) {
+            //    user.photoURL = photoURL;
+            //    await user.save();
+            // }
         }
 
         res.json(user);
@@ -125,7 +132,7 @@ router.get('/:uid', async (req, res) => {
 // Update User Profile
 router.put('/:uid', async (req, res) => {
     try {
-        const { role, college, portfolio, github, linkedin, leetcode, codeforces, skills, email } = req.body;
+        const { role, college, portfolio, github, linkedin, leetcode, codeforces, skills, email, photoURL } = req.body;
 
         console.log(`Updating profile for UID: ${req.params.uid}`);
 
@@ -134,6 +141,7 @@ router.put('/:uid', async (req, res) => {
             {
                 $set: {
                     ...(email && { email }), // Only update email if provided (it should be)
+                    ...(photoURL && { photoURL }), // Update photoURL if provided
                     role,
                     college,
                     portfolio,

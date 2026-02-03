@@ -19,8 +19,22 @@ const Profile = () => {
         linkedin: "",
         portfolio: "",
         leetcode: "",
-        codeforces: ""
+        codeforces: "",
+        photoURL: ""
     });
+
+    const AVATARS = [
+        // Boys - Verified Hex Codes
+        "https://api.dicebear.com/7.x/avataaars/svg?seed=Alexander&skinColor=ffdbb4&backgroundColor=c0aede",
+        "https://api.dicebear.com/7.x/avataaars/svg?seed=Mason&skinColor=edb98a&backgroundColor=b6e3f4",
+        "https://api.dicebear.com/7.x/avataaars/svg?seed=Ethan&skinColor=ffdbb4&backgroundColor=d1d4f9",
+        "https://api.dicebear.com/7.x/avataaars/svg?seed=Ryan&skinColor=edb98a&backgroundColor=ffdfbf",
+        // Girls - Verified Hex Codes
+        "https://api.dicebear.com/7.x/avataaars/svg?seed=Jessica&skinColor=ffdbb4&backgroundColor=b6e3f4",
+        "https://api.dicebear.com/7.x/avataaars/svg?seed=Lily&skinColor=edb98a&backgroundColor=c0aede",
+        "https://api.dicebear.com/7.x/avataaars/svg?seed=Sophie&skinColor=ffdbb4&backgroundColor=ffdfbf",
+        "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah&skinColor=edb98a&backgroundColor=d1d4f9"
+    ];
 
     // Update local state when user data loads
     useEffect(() => {
@@ -32,14 +46,15 @@ const Profile = () => {
                 linkedin: userData.linkedin || "",
                 portfolio: userData.portfolio || "",
                 leetcode: userData.leetcode || "",
-                codeforces: userData.codeforces || ""
+                codeforces: userData.codeforces || "",
+                photoURL: userData.photoURL || currentUser?.photoURL || ""
             });
         }
-    }, [userData]);
+    }, [userData, currentUser]);
 
     // Dynamic User Props from Auth Context + Placeholders where data missing
     const userProps = {
-        profileImageUrl: currentUser?.photoURL || "https://api.dicebear.com/7.x/avataaars/svg?seed=" + (currentUser?.uid || "User"),
+        profileImageUrl: userData?.photoURL || currentUser?.photoURL || "https://api.dicebear.com/7.x/avataaars/svg?seed=" + (currentUser?.uid || "User"),
         isVerified: userData?.isPro || false,
         username: currentUser?.displayName || currentUser?.email?.split('@')[0] || "User",
         role: userData?.role || "Full Stack Developer",
@@ -197,12 +212,39 @@ const Profile = () => {
                             <motion.div
                                 initial={{ opacity: 0, scale: 0.95 }}
                                 animate={{ opacity: 1, scale: 1 }}
-                                className="bg-[#0f0f0f] border border-white/10 rounded-2xl w-full max-w-lg p-6 shadow-2xl relative"
+                                className="bg-[#0f0f0f] border border-white/10 rounded-2xl w-full max-w-lg p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto"
                             >
                                 <h2 className="text-xl font-bold text-white mb-4">Edit Profile</h2>
-                                <p className="text-gray-400 text-sm mb-6">Update your personal details and social links.</p>
+                                <p className="text-gray-400 text-sm mb-6">Update your personal details and avatar.</p>
 
-                                <div className="space-y-4">
+                                <div className="space-y-6">
+                                    {/* Avatar Selection - Added as per request */}
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-400 mb-3">Choose Avatar</label>
+                                        <div className="grid grid-cols-4 gap-4">
+                                            {AVATARS.map((avatar, index) => (
+                                                <div
+                                                    key={index}
+                                                    onClick={() => setFormData({ ...formData, photoURL: avatar })}
+                                                    className={`cursor-pointer relative rounded-full p-1 transition-all hover:scale-105 aspect-square flex items-center justify-center ${formData.photoURL === avatar ? 'bg-blue-500 ring-2 ring-blue-500 ring-offset-2 ring-offset-black' : 'bg-transparent hover:bg-white/10'}`}
+                                                >
+                                                    <img
+                                                        src={avatar}
+                                                        alt={`Avatar ${index + 1}`}
+                                                        className="w-full h-full rounded-full object-cover"
+                                                    />
+                                                    {formData.photoURL === avatar && (
+                                                        <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-full">
+                                                            <div className="bg-blue-500 rounded-full p-1">
+                                                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-white"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
                                     <div>
                                         <label className="block text-xs font-medium text-gray-400 mb-1">Role</label>
                                         <select

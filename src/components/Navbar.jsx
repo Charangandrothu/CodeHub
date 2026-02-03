@@ -289,8 +289,8 @@ const Navbar = () => {
                   className="flex items-center gap-2 p-1 pl-2 pr-3 rounded-full border border-white/10 hover:bg-white/5 hover:border-white/20 transition-all duration-300 group"
                 >
                   <div className="relative w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-xs ring-2 ring-[#0a0a0a] group-hover:ring-purple-500/50 transition-all overflow-hidden">
-                    {currentUser.photoURL ? (
-                      <img src={currentUser.photoURL} alt="Profile" className="w-full h-full object-cover" />
+                    {userData?.photoURL || currentUser.photoURL ? (
+                      <img src={userData?.photoURL || currentUser.photoURL} alt="Profile" className="w-full h-full object-cover" />
                     ) : (
                       currentUser.displayName ? currentUser.displayName[0].toUpperCase() : (currentUser.email ? currentUser.email[0].toUpperCase() : 'U')
                     )}
