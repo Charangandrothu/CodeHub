@@ -4,7 +4,7 @@ import { API_URL } from '../config';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-hot-toast'; // Assuming you have toast or use alert
 
-const SubscriptionButton = () => {
+const SubscriptionButton = (props) => {
     const { currentUser, refreshUserData } = useAuth();
     const [loading, setLoading] = useState(false);
 
@@ -97,15 +97,17 @@ const SubscriptionButton = () => {
         <button
             onClick={handleSubscription}
             disabled={loading}
-            className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-3 px-6 rounded-xl transition-all shadow-lg hover:shadow-blue-500/25 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className={props.className || "w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-3 px-6 rounded-xl transition-all shadow-lg hover:shadow-blue-500/25 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"}
         >
             {loading ? (
                 <span className="animate-pulse">Processing...</span>
             ) : (
-                <>
-                    <span>Upgrade to PRO</span>
-                    <span className="bg-white/20 text-xs py-0.5 px-2 rounded-full">₹99/mo</span>
-                </>
+                props.children || (
+                    <>
+                        <span>Upgrade to PRO</span>
+                        <span className="bg-white/20 text-xs py-0.5 px-2 rounded-full">₹99/mo</span>
+                    </>
+                )
             )}
         </button>
     );

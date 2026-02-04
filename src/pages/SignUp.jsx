@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { createUserWithEmailAndPassword, updateProfile, signOut } from "firebase/auth";
 import { setDoc, doc } from "firebase/firestore";
 import { auth, db } from '../firebase';
+import { useAuth } from '../context/AuthContext';
 import { motion, useMotionValue, useTransform, useSpring } from 'framer-motion'
 import { useNavigate, Link } from 'react-router-dom'
 import { Mail, Lock, User, ArrowRight, Loader2, Eye, EyeOff } from 'lucide-react'
@@ -17,6 +18,15 @@ const SignUp = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [passwordError, setPasswordError] = useState('')
   const [focusedField, setFocusedField] = useState(null)
+
+  const { currentUser } = useAuth();
+
+  // Redirect if already logged in (and not currently signing up)
+  useEffect(() => {
+    if (currentUser && !isLoading) {
+      navigate('/dashboard');
+    }
+  }, [currentUser, isLoading, navigate]);
 
   // Mouse parallax effect
   const mouseX = useMotionValue(0)

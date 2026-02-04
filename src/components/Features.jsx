@@ -68,6 +68,7 @@ const Features = () => {
                 <FeatureSection
                     title="Master Data Structures & Algorithms"
                     description="Comprehensive topic-wise practice with curated problems from top product-based companies. Track your mastery across Arrays, Graphs, DP, and more."
+                    link="/dsa"
                     icon={Code2}
                     gradient="from-blue-600 to-cyan-500"
                     align="left"
@@ -110,33 +111,13 @@ const Features = () => {
                 </FeatureSection>
 
                 {/* 2. DSA Contests */}
-                <FeatureSection
-                    title="Compete in Live Contests"
-                    description="Experience real interview pressure with bi-weekly contests. Climb the global leaderboard and earn badges to showcase your competitive programming skills."
-                    icon={Trophy}
-                    gradient="from-yellow-500 to-orange-500"
-                    align="right"
-                >
-                    <div className="relative rounded-2xl bg-[#0F0F0F] border border-white/10 p-6 overflow-hidden">
-                        {/* Leaderboard Entries */}
-                        <div className="space-y-3">
-                            <LeaderboardRow rank={1} name="Charan Gandrothu" score={1200} country="🇺🇸" />
-                            <LeaderboardRow rank={2} name="Priya Sharma" score={1180} country="🇮🇳" />
-                            <LeaderboardRow rank={3} name="Jordan Lee" score={1150} country="🇬🇧" />
-                        </div>
 
-                        {/* Countdown Overlay */}
-                        <div className="mt-6 flex justify-between items-center bg-white/5 rounded-xl p-3 border border-white/5">
-                            <div className="text-xs text-gray-400">Next Contest Starts In:</div>
-                            <div className="font-mono text-orange-400 font-bold">04 : 12 : 36</div>
-                        </div>
-                    </div>
-                </FeatureSection>
 
                 {/* 3. Aptitude & Reasoning */}
                 <FeatureSection
                     title="Aptitude & Logical Reasoning"
                     description="Don't let aptitude be the bottleneck. Dedicated modules for Quantitative, Logical, and Verbal ability with theory, practice, and timed tests."
+                    link="/aptitude"
                     icon={BrainCircuit}
                     gradient="from-pink-500 to-rose-500"
                     align="left"
@@ -159,6 +140,7 @@ const Features = () => {
                 <FeatureSection
                     title="Company-Specific Mock Tests"
                     description="Simulate the actual placement drive environment. Focused tests on Aptitude and Reasoning tailored for specific companies."
+                    link="/mock-tests"
                     icon={Target}
                     gradient="from-emerald-500 to-green-400"
                     align="right"
@@ -187,10 +169,10 @@ const Features = () => {
                             </div>
                         </div>
                     </div>
-                </FeatureSection>
+                </FeatureSection >
 
                 {/* 5. Analytics */}
-                <FeatureSection
+                < FeatureSection
                     title="Deep Performance Analytics"
                     description="Understand your strengths and weaknesses with detailed visual reports. Get an 'Interview Readiness Score' to know exactly when you're ready."
                     icon={Activity}
@@ -225,10 +207,10 @@ const Features = () => {
                             </div>
                         </div>
                     </div>
-                </FeatureSection>
+                </FeatureSection >
 
                 {/* 6. AI Assistance */}
-                <FeatureSection
+                < FeatureSection
                     title="AI-Powered Assistance"
                     description="Stuck on a problem? Get intelligent hints, complexity analysis, and step-by-step explanations without seeing the full solution."
                     icon={Sparkles}
@@ -261,22 +243,22 @@ const Features = () => {
                             </div>
                         </div>
                     </div>
-                </FeatureSection>
-            </div>
+                </FeatureSection >
+            </div >
 
 
-        </section>
+        </section >
     );
 };
 
 // Sub-components for cleaner code
-const FeatureSection = ({ title, description, icon: Icon, gradient, align, children }) => {
+const FeatureSection = ({ title, description, link, icon: Icon, gradient, align, children }) => {
     const navigate = useNavigate();
     const { currentUser } = useAuth();
 
     const handleLearnMore = () => {
         if (currentUser) {
-            navigate('/dashboard');
+            navigate(link || '/dashboard');
         } else {
             navigate('/login');
         }

@@ -28,11 +28,7 @@ function AppRoutes() {
           <Login />
         </PublicRoute>
       } />
-      <Route path="/signup" element={
-        <PublicRoute>
-          <SignUp />
-        </PublicRoute>
-      } />
+      <Route path="/signup" element={<SignUp />} />
       <Route path="/pricing" element={<Pricing />} />
 
       {/* Protected Routes - Only for authenticated users */}

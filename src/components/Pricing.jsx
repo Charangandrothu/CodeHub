@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
 import { Check, X, Zap, Crown, Sparkles, Box, Rocket } from 'lucide-react';
+import SubscriptionButton from './SubscriptionButton';
 
 const Pricing = () => {
     // Pricing data
@@ -181,14 +182,17 @@ const Pricing = () => {
                             <FeatureRow text="Verified Pro Certificate" icon={Crown} highlightColor="text-orange-400" highlight />
                         </motion.div>
 
-                        <motion.button
-                            onClick={handleGetStarted}
+                        <motion.div
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
-                            className="relative z-10 w-full py-4 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold text-lg shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-shadow flex items-center justify-center gap-2"
+                            className="relative z-10 w-full"
                         >
-                            Upgrade to Pro <ArrowRight size={18} />
-                        </motion.button>
+                            <SubscriptionButton
+                                className="w-full py-4 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold text-lg shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-shadow flex items-center justify-center gap-2"
+                            >
+                                Upgrade to Pro <ArrowRight size={18} />
+                            </SubscriptionButton>
+                        </motion.div>
                     </motion.div>
                 </div>
 
