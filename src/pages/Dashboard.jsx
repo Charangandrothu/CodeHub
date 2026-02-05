@@ -17,6 +17,7 @@ import {
     Zap
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
+import DailyQuote from '../components/dsa/DailyQuote';
 
 const Dashboard = () => {
     const { currentUser, userData } = useAuth();
@@ -259,14 +260,8 @@ const Dashboard = () => {
                             </div>
                         </div>
 
-                        {/* Mini Motivation */}
-                        <div className="p-5 rounded-2xl border border-white/5 bg-gradient-to-br from-purple-900/10 to-blue-900/10">
-                            <BookOpen size={20} className="text-purple-400 mb-3" />
-                            <p className="text-gray-300 text-sm italic leading-relaxed">
-                                "Code is like humor. When you have to explain it, it’s bad."
-                            </p>
-                            <p className="text-xs text-gray-500 mt-2">— Cory House</p>
-                        </div>
+                        {/* Mini Motivation - Dynamic */}
+                        <DailyQuote />
                     </motion.div>
 
                 </div>

@@ -113,39 +113,25 @@ const SubmissionResultPanel = ({ submissionResult, output }) => {
                 </motion.div>
             )}
 
-            {/* Premium Stats Grid */}
+            {/* Premium Stats Placeholders (Visual Candy) */}
             {isSuccess && (
-                <motion.div variants={item} className="grid grid-cols-2 gap-2 mt-auto">
-                    {/* Runtime */}
-                    <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-xl p-3 flex flex-col items-center justify-center gap-1">
-                        <div className="flex items-center gap-2 text-zinc-500 mb-1">
-                            <Clock size={14} />
-                            <span className="text-[10px] font-bold uppercase tracking-wider">Runtime</span>
+                <motion.div variants={item} className="grid grid-cols-2 gap-3 mt-auto">
+                    <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-xl p-3 flex items-center gap-3">
+                        <div className="p-2 bg-green-500/10 rounded-lg text-green-400">
+                            <Clock size={16} />
                         </div>
-                        <p className="text-sm font-mono font-bold text-green-400">
-                            {submissionResult.time !== "N/A" ? `${submissionResult.time}ms` : "N/A"}
-                        </p>
-                    </div>
-
-                    {/* Memory */}
-                    <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-xl p-3 flex flex-col items-center justify-center gap-1">
-                        <div className="flex items-center gap-2 text-zinc-500 mb-1">
-                            <Database size={14} />
-                            <span className="text-[10px] font-bold uppercase tracking-wider">Memory</span>
+                        <div>
+                            <p className="text-[10px] text-zinc-500 uppercase font-bold">Runtime</p>
+                            <p className="text-xs font-mono text-zinc-300">~24ms</p>
                         </div>
-                        <p className="text-sm font-mono font-bold text-purple-400">
-                            {submissionResult.memory !== "N/A" ? `${submissionResult.memory}MB` : "N/A"}
-                        </p>
                     </div>
-
-                    {/* Test Cases Count (Full Width) */}
-                    <div className="col-span-2 bg-zinc-900/50 border border-zinc-800/50 rounded-xl p-3 flex items-center justify-between px-6">
-                        <span className="text-[10px] uppercase font-bold text-zinc-500 tracking-wider">Test Cases Passed</span>
-                        <div className="flex items-center gap-2">
-                            <CheckCircle2 size={16} className="text-green-500" />
-                            <span className="text-sm font-mono font-bold text-zinc-200">
-                                {submissionResult.passedTestCases} / {submissionResult.totalTestCases}
-                            </span>
+                    <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-xl p-3 flex items-center gap-3">
+                        <div className="p-2 bg-purple-500/10 rounded-lg text-purple-400">
+                            <Database size={16} />
+                        </div>
+                        <div>
+                            <p className="text-[10px] text-zinc-500 uppercase font-bold">Memory</p>
+                            <p className="text-xs font-mono text-zinc-300">14.2 MB</p>
                         </div>
                     </div>
                 </motion.div>
