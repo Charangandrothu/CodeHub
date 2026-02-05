@@ -6,26 +6,31 @@ import {
     Monitor,
     CreditCard,
     Camera,
-    ChevronRight,
+    ChevronRight, // Ensure this import is maintained
     Save,
     Moon,
     Sun,
     Check,
     Zap,
-    Lock
-} from 'lucide-react';
+    Lock,
+    Trash
+} from 'lucide-react'; // Added Trash
 import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/ui/Button';
 import { API_URL } from '../config';
+import { updateProfile, deleteUser } from 'firebase/auth';
+import { auth } from '../firebase';
+import { useNavigate } from 'react-router-dom';
 
 const Settings = () => {
-    const { currentUser, userData, refreshUserData } = useAuth();
+    const { currentUser, userData, refreshUserData, logout } = useAuth();
     const [activeTab, setActiveTab] = useState('account');
     const [saving, setSaving] = useState(false);
+    const navigate = useNavigate();
 
     // Default Preferences State
     const [formData, setFormData] = useState({
-        displayName: currentUser?.displayName || "",
+        displayName: currentUser?.displayName || userData?.displayName || "",
         goal: "Placements",
         difficulty: "Medium",
         topics: ["DSA", "Aptitude"],
@@ -42,19 +47,58 @@ const Settings = () => {
 
     // Populate state from userData on load
     useEffect(() => {
-        if (userData?.preferences) {
+        if (userData) {
             setFormData(prev => ({
                 ...prev,
-                ...userData.preferences,
-                displayName: currentUser?.displayName || userData.displayName || ""
+                ...(userData.preferences || {}),
+                displayName: currentUser?.displayName || userData.displayName || prev.displayName,
+                // Ensure notifications are merged correctly if partial
+                notifications: { ...prev.notifications, ...(userData.preferences?.notifications || {}) }
             }));
         }
     }, [userData, currentUser]);
 
+    // Apply Theme Effect
+    useEffect(() => {
+        const theme = formData.theme;
+        if (theme === 'dark') {
+            document.documentElement.classList.add('dark');
+            document.documentElement.classList.remove('light');
+        } else if (theme === 'light') {
+            document.documentElement.classList.remove('dark');
+            document.documentElement.classList.add('light');
+        } else {
+            // System: check media query
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        }
+    }, [formData.theme]);
+
+
     const handleSave = async () => {
         setSaving(true);
         try {
-            // Update preferences in backend
+            // 1. Update Firebase Profile (DisplayName)
+            if (currentUser && formData.displayName !== currentUser.displayName) {
+                await updateProfile(currentUser, {
+                    displayName: formData.displayName
+                });
+            }
+
+            // 2. Update Backend User Profile (DisplayName, etc.)
+            await fetch(`${API_URL}/api/users/${currentUser.uid}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    displayName: formData.displayName,
+                    // Add other profile fields if editable here
+                })
+            });
+
+            // 3. Update Backend Preferences
             await fetch(`${API_URL}/api/users/preferences/${currentUser.uid}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
@@ -71,18 +115,37 @@ const Settings = () => {
                 })
             });
 
-            // Update Profile Name if changed
-            if (formData.displayName !== currentUser.displayName) {
-                // Here you would call Firebase updateProfile or your backend profile route
-                // For now, assuming backend sync handles it via the update route or we construct a new object
-            }
-
             await refreshUserData();
-            // Show success toast (optional)
+            // Optional/Toast success here
         } catch (error) {
             console.error("Failed to save settings:", error);
+            alert("Failed to save settings. Please try again.");
         } finally {
             setSaving(false);
+        }
+    };
+
+    const handleDeleteAccount = async () => {
+        if (!confirm("Are you sure you want to delete your account? This action cannot be undone.")) return;
+
+        try {
+            // 1. Delete from Backend
+            await fetch(`${API_URL}/api/users/${currentUser.uid}`, {
+                method: 'DELETE'
+            });
+
+            // 2. Delete from Firebase
+            await deleteUser(currentUser);
+
+            // 3. Cleanup
+            navigate('/');
+        } catch (error) {
+            console.error("Failed to delete account:", error);
+            if (error.code === 'auth/requires-recent-login') {
+                alert("For security, please log out and log in again before deleting your account.");
+            } else {
+                alert("Failed to delete account: " + error.message);
+            }
         }
     };
 
@@ -131,7 +194,7 @@ const Settings = () => {
                         <div className="relative">
                             <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 p-[2px]">
                                 <img
-                                    src={userData?.photoURL || currentUser?.photoURL || `https://ui-avatars.com/api/?name=${currentUser?.displayName}&background=0D8ABC&color=fff`}
+                                    src={currentUser?.photoURL || `https://ui-avatars.com/api/?name=${currentUser?.displayName || 'User'}&background=0D8ABC&color=fff`}
                                     alt="Profile"
                                     className="w-full h-full rounded-full object-cover border-2 border-[#1a1a1a]"
                                 />
@@ -141,7 +204,7 @@ const Settings = () => {
                             </button>
                         </div>
                         <div className="flex-1 min-w-0">
-                            <h3 className="text-sm font-semibold text-white truncate">{currentUser?.displayName || 'User'}</h3>
+                            <h3 className="text-sm font-semibold text-white truncate">{formData.displayName || currentUser?.displayName || 'User'}</h3>
                             <p className="text-xs text-gray-400 truncate">{currentUser?.email}</p>
                         </div>
                     </div>
@@ -194,7 +257,7 @@ const Settings = () => {
                                 <div className="flex items-center justify-between pb-6 border-b border-white/5">
                                     <div>
                                         <h2 className="text-xl font-bold text-white mb-1">Personal Information</h2>
-                                        <p className="text-sm text-gray-400">Update your photo and personal details here.</p>
+                                        <p className="text-sm text-gray-400">Update your personal details here.</p>
                                     </div>
                                     <Button
                                         onClick={handleSave}
@@ -208,7 +271,7 @@ const Settings = () => {
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div className="space-y-2">
-                                        <label className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Full Name</label>
+                                        <label className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Display Name</label>
                                         <div className="relative group">
                                             <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-blue-400 transition-colors" />
                                             <input
@@ -243,10 +306,11 @@ const Settings = () => {
                                                 </div>
                                                 <div>
                                                     <p className="text-sm font-medium text-white">Password</p>
-                                                    <p className="text-xs text-gray-500">Last changed 3 months ago</p>
+                                                    <p className="text-xs text-gray-500">Managed via Authentication Provider</p>
                                                 </div>
                                             </div>
-                                            <Button variant="outline" size="sm" className="text-xs">Change</Button>
+                                            {/* Password change usually requires re-auth flow which is complex, hiding button for now or redirecting */}
+                                            {/* <Button variant="outline" size="sm" className="text-xs">Change</Button> */}
                                         </div>
                                     </div>
                                 </div>
@@ -258,8 +322,11 @@ const Settings = () => {
                                             <p className="text-sm font-medium text-white">Delete Account</p>
                                             <p className="text-xs text-gray-400 mt-1">Permanently remove your account and all data.</p>
                                         </div>
-                                        <button className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 text-xs font-semibold rounded-lg border border-red-500/20 transition-all">
-                                            Delete Account
+                                        <button
+                                            onClick={handleDeleteAccount}
+                                            className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 text-xs font-semibold rounded-lg border border-red-500/20 transition-all flex items-center gap-2"
+                                        >
+                                            <Trash size={14} /> Delete Account
                                         </button>
                                     </div>
                                 </div>
@@ -471,7 +538,7 @@ const Settings = () => {
                                         </p>
 
                                         <div className="flex items-center gap-4">
-                                            <button className={`px-4 py-2 text-sm font-bold rounded-lg transition-colors shadow-lg ${userData?.isPro ? 'bg-amber-500 hover:bg-amber-400 text-black shadow-amber-500/20' : 'bg-blue-500 hover:bg-blue-400 text-white shadow-blue-500/20'}`}>
+                                            <button className={`px-4 py-2 text-sm font-bold rounded-lg transition-colors shadow-lg ${userData?.isPro ? 'bg-amber-500 hover:bg-amber-400 text-black shadow-amber-500/20' : 'bg-blue-500 hover:bg-blue-400 text-white shadow-blue-500/20'}`} onClick={() => navigate('/pricing')}>
                                                 {userData?.isPro ? "Manage Billing" : "Upgrade Now"}
                                             </button>
                                             {userData?.isPro && (
@@ -486,27 +553,29 @@ const Settings = () => {
                                 <div>
                                     <h4 className="text-sm font-medium text-white mb-4">Billing History</h4>
                                     <div className="rounded-xl border border-white/10 overflow-hidden">
-                                        {[
-                                            { date: 'Oct 24, 2023', amount: '$9.99', status: 'Paid', invoice: '#INV-0024' },
-                                            { date: 'Sep 24, 2023', amount: '$9.99', status: 'Paid', invoice: '#INV-0018' },
-                                            { date: 'Aug 24, 2023', amount: '$9.99', status: 'Paid', invoice: '#INV-0012' }
-                                        ].map((invoice, i) => (
-                                            <div key={i} className="flex items-center justify-between p-4 border-b border-white/5 last:border-0 bg-white/[0.02] hover:bg-white/[0.04] transition-colors">
-                                                <div className="flex items-center gap-4">
-                                                    <div className="p-2 rounded-lg bg-green-500/10 text-green-500">
-                                                        <Check size={16} />
+                                        {userData?.billingHistory && userData.billingHistory.length > 0 ? (
+                                            userData.billingHistory.map((invoice, i) => (
+                                                <div key={i} className="flex items-center justify-between p-4 border-b border-white/5 last:border-0 bg-white/[0.02] hover:bg-white/[0.04] transition-colors">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="p-2 rounded-lg bg-green-500/10 text-green-500">
+                                                            <Check size={16} />
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-sm font-medium text-white">{invoice.plan}</p>
+                                                            <p className="text-xs text-gray-500">{new Date(invoice.date).toLocaleDateString()}</p>
+                                                        </div>
                                                     </div>
-                                                    <div>
-                                                        <p className="text-sm font-medium text-white">Pro Monthly</p>
-                                                        <p className="text-xs text-gray-500">{invoice.date}</p>
+                                                    <div className="text-right">
+                                                        <p className="text-sm font-bold text-white">{invoice.amount}</p>
+                                                        <p className="text-xs text-blue-400 cursor-pointer hover:underline">Download</p>
                                                     </div>
                                                 </div>
-                                                <div className="text-right">
-                                                    <p className="text-sm font-bold text-white">{invoice.amount}</p>
-                                                    <p className="text-xs text-blue-400 cursor-pointer hover:underline">Download</p>
-                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="p-6 text-center text-gray-500 text-sm">
+                                                No billing history available.
                                             </div>
-                                        ))}
+                                        )}
                                     </div>
                                 </div>
                             </div>

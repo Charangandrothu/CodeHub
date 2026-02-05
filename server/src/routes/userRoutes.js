@@ -17,6 +17,7 @@ router.post('/sync', async (req, res) => {
             user = new User({
                 uid,
                 email,
+                displayName: displayName || "", // Save displayName
                 photoURL: photoURL || "",
                 isPro: false,
                 stats: {
@@ -30,11 +31,12 @@ router.post('/sync', async (req, res) => {
             });
             await user.save();
         } else {
-            // Optional: Update photoURL on sync if it changes from provider (commented out to prefer manual selection)
-            // if (photoURL && user.photoURL !== photoURL) {
-            //    user.photoURL = photoURL;
-            //    await user.save();
-            // }
+            // Update displayName and photoURL on sync if provided
+            if (displayName || photoURL) {
+                user.displayName = displayName || user.displayName;
+                user.photoURL = photoURL || user.photoURL;
+                await user.save();
+            }
         }
 
         res.json(user);
@@ -143,6 +145,7 @@ router.put('/:uid', async (req, res) => {
                     ...(email && { email }), // Only update email if provided (it should be)
                     ...(photoURL && { photoURL }), // Update photoURL if provided
                     role,
+                    displayName: req.body.displayName, // Allow updating displayName
                     college,
                     portfolio,
                     github,
@@ -243,6 +246,19 @@ router.put('/preferences/:uid', async (req, res) => {
         res.json(user);
     } catch (err) {
         res.status(500).json({ error: err.message });
+    }
+});
+
+// Delete User
+router.delete('/:uid', async (req, res) => {
+    try {
+        const result = await User.deleteOne({ uid: req.params.uid });
+        if (result.deletedCount === 0) {
+            return res.status(404).json({ error: "User not found" });
+        }
+        res.json({ message: "User deleted successfully" });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
 });
 

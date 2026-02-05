@@ -23,6 +23,7 @@ const userSchema = new mongoose.Schema({
         submittedAt: { type: Date, default: Date.now }
     }],
     // Profile Details
+    displayName: { type: String, default: "" }, // Added displayName
     role: { type: String, default: "Full Stack Developer" },
     college: { type: String, default: "" },
     portfolio: { type: String, default: "" },
@@ -52,6 +53,13 @@ const userSchema = new mongoose.Schema({
     plan: { type: String, default: 'FREE' }, // 'FREE' or 'PRO'
     paymentStatus: { type: String, default: 'inactive' },
     subscriptionId: { type: String },
+    billingHistory: [{
+        date: { type: Date, default: Date.now },
+        amount: String,
+        status: String,
+        invoiceId: String,
+        plan: String // e.g. "Pro Monthly"
+    }],
     updatedAt: { type: Date, default: Date.now }
 });
 
