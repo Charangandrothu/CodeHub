@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Play, Send, RefreshCw, AlertCircle, CheckCircle2, Copy, FileText, LayoutList, History, Code2, Check, X, Zap, Clock, Cpu, TrendingUp, Lock } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import CodeEditor from '../components/dsa/CodeEditor';
+import TestCasesPanel from '../components/dsa/TestCasesPanel';
+import SubmissionResultPanel from '../components/dsa/SubmissionResultPanel';
 import { useAuth } from '../context/AuthContext';
 import logo_img from '../assets/logo_img.png';
 import { API_URL } from '../config';
@@ -26,6 +28,7 @@ export default function QuestionPage() {
     const [activeBottomTab, setActiveBottomTab] = useState('testcases');
     const [activeTestCase, setActiveTestCase] = useState(0);
     const [submissionResult, setSubmissionResult] = useState(null);
+    const [testCaseResults, setTestCaseResults] = useState(null); // Stores results for sample cases
 
     const handleLanguageChange = (e) => {
         const newLang = e.target.value;
@@ -105,57 +108,70 @@ export default function QuestionPage() {
     }, [editorHeightPercent]);
 
     const runCode = async () => {
-        setActiveBottomTab('console');
-        setOutput(null);
-        setSubmissionResult(null);
+        // Switch to Test Cases tab to show results
+        setActiveBottomTab('testcases');
         setRunStatus("running");
+        setTestCaseResults(null);
+
+        // Prepare promises for all examples
+        const examples = problem?.examples || [];
+        if (examples.length === 0) {
+            setRunStatus("idle");
+            return;
+        }
 
         try {
-            const res = await fetch(`${API_URL}/api/execute/run`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    code,
-                    language,
-                    stdin: problem?.examples?.[0]?.input || ""
-                })
+            const promises = examples.map(async (example, index) => {
+                try {
+                    const res = await fetch(`${API_URL}/api/execute/run`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            code,
+                            language,
+                            stdin: example.input
+                        })
+                    });
+
+                    const data = await res.json();
+
+                    // Helper to normalize strings for comparison
+                    const normalize = (str) => str ? str.trim().replace(/\r\n/g, "\n") : "";
+                    const actualOutput = normalize(data.stdout || "");
+                    const expectedOutput = normalize(example.output);
+
+                    let status = "Accepted";
+                    if (data.stderr || data.compile_output) {
+                        status = "Runtime Error";
+                    } else if (actualOutput !== expectedOutput) {
+                        status = "Wrong Answer";
+                    }
+
+                    return {
+                        status,
+                        input: example.input,
+                        expected: example.output,
+                        actual: data.stdout || "",
+                        error: data.stderr || data.compile_output || null
+                    };
+
+                } catch (err) {
+                    return {
+                        status: "Error",
+                        input: example.input,
+                        expected: example.output,
+                        actual: "",
+                        error: err.message
+                    };
+                }
             });
 
-            const data = await res.json();
-            const actualOutput = data.stdout || "";
-            // Fix: Don't treat 'Accepted' status as an error. Use stderr/compile_output primarily.
-            const rawError = data.stderr || data.compile_output;
-
-            // Normalize for comparison
-            const normalize = (str) => str ? str.trim().replace(/\r\n/g, "\n") : "";
-            const normalizedActual = normalize(actualOutput);
-            const normalizedExpected = normalize(problem?.examples?.[0]?.output);
-
-            let verdict = "Accepted";
-            let details = "";
-
-            if (rawError) {
-                verdict = "Runtime Error";
-                details = rawError;
-            } else if (normalizedActual !== normalizedExpected) {
-                verdict = "Wrong Answer";
-                details = `Input: ${problem?.examples?.[0]?.input}\nExpected: ${problem?.examples?.[0]?.output}\nActual: ${actualOutput}`;
-            } else {
-                details = `Input: ${problem?.examples?.[0]?.input}\nOutput: ${actualOutput}`;
-            }
-
-            setSubmissionResult({
-                verdict: verdict === "Accepted" ? "Passed" : verdict,
-                details: details,
-                type: 'run'
-            });
-
-            setOutput(actualOutput);
+            const results = await Promise.all(promises);
+            setTestCaseResults(results);
             setRunStatus("idle");
-            // If it's a run, stay on console.
 
         } catch (err) {
-            setSubmissionResult({ verdict: "Error", details: "Execution failed: " + err.message });
+            console.error(err);
             setRunStatus("idle");
         }
     };
@@ -209,8 +225,10 @@ export default function QuestionPage() {
                 verdict: data.verdict,
                 details: data.stderr || "",
                 failedTestCase: data.failedTestCase,
-                time: "50", // Mock or from backend
-                memory: "3.2", // Mock or from backend
+                time: data.time ? `${(parseFloat(data.time) * 1000).toFixed(0)}` : "N/A", // Send pure number string
+                memory: data.memory ? `${(parseFloat(data.memory) / 1024).toFixed(1)}` : "N/A", // Send pure number string
+                passedTestCases: data.passedTestCases,
+                totalTestCases: data.totalTestCases,
                 type: 'submit'
             });
 
@@ -931,29 +949,10 @@ export default function QuestionPage() {
                                             </div>
                                         </div>
                                     ) : submissionResult ? (
-                                        <div className="font-mono text-sm space-y-4">
-                                            <div className={`p-3 rounded-lg border ${['Accepted', 'Passed'].includes(submissionResult.verdict) ? 'bg-green-500/10 border-green-500/20 text-green-400' : 'bg-red-500/10 border-red-500/20 text-red-400'}`}>
-                                                <div className="flex items-center gap-2 font-bold mb-1">
-                                                    {['Accepted', 'Passed'].includes(submissionResult.verdict) ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
-                                                    {submissionResult.verdict}
-                                                </div>
-                                                {submissionResult.details && (
-                                                    <pre className="text-xs text-[#e5e5e5] whitespace-pre-wrap mt-2 font-mono overflow-x-auto">
-                                                        {submissionResult.details}
-                                                    </pre>
-                                                )}
-                                            </div>
-
-                                            {output && !submissionResult.details?.includes(output) && (
-                                                <div className="space-y-1">
-                                                    <div className="text-xs text-zinc-500 font-semibold uppercase">Stdout</div>
-                                                    <pre className="bg-black/30 p-3 rounded border border-white/5 text-[#e5e5e5] whitespace-pre-wrap font-mono overflow-x-auto">
-                                                        {output}
-                                                    </pre>
-                                                </div>
-                                            )}
-                                        </div>
-
+                                        <SubmissionResultPanel
+                                            submissionResult={submissionResult}
+                                            output={output}
+                                        />
                                     ) : (
                                         <div className="flex-1 flex flex-col items-center justify-center text-center p-8 text-zinc-500">
                                             <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center mb-4 transition-transform hover:scale-110">
@@ -966,39 +965,13 @@ export default function QuestionPage() {
                                     }
                                 </div >
                             ) : (
-                                problem.examples && problem.examples.length > 0 && (
-                                    <div className="space-y-4">
-                                        {/* Example Tabs */}
-                                        {problem.examples.length > 1 && (
-                                            <div className="flex gap-2 mb-2">
-                                                {problem.examples.map((_, i) => (
-                                                    <button
-                                                        key={i}
-                                                        onClick={() => setActiveTestCase(i)}
-                                                        className={`px-3 py-1 border rounded-md text-[10px] font-medium cursor-pointer transition-colors ${i === activeTestCase ? 'bg-[#262626] border-[#333333] text-white' : 'border-transparent hover:bg-[#262626] text-[#737373]'}`}
-                                                    >
-                                                        Case {i + 1}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        )}
-
-                                        <div className="space-y-3">
-                                            <div className="space-y-1">
-                                                <label className="text-[10px] font-semibold text-[#737373] uppercase">Input</label>
-                                                <pre className="bg-[#141414] rounded-md p-2 max-h-20 overflow-y-auto custom-scrollbar text-[11px] font-mono text-[#d4d4d4] border border-[#262626] whitespace-pre-wrap">
-                                                    {problem.examples[activeTestCase]?.input || ""}
-                                                </pre>
-                                            </div>
-                                            <div className="space-y-1">
-                                                <label className="text-[10px] font-semibold text-[#737373] uppercase">Expected Output</label>
-                                                <pre className="bg-[#141414] rounded-md p-2 max-h-20 overflow-y-auto custom-scrollbar text-[11px] font-mono text-emerald-400 border border-[#262626] whitespace-pre-wrap">
-                                                    {problem.examples[activeTestCase]?.output || ""}
-                                                </pre>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )
+                                <TestCasesPanel
+                                    testCases={problem.examples}
+                                    activeTestCase={activeTestCase}
+                                    setActiveTestCase={setActiveTestCase}
+                                    testCaseResults={testCaseResults}
+                                    runStatus={runStatus}
+                                />
                             )}
                         </div >
                     </div >

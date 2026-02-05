@@ -421,13 +421,28 @@ router.post("/submit", async (req, res) => {
             console.error("Failed to update user stats:", updateErr);
         }
 
+        // Calculate Stats
+        let maxTime = 0;
+        let maxMemory = 0;
+
+        for (const res of results) {
+            if (res.result) {
+                const t = parseFloat(res.result.time) || 0;
+                const m = parseFloat(res.result.memory) || 0;
+                if (t > maxTime) maxTime = t;
+                if (m > maxMemory) maxMemory = m;
+            }
+        }
+
         res.json({
             verdict: "Accepted",
             stdout: "All test cases passed",
             stderr: "",
             failedTestCase: null,
             totalTestCases: hiddenCases.length,
-            passedTestCases: hiddenCases.length
+            passedTestCases: hiddenCases.length,
+            time: maxTime,
+            memory: maxMemory
         });
 
     } catch (error) {
