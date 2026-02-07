@@ -113,29 +113,6 @@ const SubmissionResultPanel = ({ submissionResult, output }) => {
                 </motion.div>
             )}
 
-            {/* Premium Stats Placeholders (Visual Candy) */}
-            {isSuccess && (
-                <motion.div variants={item} className="grid grid-cols-2 gap-3 mt-auto">
-                    <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-xl p-3 flex items-center gap-3">
-                        <div className="p-2 bg-green-500/10 rounded-lg text-green-400">
-                            <Clock size={16} />
-                        </div>
-                        <div>
-                            <p className="text-[10px] text-zinc-500 uppercase font-bold">Runtime</p>
-                            <p className="text-xs font-mono text-zinc-300">~24ms</p>
-                        </div>
-                    </div>
-                    <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-xl p-3 flex items-center gap-3">
-                        <div className="p-2 bg-purple-500/10 rounded-lg text-purple-400">
-                            <Database size={16} />
-                        </div>
-                        <div>
-                            <p className="text-[10px] text-zinc-500 uppercase font-bold">Memory</p>
-                            <p className="text-xs font-mono text-zinc-300">14.2 MB</p>
-                        </div>
-                    </div>
-                </motion.div>
-            )}
         </motion.div>
     );
 };

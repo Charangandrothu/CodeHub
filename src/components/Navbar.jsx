@@ -331,7 +331,9 @@ const Navbar = () => {
                           label="My Profile"
                           onClick={() => {
                             setShowProfileMenu(false);
-                            navigate('/profile');
+                            const rawName = userData?.username || currentUser?.displayName || currentUser?.email?.split('@')[0] || 'profile';
+                            const username = rawName.toLowerCase().replace(/[^a-z0-9]/g, '');
+                            navigate(`/${username}`);
                           }}
                         />
                         <MenuLink icon={LayoutDashboard} label="Dashboard" onClick={() => navigate('/dashboard')} />

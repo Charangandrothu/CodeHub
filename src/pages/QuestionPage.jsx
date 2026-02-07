@@ -273,11 +273,12 @@ export default function QuestionPage() {
                 verdict: data.verdict,
                 details: data.stderr || "",
                 failedTestCase: data.failedTestCase,
-                time: data.time ? `${(parseFloat(data.time) * 1000).toFixed(0)}` : "N/A", // Send pure number string
-                memory: data.memory ? `${(parseFloat(data.memory) / 1024).toFixed(1)}` : "N/A", // Send pure number string
+                time: data.time ? (parseFloat(data.time) * 1000).toFixed(2) : "N/A",
+                memory: data.memory ? (parseFloat(data.memory) / 1024).toFixed(2) : "N/A",
                 passedTestCases: data.passedTestCases,
                 totalTestCases: data.totalTestCases,
-                type: 'submit'
+                type: 'submit',
+                submittedAt: new Date().toISOString()
             });
 
             setRunStatus("idle");
@@ -339,6 +340,45 @@ export default function QuestionPage() {
             fetchProblem();
         }
     }, [slug, language]);
+
+    // Fetch latest submission when tab changes to 'submissions'
+    useEffect(() => {
+        const fetchLatestSubmission = async () => {
+            if (activeTab === 'submissions' && !submissionResult && currentUser && problem) {
+                try {
+                    const res = await fetch(`${API_URL}/api/execute/submission/${problem._id}?userId=${currentUser.uid}`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data) {
+                            setSubmissionResult({
+                                verdict: data.verdict,
+                                details: "",
+                                time: data.runtime ? (parseFloat(data.runtime) * 1000).toFixed(2) : "N/A",
+                                memory: data.memory ? (parseFloat(data.memory) / 1024).toFixed(2) : "N/A",
+                                passedTestCases: problem.testCases?.hidden?.length || 0,
+                                totalTestCases: problem.testCases?.hidden?.length || 0,
+                                type: 'submit',
+                                submittedAt: data.submittedAt,
+                                code: data.code // Store code to restore later
+                            });
+                        }
+                    }
+                } catch (err) {
+                    console.error("Failed to fetch submission:", err);
+                }
+            }
+        };
+
+        fetchLatestSubmission();
+    }, [activeTab, currentUser, problem, submissionResult]);
+
+    // Save code and language changes
+    useEffect(() => {
+        if (slug) {
+            localStorage.setItem(`codehub-code-${slug}-${language}`, code);
+        }
+        localStorage.setItem("codehub-language", language);
+    }, [code, language, slug]);
 
     // Refs to hold latest runCode/submitCode functions to avoid stale closures in event listener
     const runCodeRef = useRef(runCode);
@@ -847,7 +887,7 @@ export default function QuestionPage() {
                                                                             fill="none" strokeLinecap="round"
                                                                         />
                                                                     </svg>
-                                                                    <span className="absolute text-sm font-bold text-white">{submissionResult.time || 45}ms</span>
+                                                                    <span className="absolute text-sm font-bold text-white">{submissionResult.time}ms</span>
                                                                 </div>
                                                                 <span className="text-xs text-zinc-400 font-bold uppercase tracking-wider">Runtime</span>
                                                                 <span className="text-[10px] text-emerald-400 mt-1">Beats 94%</span>
@@ -870,7 +910,7 @@ export default function QuestionPage() {
                                                                             fill="none" strokeLinecap="round"
                                                                         />
                                                                     </svg>
-                                                                    <span className="absolute text-sm font-bold text-white">{submissionResult.memory || 3.2}MB</span>
+                                                                    <span className="absolute text-sm font-bold text-white">{submissionResult.memory}MB</span>
                                                                 </div>
                                                                 <span className="text-xs text-zinc-400 font-bold uppercase tracking-wider">Memory</span>
                                                                 <span className="text-[10px] text-blue-400 mt-1">Optimal</span>
@@ -958,6 +998,47 @@ export default function QuestionPage() {
                                         <History size={32} className="mb-3 opacity-20" />
                                         <p className="text-sm font-medium">No submission selected</p>
                                         <p className="text-xs mt-1">Submit your code to see the results here</p>
+                                    </div>
+                                )}
+
+                                {/* Recent Submissions List (Only 1 per problem as per new logic) */}
+                                {submissionResult && submissionResult.type === 'submit' && (
+                                    <div className="mt-auto pt-4 border-t border-[#262626]">
+                                        <h4 className="text-xs font-bold text-white mb-3 flex items-center gap-2">
+                                            <History size={12} className="text-zinc-500" />
+                                            Submission History
+                                        </h4>
+                                        <div
+                                            onClick={() => {
+                                                if (submissionResult.code) setCode(submissionResult.code);
+                                            }}
+                                            className="bg-[#1A1A1A] hover:bg-[#262626] border border-[#262626] rounded-lg p-3 flex items-center justify-between cursor-pointer transition-colors group"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className={`p-1.5 rounded-md ${['Accepted', 'Passed'].includes(submissionResult.verdict) ? 'bg-emerald-500/10 text-emerald-500' : 'bg-red-500/10 text-red-500'}`}>
+                                                    {['Accepted', 'Passed'].includes(submissionResult.verdict) ? <Check size={14} /> : <X size={14} />}
+                                                </div>
+                                                <div className="flex flex-col">
+                                                    <span className={`text-xs font-bold ${['Accepted', 'Passed'].includes(submissionResult.verdict) ? 'text-white' : 'text-red-400'}`}>
+                                                        {submissionResult.verdict}
+                                                    </span>
+                                                    <span className="text-[10px] text-zinc-500 font-mono">
+                                                        {submissionResult.submittedAt ? new Date(submissionResult.submittedAt).toLocaleString() : 'Just now'}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-4">
+                                                <div className="text-right hidden sm:block">
+                                                    <div className="text-[10px] text-zinc-400">Time</div>
+                                                    <div className="text-xs font-mono text-zinc-300">{submissionResult.time}ms</div>
+                                                </div>
+                                                <div className="text-right hidden sm:block">
+                                                    <div className="text-[10px] text-zinc-400">Memory</div>
+                                                    <div className="text-xs font-mono text-zinc-300">{submissionResult.memory}MB</div>
+                                                </div>
+                                                <ChevronLeft size={14} className="text-zinc-600 group-hover:text-zinc-400 rotate-180 transition-colors" />
+                                            </div>
+                                        </div>
                                     </div>
                                 )}
                             </div>

@@ -197,13 +197,15 @@ const ProfileSidebar = ({
                 </div>
 
                 {/* Edit Button */}
-                <Button
-                    onClick={onEdit}
-                    className="w-full gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 border-none shadow-lg shadow-blue-500/20"
-                >
-                    <Edit3 size={16} />
-                    {cta.editProfileText}
-                </Button>
+                {onEdit && (
+                    <Button
+                        onClick={onEdit}
+                        className="w-full gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 border-none shadow-lg shadow-blue-500/20"
+                    >
+                        <Edit3 size={16} />
+                        {cta.editProfileText}
+                    </Button>
+                )}
 
             </div>
         </aside>

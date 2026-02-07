@@ -62,14 +62,14 @@ function AppRoutes() {
           <Aptitude />
         </ProtectedRoute>
       } />
-      <Route path="/profile" element={
-        <ProtectedRoute>
-          <Profile />
-        </ProtectedRoute>
-      } />
       <Route path="/settings" element={
         <ProtectedRoute>
           <Settings />
+        </ProtectedRoute>
+      } />
+      <Route path="/:username" element={
+        <ProtectedRoute>
+          <Profile />
         </ProtectedRoute>
       } />
     </Routes>

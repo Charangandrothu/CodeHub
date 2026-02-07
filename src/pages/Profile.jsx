@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import ProfileSidebar from '../components/profile/ProfileSidebar';
 import SubmissionHeatmap from '../components/profile/SubmissionHeatmap';
 import { useAuth } from '../context/AuthContext';
@@ -8,8 +9,47 @@ import { Button } from '../components/ui/Button';
 import { API_URL } from '../config';
 
 const Profile = () => {
-    const { currentUser, userData, refreshUserData } = useAuth();
+    const { currentUser, userData: authUser, refreshUserData } = useAuth();
+    const { username } = useParams();
+    const [fetchedUser, setFetchedUser] = useState(null);
+    const [notFound, setNotFound] = useState(false);
+
+    // Fetch user if username param exists
+    useEffect(() => {
+        if (username) {
+            fetch(`${API_URL}/api/users/handle/${username}`)
+                .then(res => {
+                    if (!res.ok) throw new Error("User not found");
+                    return res.json();
+                })
+                .then(data => {
+                    setFetchedUser(data);
+                    setNotFound(false);
+                })
+                .catch(err => {
+                    console.error(err);
+                    setNotFound(true);
+                });
+        } else {
+            setFetchedUser(null);
+            setNotFound(false);
+        }
+    }, [username]);
+
+    const userData = username ? fetchedUser : authUser;
+    const isOwner = !username || (currentUser && userData?.uid === currentUser.uid);
+
     const [isEditing, setIsEditing] = useState(false);
+
+    if (notFound) {
+        return (
+            <div className="min-h-screen bg-[#0a0a0a] pt-28 flex flex-col items-center justify-center text-white">
+                <h1 className="text-4xl font-bold mb-4">User Not Found</h1>
+                <p className="text-gray-400">The requested profile does not exist.</p>
+                <Button className="mt-6" onClick={() => window.history.back()}>Go Back</Button>
+            </div>
+        );
+    }
 
     // Local State for Editing Forms
     const [formData, setFormData] = useState({
@@ -37,8 +77,9 @@ const Profile = () => {
     ];
 
     // Update local state when user data loads
+    // Update local state when user data loads (only if owner)
     useEffect(() => {
-        if (userData) {
+        if (userData && isOwner) {
             setFormData({
                 role: userData.role || "Full Stack Developer",
                 college: userData.college || "University of Code",
@@ -50,13 +91,13 @@ const Profile = () => {
                 photoURL: userData.photoURL || currentUser?.photoURL || ""
             });
         }
-    }, [userData, currentUser]);
+    }, [userData, currentUser, isOwner]);
 
     // Dynamic User Props from Auth Context + Placeholders where data missing
     const userProps = {
-        profileImageUrl: userData?.photoURL || currentUser?.photoURL || "https://api.dicebear.com/7.x/avataaars/svg?seed=" + (currentUser?.uid || "User"),
+        profileImageUrl: userData?.photoURL || "https://api.dicebear.com/7.x/avataaars/svg?seed=" + (userData?.uid || "User"),
         isVerified: userData?.isPro || false,
-        username: currentUser?.displayName || currentUser?.email?.split('@')[0] || "User",
+        username: userData?.username || userData?.displayName || "User",
         role: userData?.role || "Full Stack Developer",
         status: userData?.isPro ? "Pro Member" : "Community Member",
         college: userData?.college || "University of Code",
@@ -122,7 +163,7 @@ const Profile = () => {
                     <ProfileSidebar
                         user={userProps}
                         className="w-full"
-                        onEdit={() => setIsEditing(true)}
+                        onEdit={isOwner ? () => setIsEditing(true) : undefined}
                     />
                 </motion.div>
 

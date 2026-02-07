@@ -13,6 +13,7 @@ const languageIds = {
 
 const Problem = require("../models/Problem");
 const User = require("../models/User");
+const Submission = require("../models/Submission");
 
 // Helper to normalize output for comparison
 const normalizeOutput = (str) => {
@@ -429,13 +430,25 @@ router.post("/submit", async (req, res) => {
                 if (!userUpdate.stats) userUpdate.stats = {};
                 if (!userUpdate.stats.solvedProblemIds) userUpdate.stats.solvedProblemIds = [];
 
-                // Add to submission history
-                userUpdate.submissionHistory.push({
+                // Add to submission history (Unique per problem)
+                const existingHistoryIndex = userUpdate.submissionHistory.findIndex(
+                    s => s.problemId === problemId
+                );
+
+                const historyEntry = {
                     problemId: problemId,
                     problemTitle: problem.title || "Unknown Problem",
                     verdict: "Accepted",
                     submittedAt: new Date()
-                });
+                };
+
+                if (existingHistoryIndex !== -1) {
+                    // Update existing
+                    userUpdate.submissionHistory[existingHistoryIndex] = historyEntry;
+                } else {
+                    // Add new
+                    userUpdate.submissionHistory.push(historyEntry);
+                }
 
                 if (!userUpdate.stats.solvedProblemIds.includes(problemId)) {
                     userUpdate.stats.solvedProblemIds.push(problemId);
@@ -489,6 +502,28 @@ router.post("/submit", async (req, res) => {
             }
         }
 
+        // Store Unique Submission
+        await Submission.findOneAndUpdate(
+            { userId: userId, problemId: problemId },
+            {
+                code: code,
+                language: language,
+                verdict: "Accepted",
+                runtime: maxTime,
+                memory: maxMemory,
+                submittedAt: new Date()
+            },
+            { upsert: true, new: true }
+        );
+
+        // Deduct Submission Credit ONLY on success (and if not Pro)
+        if (!user.isPro) {
+            await User.findOneAndUpdate(
+                { uid: userId, "stats.submissionCredits": { $gt: 0 } },
+                { $inc: { "stats.submissionCredits": -1 } }
+            );
+        }
+
         res.json({
             verdict: "Accepted",
             stdout: "All test cases passed",
@@ -500,14 +535,6 @@ router.post("/submit", async (req, res) => {
             memory: maxMemory
         });
 
-        // Deduct Submission Credit ONLY on success (and if not Pro)
-        if (!user.isPro) {
-            await User.findOneAndUpdate(
-                { uid: userId, "stats.submissionCredits": { $gt: 0 } },
-                { $inc: { "stats.submissionCredits": -1 } }
-            );
-        }
-
     } catch (error) {
         res.status(500).json({
             verdict: "Runtime Error",
@@ -517,6 +544,23 @@ router.post("/submit", async (req, res) => {
             totalTestCases: 0,
             passedTestCases: 0
         });
+    }
+});
+
+// GET Submission Route (Unique per user/problem)
+router.get("/submission/:problemId", async (req, res) => {
+    const { problemId } = req.params;
+    const { userId } = req.query;
+
+    if (!problemId || !userId) {
+        return res.status(400).json({ error: "Missing problemId or userId" });
+    }
+
+    try {
+        const submission = await Submission.findOne({ userId, problemId });
+        res.json(submission || null); // Return null if no submission found
+    } catch (error) {
+        res.status(500).json({ error: "Failed to fetch submission", details: error.message });
     }
 });
 

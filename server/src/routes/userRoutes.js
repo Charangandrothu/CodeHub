@@ -17,6 +17,7 @@ router.post('/sync', async (req, res) => {
             user = new User({
                 uid,
                 email,
+                username: (displayName || email.split('@')[0]).toLowerCase().replace(/[^a-z0-9]/g, ''), // Default username sanitized
                 displayName: displayName || "", // Save displayName
                 photoURL: photoURL || "",
                 isPro: false,
@@ -96,7 +97,52 @@ const calculateStreak = (history) => {
     return streak;
 };
 
-// Get User Status
+// Get User by Username (Handle)
+router.get('/handle/:username', async (req, res) => {
+    try {
+        const handle = req.params.username.toLowerCase();
+
+        // 1. Try finding by explicit username (Case Insensitive)
+        let user = await User.findOne({
+            username: { $regex: new RegExp(`^${handle}$`, 'i') }
+        });
+
+        // 2. Fallback: Try finding by Email Prefix (for legacy users)
+        // Only works if handle matches the sanitized email prefix logic roughly, or exact prefix
+        if (!user) {
+            user = await User.findOne({
+                email: { $regex: new RegExp(`^${handle}@`, 'i') }
+            });
+
+            // If found via email fallback and has no username, claim it
+            if (user && !user.username) {
+                user.username = handle;
+                try {
+                    await user.save();
+                } catch (e) {
+                    // Ignore save errors (collisions etc), just return user
+                }
+            }
+        }
+
+        if (!user) {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        // Recalculate Streak Dynamically
+        const dynamicStreak = calculateStreak(user.submissionHistory);
+        if (user.stats.streak !== dynamicStreak) {
+            user.stats.streak = dynamicStreak;
+            await user.save();
+        }
+
+        res.json(user);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Get User Status (by UID)
 router.get('/:uid', async (req, res) => {
     try {
         const user = await User.findOne({ uid: req.params.uid });
@@ -116,6 +162,19 @@ router.get('/:uid', async (req, res) => {
                     submissionCredits: 3
                 }
             });
+        }
+
+        // Backfill username if missing
+        if (!user.username) {
+            const baseName = (user.displayName || user.email.split('@')[0]).toLowerCase().replace(/[^a-z0-9]/g, '');
+            user.username = baseName;
+            try {
+                await user.save();
+            } catch (e) {
+                // If duplicate, append random string
+                user.username = baseName + Math.floor(Math.random() * 1000);
+                await user.save().catch(() => { });
+            }
         }
 
         // Recalculate Streak Dynamically to ensure consistency
