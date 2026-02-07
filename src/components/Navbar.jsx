@@ -105,8 +105,10 @@ const Navbar = () => {
         visible: { y: 0 },
         hidden: { y: -100 },
       }}
+      initial="hidden"
       animate={hidden ? "hidden" : "visible"}
-      transition={{ duration: 0.35, ease: "easeInOut" }}
+      exit="hidden"
+      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
       className={`fixed top-0 left-0 right-0 z-50 flex items-center justify-center px-4 sm:px-6 py-4 ${location.pathname.startsWith('/problem/') ? 'hidden' : ''}`}
     >
       {/* Glassmorphism Container */}

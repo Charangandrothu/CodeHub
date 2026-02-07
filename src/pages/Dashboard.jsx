@@ -220,17 +220,15 @@ const Dashboard = () => {
                                                     <h3 className="text-lg font-bold text-white mb-1 group-hover:text-blue-300 transition-colors">
                                                         {nextTask?.topic || "Loading..."}
                                                     </h3>
-                                                    <p className="text-sm text-gray-400 mb-2 flex items-center gap-2">
+                                                    <div className="flex items-center gap-2 text-sm text-gray-400 font-medium mt-1 mb-2">
                                                         <span>{nextTask?.solvedCount || 0} / {nextTask?.totalProblems || '?'} Solved</span>
-                                                        <span className="w-1 h-1 rounded-full bg-gray-600" />
-                                                        <span>{nextTask?.progress || 0}% Complete</span>
-                                                    </p>
-                                                    <div className="w-48 h-1 bg-white/10 rounded-full overflow-hidden">
+                                                    </div>
+                                                    <div className="w-full max-w-[240px] h-1.5 bg-white/10 rounded-full overflow-hidden">
                                                         <motion.div
                                                             initial={{ width: 0 }}
                                                             animate={{ width: `${nextTask?.progress || 0}%` }}
-                                                            transition={{ duration: 1 }}
-                                                            className="h-full bg-blue-500 rounded-full"
+                                                            transition={{ duration: 1, ease: "easeOut" }}
+                                                            className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full"
                                                         />
                                                     </div>
                                                 </>

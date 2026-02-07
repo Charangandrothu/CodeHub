@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { AnimatePresence } from 'framer-motion';
 import LandingPage from './pages/LandingPage'
 import Navbar from './components/Navbar'
 import Login from './pages/Login'
@@ -77,9 +78,14 @@ function AppRoutes() {
 }
 
 const ConditionalNavbar = () => {
-  const location = useLocation(); // Now works because it's rendered inside Router
+  const location = useLocation();
   const isDSAPage = location.pathname.startsWith('/dsa');
-  return isDSAPage ? null : <Navbar />;
+
+  return (
+    <AnimatePresence>
+      {!isDSAPage && <Navbar key="navbar" />}
+    </AnimatePresence>
+  );
 };
 
 function App() {

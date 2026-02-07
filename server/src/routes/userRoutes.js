@@ -329,56 +329,92 @@ router.get('/next-task/:uid', async (req, res) => {
         const user = await User.findOne({ uid: req.params.uid });
         if (!user) return res.status(404).json({ error: "User not found" });
 
-        const Problem = require('../models/Problem'); // Lazy load or move to top
+        const Problem = require('../models/Problem');
 
-        let currentTopic = 'Patterns'; // Default for new users
-        let topicSlug = 'patterns';
+        const TOPIC_ORDER = [
+            'patterns', 'sorting', 'beginner', 'arrays', 'strings',
+            'binary-search', 'recursion-backtracking', 'linked-lists',
+            'stacks-queues', 'hashing', 'trees', 'dp'
+        ];
+
+        const TOPIC_NAMES = {
+            'patterns': 'Patterns', 'sorting': 'Sorting', 'beginner': 'Beginner',
+            'arrays': 'Arrays', 'strings': 'Strings', 'binary-search': 'Binary Search',
+            'recursion-backtracking': 'Recursion', 'linked-lists': 'Linked Lists',
+            'stacks-queues': 'Stacks & Queues', 'hashing': 'Hashing',
+            'trees': 'Trees', 'dp': 'Dynamic Programming'
+        };
+
+        const getMatcher = (id) => {
+            switch (id) {
+                case 'arrays': return /array/i;
+                case 'hashing': return /hash/i;
+                case 'recursion-backtracking': return /recursion|backtracking/i;
+                case 'stacks-queues': return /stack|queue/i;
+                case 'trees': return /tree|graph/i;
+                case 'dp': return /dynamic\s*programming|dp/i;
+                case 'beginner': return /beginner/i;
+                case 'linked-lists': return /linked\s*list/i;
+                case 'binary-search': return /binary\s*search/i;
+                case 'patterns': return /pattern/i;
+                case 'strings': return /string/i;
+                case 'sorting': return /sort/i;
+                default: return new RegExp(id.replace('-', '.*'), 'i');
+            }
+        };
+
+        let currentTopicId = 'patterns';
 
         // 1. Detect Last Active Topic
         if (user.submissionHistory && user.submissionHistory.length > 0) {
-            // Sort to get latest Accepted submission
             const lastSubmission = user.submissionHistory
                 .filter(s => s.verdict === 'Accepted')
                 .sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt))[0];
 
             if (lastSubmission) {
-                // Fetch problem to get topic
-                // submissionHistory stores problemId. If it's ID, findById.
-                // If it's slug, findOne. Based on previous turns, it seems to be ID.
-                // Assuming problemId stored in history is the MongoDB _id string.
                 const lastProblem = await Problem.findById(lastSubmission.problemId);
                 if (lastProblem && lastProblem.topic) {
-                    currentTopic = lastProblem.topic;
+                    const foundId = TOPIC_ORDER.find(id => getMatcher(id).test(lastProblem.topic));
+                    if (foundId) currentTopicId = foundId;
                 }
             }
         }
 
-        // 2. Calculate Progress for this Topic
-        // Get all problems in this topic
-        // Regex for case-insensitive match just in case
-        const topicProblems = await Problem.find({
-            topic: { $regex: new RegExp(`^${currentTopic}$`, 'i') }
-        }).select('_id');
+        // 2. Find Next Unfinished Topic
+        // Robust Solved Set
+        const solvedSet = new Set();
+        if (user.solvedProblemIds) user.solvedProblemIds.forEach(id => solvedSet.add(id.toString()));
+        if (user.submissionHistory) user.submissionHistory.forEach(s => {
+            if (s.verdict === 'Accepted' && s.problemId) solvedSet.add(s.problemId.toString());
+        });
 
-        const totalProblems = topicProblems.length;
-        const topicProblemIds = topicProblems.map(p => p._id.toString());
+        let finalStats = { solved: 0, total: 0, id: currentTopicId };
+        let startIdx = TOPIC_ORDER.indexOf(currentTopicId);
+        if (startIdx === -1) startIdx = 0;
 
-        // Count how many of these the user has solved
-        // solvedProblemIds stores IDs of solved problems
-        const solvedCount = user.solvedProblemIds
-            ? user.solvedProblemIds.filter(id => topicProblemIds.includes(id)).length
-            : 0;
+        for (let i = startIdx; i < TOPIC_ORDER.length; i++) {
+            const id = TOPIC_ORDER[i];
+            const matcher = getMatcher(id);
+            const topicProblems = await Problem.find({ topic: matcher }).select('_id');
 
-        const progress = totalProblems > 0 ? Math.round((solvedCount / totalProblems) * 100) : 0;
+            const total = topicProblems.length;
+            const solved = topicProblems.filter(p => solvedSet.has(p._id.toString())).length;
 
-        // Slugify topic for URL (simple version)
-        topicSlug = currentTopic.toLowerCase().replace(/\s+/g, '-');
+            finalStats = { total, solved, id };
+
+            // If incomplete (and has problems), stop here. This is the recommendation.
+            if (solved < total && total > 0) break;
+
+            // If completed, loop continues to next topic
+        }
+
+        const progress = finalStats.total > 0 ? Math.round((finalStats.solved / finalStats.total) * 100) : 0;
 
         res.json({
-            topic: currentTopic,
-            slug: topicSlug,
-            solvedCount,
-            totalProblems,
+            topic: TOPIC_NAMES[finalStats.id] || finalStats.id,
+            slug: finalStats.id,
+            solvedCount: finalStats.solved,
+            totalProblems: finalStats.total,
             progress
         });
 
