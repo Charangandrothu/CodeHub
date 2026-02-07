@@ -195,17 +195,44 @@ const executeWithPolling = async (source_code, language_id, stdin) => {
 
 // RUN Route - Executes code with given stdin
 router.post("/run", async (req, res) => {
-    const { code, language, stdin } = req.body;
-    console.log(`[EXECUTE] Run request received for ${language}`);
-
+    const { code, language, stdin, userId } = req.body; // Added userId
 
     try {
+        let user = null;
+        if (userId) {
+            user = await User.findOne({ uid: userId });
+            if (user) {
+                // Check Daily Reset Logic
+                const now = new Date();
+                const lastReset = user.stats.lastRunResetDate ? new Date(user.stats.lastRunResetDate) : new Date(0);
+
+                // Compare dates (ignoring time)
+                const isSameDay = now.getDate() === lastReset.getDate() &&
+                    now.getMonth() === lastReset.getMonth() &&
+                    now.getFullYear() === lastReset.getFullYear();
+
+                if (!isSameDay) {
+                    user.stats.runCredits = 3;
+                    user.stats.lastRunResetDate = now;
+                    await user.save();
+                }
+
+                // Check Credits
+                if (!user.isPro && user.stats.runCredits <= 0) {
+                    return res.status(403).json({
+                        error: "Daily Run Limit Exceeded",
+                        verdict: "Limit Exceeded",
+                        details: "You have exhausted your daily run credits. Upgrade to Pro for unlimited runs.",
+                        isLimitError: true
+                    });
+                }
+            }
+        }
+
         // Apply Driver Code logic if applicable
         const finalSourceCode = generateDriverCode(code, language, stdin || "");
 
         // Determine if we need to pass stdin (fallback mode)
-        // If driver code execution was applied, inputs are embedded, so stdin is empty.
-        // If raw code is returned, pass original stdin.
         const effectiveStdin = (finalSourceCode !== code) ? "" : (stdin || "");
 
         // Execute with polling
@@ -215,7 +242,18 @@ router.post("/run", async (req, res) => {
             effectiveStdin
         );
 
-        console.log(`[EXECUTE] Run response received from Judge0`);
+        // Deduct Run Credit ONLY on success
+        if (user && !user.isPro) {
+            // Re-fetch to ensure we don't overwrite concurrent updates (though simplistic here)
+            // Ideally use $inc, but we need to check bounds. 
+            // Since we checked before, we can just decrement.
+            await User.findOneAndUpdate(
+                { uid: userId, "stats.runCredits": { $gt: 0 } },
+                { $inc: { "stats.runCredits": -1 } }
+            );
+        }
+
+
 
         res.json({
             stdout: result.stdout,
@@ -235,7 +273,6 @@ router.post("/run", async (req, res) => {
 // SUBMIT Route - Judges correctness
 router.post("/submit", async (req, res) => {
     const { code, language, problemId, userId } = req.body;
-    console.log(`[EXECUTE] Submit request received for Problem ID: ${problemId} from User: ${userId}`);
 
 
     if (!code || !language || !problemId || !userId) {
@@ -243,14 +280,33 @@ router.post("/submit", async (req, res) => {
     }
 
     try {
-        // Check Pro Status
+        // Check Pro Status & Submission Credits
         const user = await User.findOne({ uid: userId });
-        if (!user || (!user.isPro)) {
-            return res.status(403).json({
-                error: "Pro Subscription Required",
-                verdict: "Restricted",
-                details: "Only Pro members can submit solutions. Please upgrade to Pro."
-            });
+
+        // Ensure stats exist
+        if (user && !user.stats) {
+            user.stats = {
+                runCredits: 3,
+                submissionCredits: 3,
+                dailyTarget: 3
+            };
+            await user.save();
+        }
+
+        if (!user) {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        if (!user.isPro) {
+            // Check submission credits for free users
+            if (user.stats.submissionCredits <= 0) {
+                return res.status(403).json({
+                    error: "Submission Limit Exceeded",
+                    verdict: "Limit Exceeded",
+                    details: "You have used all your free submissions. Upgrade to Pro for unlimited submissions.",
+                    isLimitError: true
+                });
+            }
         }
 
         const problem = await Problem.findById(problemId);
@@ -265,7 +321,7 @@ router.post("/submit", async (req, res) => {
         }
 
         // Parallel Execution
-        console.log(`[EXECUTE] Starting parallel execution for ${hiddenCases.length} test cases...`);
+        // Parallel Execution
 
         const promises = hiddenCases.map(async (testCase, index) => {
             // Generate Driver Code wrapping the user's function
@@ -286,7 +342,6 @@ router.post("/submit", async (req, res) => {
         });
 
         const results = await Promise.all(promises);
-        console.log(`[EXECUTE] All test cases finished.`);
 
         // Process Results
         // Find first failure
@@ -444,6 +499,14 @@ router.post("/submit", async (req, res) => {
             time: maxTime,
             memory: maxMemory
         });
+
+        // Deduct Submission Credit ONLY on success (and if not Pro)
+        if (!user.isPro) {
+            await User.findOneAndUpdate(
+                { uid: userId, "stats.submissionCredits": { $gt: 0 } },
+                { $inc: { "stats.submissionCredits": -1 } }
+            );
+        }
 
     } catch (error) {
         res.status(500).json({

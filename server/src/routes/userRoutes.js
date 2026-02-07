@@ -111,7 +111,9 @@ router.get('/:uid', async (req, res) => {
                     totalProblems: 150,
                     timeSpent: "0h 0m",
                     globalRank: 0,
-                    lastSolvedDate: null
+                    lastSolvedDate: null,
+                    runCredits: 3,
+                    submissionCredits: 3
                 }
             });
         }

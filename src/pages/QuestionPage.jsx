@@ -107,6 +107,9 @@ export default function QuestionPage() {
         document.addEventListener('mouseup', onMouseUp);
     }, [editorHeightPercent]);
 
+    // Limit Modal State
+    const [limitModal, setLimitModal] = useState({ show: false, type: 'run', message: '' });
+
     const runCode = async () => {
         // Switch to Test Cases tab to show results
         setActiveBottomTab('testcases');
@@ -121,6 +124,17 @@ export default function QuestionPage() {
         }
 
         try {
+            // First check run locally (optimistic)
+            if (currentUser && userData && !userData.isPro && (userData.stats?.runCredits <= 0)) {
+                setLimitModal({
+                    show: true,
+                    type: 'run',
+                    message: "You have exhausted today's run credits."
+                });
+                setRunStatus("idle");
+                return;
+            }
+
             const promises = examples.map(async (example, index) => {
                 try {
                     const res = await fetch(`${API_URL}/api/execute/run`, {
@@ -129,11 +143,16 @@ export default function QuestionPage() {
                         body: JSON.stringify({
                             code,
                             language,
-                            stdin: example.input
+                            stdin: example.input,
+                            userId: currentUser?.uid // Pass User ID for credit tracking
                         })
                     });
 
                     const data = await res.json();
+
+                    if (res.status === 403 && data.isLimitError) {
+                        throw new Error("LIMIT_EXCEEDED");
+                    }
 
                     // Helper to normalize strings for comparison
                     const normalize = (str) => str ? str.trim().replace(/\r\n/g, "\n") : "";
@@ -156,6 +175,7 @@ export default function QuestionPage() {
                     };
 
                 } catch (err) {
+                    if (err.message === "LIMIT_EXCEEDED") throw err;
                     return {
                         status: "Error",
                         input: example.input,
@@ -168,26 +188,42 @@ export default function QuestionPage() {
 
             const results = await Promise.all(promises);
             setTestCaseResults(results);
+
+            // Refund credits locally? No, refresh user data to sync credits
+            if (refreshUserData) refreshUserData();
+
             setRunStatus("idle");
 
         } catch (err) {
             console.error(err);
             setRunStatus("idle");
+            if (err.message === "LIMIT_EXCEEDED") {
+                setLimitModal({
+                    show: true,
+                    type: 'run',
+                    message: "You have exhausted today's run credits."
+                });
+            }
         }
     };
 
     const submitCode = async () => {
-        // Optimistic Pro Check (Fast)
-        if (currentUser && userData && !userData.isPro) {
-            navigate('/pricing');
-            return;
-        }
-
         setRunStatus("submitting");
         setActiveTab("submissions");
         setSubmissionResult(null);
 
         try {
+            // Optimistic Check
+            if (currentUser && userData && !userData.isPro && (userData.stats?.submissionCredits <= 0)) {
+                setLimitModal({
+                    show: true,
+                    type: 'submit',
+                    message: "You have used all your free submissions."
+                });
+                setRunStatus("idle");
+                return;
+            }
+
             const res = await fetch(`${API_URL}/api/execute/submit`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -202,8 +238,18 @@ export default function QuestionPage() {
             const data = await res.json();
 
             if (!res.ok) {
-                // Handle Pro Restriction (403) or other errors
+                // Handle Pro Restriction (403) or Limit Exceeded
                 if (res.status === 403) {
+                    if (data.isLimitError) {
+                        setLimitModal({
+                            show: true,
+                            type: 'submit',
+                            message: data.details
+                        });
+                        setRunStatus("idle");
+                        return;
+                    }
+
                     setSubmissionResult({
                         verdict: "Restricted", // Custom verdict for UI
                         details: data.details || data.error,
@@ -219,6 +265,8 @@ export default function QuestionPage() {
             // If Accepted/Passed, refresh user data to update 'Solved' status in DSA page
             if (['Accepted', 'Passed'].includes(data.verdict)) {
                 if (refreshUserData) refreshUserData();
+            } else {
+                if (refreshUserData) refreshUserData(); // Also refresh to update credits on failure? Logic says yes.
             }
 
             setSubmissionResult({
@@ -496,34 +544,106 @@ export default function QuestionPage() {
                 </motion.div>
 
                 <div className="flex items-center gap-3">
-                    <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={runCode}
-                        disabled={runStatus === 'running'}
-                        className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all border ${runStatus === 'running'
-                            ? 'bg-[#262626]/50 text-[#737373] border-[#333333] cursor-not-allowed'
-                            : 'bg-[#262626] hover:bg-[#333333] text-[#e5e5e5] border-[#333333] hover:border-[#404040]'}`}
-                    >
-                        {runStatus === 'running' ? (
-                            <div className="w-3.5 h-3.5 border-2 border-[#e5e5e5]/30 border-t-[#e5e5e5] rounded-full animate-spin" />
-                        ) : (
-                            <Play size={14} className="fill-current text-[#e5e5e5]" />
+                    {/* Run Button with Credits */}
+                    <div className="flex flex-col items-end">
+                        <motion.button
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={runCode}
+                            disabled={runStatus === 'running'}
+                            title={(!userData?.isPro && userData?.stats?.runCredits <= 0) ? "Upgrade to continue" : ""}
+                            className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all border cursor-pointer ${runStatus === 'running'
+                                ? 'bg-[#262626]/50 text-[#737373] border-[#333333] cursor-not-allowed'
+                                : (!userData?.isPro && userData?.stats?.runCredits <= 0)
+                                    ? 'bg-[#262626] text-[#525252] border-[#333333] opacity-75 hover:opacity-100 hover:border-purple-500/30'
+                                    : 'bg-[#262626] hover:bg-[#333333] text-[#e5e5e5] border-[#333333] hover:border-[#404040]'}`}
+                        >
+                            {runStatus === 'running' ? (
+                                <div className="w-3.5 h-3.5 border-2 border-[#e5e5e5]/30 border-t-[#e5e5e5] rounded-full animate-spin" />
+                            ) : (
+                                <Play size={14} className="fill-current text-[#e5e5e5]" />
+                            )}
+                            Run
+                        </motion.button>
+                        {!userData?.isPro && userData?.stats && (
+                            <span className="text-[9px] text-zinc-500 font-medium mr-1 mt-0.5">
+                                {userData.stats.runCredits}/3 left
+                            </span>
                         )}
-                        Run
-                    </motion.button>
-                    <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={submitCode}
-                        disabled={runStatus === 'running'}
-                        className="flex items-center gap-2 px-3 py-1.5 bg-[#22c55e]/10 hover:bg-[#22c55e]/20 text-[#22c55e] border border-[#22c55e]/20 hover:border-[#22c55e]/30 rounded-md text-xs font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        <Send size={14} />
-                        Submit
-                    </motion.button>
+                    </div>
+
+                    {/* Submit Button with Credits */}
+                    <div className="flex flex-col items-end">
+                        <motion.button
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={submitCode}
+                            disabled={runStatus === 'running'}
+                            title={(!userData?.isPro && userData?.stats?.submissionCredits <= 0) ? "Upgrade to continue" : ""}
+                            className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-semibold transition-all border cursor-pointer ${(!userData?.isPro && userData?.stats?.submissionCredits <= 0)
+                                ? 'bg-red-500/10 text-red-500/50 border-red-500/10 opacity-75 hover:opacity-100 hover:border-red-500/30'
+                                : 'bg-[#22c55e]/10 hover:bg-[#22c55e]/20 text-[#22c55e] border border-[#22c55e]/20 hover:border-[#22c55e]/30'
+                                } disabled:opacity-50 disabled:cursor-not-allowed`}
+                        >
+                            <Send size={14} />
+                            Submit
+                        </motion.button>
+                        {!userData?.isPro && userData?.stats && (
+                            <span className="text-[9px] text-zinc-500 font-medium mr-1 mt-0.5">
+                                {userData.stats.submissionCredits}/3 left
+                            </span>
+                        )}
+                    </div>
                 </div>
             </header>
+
+            {/* Limit Modal */}
+            <AnimatePresence>
+                {limitModal.show && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm"
+                        onClick={() => setLimitModal({ ...limitModal, show: false })}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.95, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.95, opacity: 0 }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="bg-[#1A1A1A] border border-[#262626] rounded-xl p-6 max-w-sm w-full shadow-2xl relative"
+                        >
+                            <button
+                                onClick={() => setLimitModal({ ...limitModal, show: false })}
+                                className="absolute top-4 right-4 text-zinc-500 hover:text-white cursor-pointer"
+                            >
+                                <X size={18} />
+                            </button>
+
+                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center mb-4 mx-auto border border-purple-500/20">
+                                <Lock size={20} className="text-purple-400" />
+                            </div>
+
+                            <h3 className="text-lg font-bold text-white text-center mb-2">
+                                {limitModal.type === 'run' ? 'Daily Run Limit Reached' : 'Submission Limit Reached'}
+                            </h3>
+
+                            <p className="text-zinc-400 text-sm text-center mb-6 leading-relaxed">
+                                {limitModal.message || "You have used all your free credits. Upgrade to Pro for unlimited access."}
+                            </p>
+
+                            <button
+                                onClick={() => navigate('/pricing')}
+                                className="w-full py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white rounded-lg font-medium text-sm transition-all shadow-lg shadow-purple-500/25 flex items-center justify-center gap-2 cursor-pointer"
+                            >
+                                <Zap size={16} className="fill-current" />
+                                Upgrade to Pro
+                            </button>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {/* Main Content Split */}
             <div

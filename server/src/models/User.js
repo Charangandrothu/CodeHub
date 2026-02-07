@@ -14,7 +14,10 @@ const userSchema = new mongoose.Schema({
         timeSpent: { type: String, default: "0h 0m" },
         totalMinutes: { type: Number, default: 0 }, // For easier calculation
         globalRank: { type: Number, default: 0 },
-        lastSolvedDate: { type: Date, default: null } // Track last solved date for streak
+        lastSolvedDate: { type: Date, default: null }, // Track last solved date for streak
+        runCredits: { type: Number, default: 3 },
+        submissionCredits: { type: Number, default: 3 },
+        lastRunResetDate: { type: Date, default: Date.now }
     },
     submissionHistory: [{
         problemId: String,
