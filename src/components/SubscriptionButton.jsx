@@ -46,7 +46,7 @@ const SubscriptionButton = (props) => {
                 subscription_id: subscriptionId,
                 name: "CodeHubx Pro",
                 description: "Monthly Pro Subscription",
-                image: window.location.origin + "/logo.png", // Use local logo from public folder
+                image: "https://codehub-jj1e.onrender.com/logopng.png", // User requested custom logo
                 handler: async function (response) {
                     // 4. Verify Payment on Backend
                     const verificationRes = await fetch(`${API_URL}/api/payment/verify-payment`, {

@@ -1,0 +1,20 @@
+{
+    "name": "CodeHubx",
+    "short_name": "CodeHubx",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#000000",
+    "theme_color": "#3b82f6",
+    "icons": [
+        {
+            "src": "/logopng.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "/logopng.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}
