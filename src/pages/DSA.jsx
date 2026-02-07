@@ -4,10 +4,12 @@ import RightPanel from '../components/dsa/RightPanel';
 
 export default function DSA() {
     return (
-        <div className="flex justify-center min-h-screen pt-24 pb-12 px-4 sm:px-6 lg:px-8 max-w-[1600px] mx-auto gap-8">
+        <div className="min-h-screen bg-[#0a0a0a]">
             <Sidebar />
-            <ContentArea />
-            <RightPanel />
+            <div className="lg:ml-72 p-6 lg:p-8 flex gap-8 max-w-[1920px]">
+                <ContentArea />
+                <RightPanel />
+            </div>
         </div>
     );
 }

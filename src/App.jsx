@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import LandingPage from './pages/LandingPage'
 import Navbar from './components/Navbar'
 import Login from './pages/Login'
@@ -76,11 +76,17 @@ function AppRoutes() {
   );
 }
 
+const ConditionalNavbar = () => {
+  const location = useLocation(); // Now works because it's rendered inside Router
+  const isDSAPage = location.pathname.startsWith('/dsa');
+  return isDSAPage ? null : <Navbar />;
+};
+
 function App() {
   return (
     <Router>
       <div className="bg-[#0a0a0a] min-h-screen text-white">
-        <Navbar />
+        <ConditionalNavbar />
         <AppRoutes />
       </div>
     </Router>

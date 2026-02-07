@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { AlertCircle, CheckCircle2, FileCode2, Terminal, RefreshCw, ArrowRight } from 'lucide-react';
+import { AlertCircle, CheckCircle2, FileCode2, Terminal, RefreshCw, ArrowRight, Trophy } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { API_URL } from '../../config';
 import { useAuth } from '../../context/AuthContext';
 
@@ -92,23 +93,55 @@ export default function ContentArea() {
         );
     }
 
+    const solvedCount = problems.filter(p => userData?.stats?.solvedProblemIds?.includes(p._id)).length;
+    const progress = problems.length > 0 ? Math.round((solvedCount / problems.length) * 100) : 0;
+
     return (
         <div className="flex-1 min-w-0 space-y-8">
-            {/* Header Section */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400">
-                        Problems
-                    </h1>
-                    <p className="text-slate-400 mt-1">
-                        Browse and practice coding problems
-                    </p>
+            {/* Premium Header Card */}
+            <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-gradient-to-br from-[#0a0a0a] to-[#111] border border-white/5 rounded-2xl p-5 relative overflow-hidden group"
+            >
+                <div className="absolute inset-0 bg-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+                <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h1 className="text-2xl font-bold text-white mb-1 tracking-tight">Problems</h1>
+                        <p className="text-slate-400 text-xs mb-3">Browse and practice coding problems</p>
+                        <div className="inline-flex items-center gap-2 text-[10px] font-medium text-slate-500 bg-white/5 px-2.5 py-1 rounded-full border border-white/5">
+                            <Terminal size={10} />
+                            <span>{problems.length} problems available</span>
+                        </div>
+                    </div>
+
+                    {/* Progress Stats */}
+                    {problems.length > 0 && (
+                        <div className="bg-white/5 border border-white/10 rounded-xl p-3 min-w-[200px] backdrop-blur-sm">
+                            <div className="flex justify-between items-center mb-2">
+                                <span className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider flex items-center gap-1.5">
+                                    <Trophy size={12} className="text-yellow-500" />
+                                    Progress
+                                </span>
+                                <span className="text-lg font-bold text-white leading-none">
+                                    {solvedCount} <span className="text-gray-500 text-xs font-normal">/ {problems.length}</span>
+                                </span>
+                            </div>
+                            <div className="relative w-full h-1.5 bg-black/40 rounded-full overflow-hidden">
+                                <motion.div
+                                    initial={{ width: 0 }}
+                                    animate={{ width: `${progress}%` }}
+                                    transition={{ duration: 1, ease: "easeOut" }}
+                                    className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full"
+                                />
+                            </div>
+                            <div className="flex justify-end mt-1">
+                                <span className="text-[10px] font-bold text-blue-400">{progress}% Completed</span>
+                            </div>
+                        </div>
+                    )}
                 </div>
-                <div className="flex items-center gap-2 text-sm text-slate-500 bg-white/5 px-3 py-1.5 rounded-full border border-white/5">
-                    <Terminal size={14} />
-                    <span>{problems.length} problems available</span>
-                </div>
-            </div>
+            </motion.div>
 
             {/* Problems List */}
             <div className="space-y-4">

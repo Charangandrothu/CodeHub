@@ -53,7 +53,6 @@ const Features = () => {
                     </h2>
                     <p className="text-lg text-gray-400 max-w-2xl mx-auto flex flex-wrap justify-center gap-x-6 gap-y-2">
                         <span>🔹 DSA</span>
-                        <span>🔹 Contests</span>
                         <span>🔹 Aptitude</span>
                         <span>🔹 Mock Tests</span>
                         <span>🔹 Analytics</span>

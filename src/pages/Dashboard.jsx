@@ -28,32 +28,36 @@ const Dashboard = () => {
     // Weekly Leaderboard State
     const [weeklyLeaderboard, setWeeklyLeaderboard] = useState([]);
     const [myWeeklyStats, setMyWeeklyStats] = useState({ rank: null, count: 0 });
+    const [nextTask, setNextTask] = useState(null);
 
     useEffect(() => {
-        const fetchLeaderboard = async () => {
-            try {
-                const res = await fetch(`${API_URL}/api/users/leaderboard/weekly`);
-                if (res.ok) {
-                    const data = await res.json();
-                    setWeeklyLeaderboard(data);
+        const fetchData = async () => {
+            if (!currentUser) return;
 
-                    if (currentUser) {
-                        const myIndex = data.findIndex(u => u.uid === currentUser.uid);
-                        if (myIndex !== -1) {
-                            setMyWeeklyStats({
-                                rank: myIndex + 1,
-                                count: data[myIndex].weeklySolvedCount
-                            });
-                        } else {
-                            setMyWeeklyStats({ rank: null, count: 0 });
-                        }
+            try {
+                // Fetch Leaderboard
+                const lbRes = await fetch(`${API_URL}/api/users/leaderboard/weekly`);
+                if (lbRes.ok) {
+                    const data = await lbRes.json();
+                    setWeeklyLeaderboard(data);
+                    const myIndex = data.findIndex(u => u.uid === currentUser.uid);
+                    if (myIndex !== -1) {
+                        setMyWeeklyStats({ rank: myIndex + 1, count: data[myIndex].weeklySolvedCount });
+                    } else {
+                        setMyWeeklyStats({ rank: null, count: 0 });
                     }
                 }
+
+                // Fetch Next Task
+                const taskRes = await fetch(`${API_URL}/api/users/next-task/${currentUser.uid}`);
+                if (taskRes.ok) {
+                    setNextTask(await taskRes.json());
+                }
             } catch (err) {
-                console.error("Failed to fetch leaderboard", err);
+                console.error("Failed to fetch dashboard data", err);
             }
         };
-        fetchLeaderboard();
+        fetchData();
     }, [currentUser]);
 
     const containerVariants = {
@@ -210,17 +214,22 @@ const Dashboard = () => {
                                                 </>
                                             ) : (
                                                 <>
-                                                    <p className="text-xs text-blue-400 font-medium uppercase tracking-wider mb-1">COMING NEXT</p>
-                                                    <h3 className="text-lg font-bold text-white mb-1 group-hover:text-blue-300 transition-colors">{dashboardState.section}</h3>
+                                                    <p className="text-xs text-blue-400 font-medium uppercase tracking-wider mb-1">
+                                                        {nextTask?.progress >= 80 ? "ALMOST THERE! 🔥" : "COMING NEXT"}
+                                                    </p>
+                                                    <h3 className="text-lg font-bold text-white mb-1 group-hover:text-blue-300 transition-colors">
+                                                        {nextTask?.topic || "Loading..."}
+                                                    </h3>
                                                     <p className="text-sm text-gray-400 mb-2 flex items-center gap-2">
-                                                        <span>Topic: {dashboardState.topic}</span>
+                                                        <span>{nextTask?.solvedCount || 0} / {nextTask?.totalProblems || '?'} Solved</span>
                                                         <span className="w-1 h-1 rounded-full bg-gray-600" />
-                                                        <span>{dashboardState.time} remaining</span>
+                                                        <span>{nextTask?.progress || 0}% Complete</span>
                                                     </p>
                                                     <div className="w-48 h-1 bg-white/10 rounded-full overflow-hidden">
                                                         <motion.div
                                                             initial={{ width: 0 }}
-                                                            animate={{ width: "35%" }}
+                                                            animate={{ width: `${nextTask?.progress || 0}%` }}
+                                                            transition={{ duration: 1 }}
                                                             className="h-full bg-blue-500 rounded-full"
                                                         />
                                                     </div>
@@ -232,9 +241,17 @@ const Dashboard = () => {
                                     <Button
                                         className={`w-full sm:w-auto shrink-0 ${dashboardState.isNewUser ? 'bg-white text-black hover:bg-gray-100' : ''}`}
                                         icon={ArrowRight}
-                                        onClick={() => navigate('/dsa')}
+                                        onClick={() => {
+                                            if (dashboardState.isNewUser) {
+                                                navigate('/dsa');
+                                            } else if (nextTask?.slug) {
+                                                navigate(`/dsa/${nextTask.slug}`);
+                                            } else {
+                                                navigate('/dsa');
+                                            }
+                                        }}
                                     >
-                                        {dashboardState.buttonText}
+                                        {nextTask?.progress >= 80 ? "Finish It 💪" : "Continue Practice"}
                                     </Button>
                                 </div>
                             </div>

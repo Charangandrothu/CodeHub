@@ -323,6 +323,148 @@ router.delete('/:uid', async (req, res) => {
     }
 });
 
+// Get Next Task (Topic Recommendation)
+router.get('/next-task/:uid', async (req, res) => {
+    try {
+        const user = await User.findOne({ uid: req.params.uid });
+        if (!user) return res.status(404).json({ error: "User not found" });
+
+        const Problem = require('../models/Problem'); // Lazy load or move to top
+
+        let currentTopic = 'Patterns'; // Default for new users
+        let topicSlug = 'patterns';
+
+        // 1. Detect Last Active Topic
+        if (user.submissionHistory && user.submissionHistory.length > 0) {
+            // Sort to get latest Accepted submission
+            const lastSubmission = user.submissionHistory
+                .filter(s => s.verdict === 'Accepted')
+                .sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt))[0];
+
+            if (lastSubmission) {
+                // Fetch problem to get topic
+                // submissionHistory stores problemId. If it's ID, findById.
+                // If it's slug, findOne. Based on previous turns, it seems to be ID.
+                // Assuming problemId stored in history is the MongoDB _id string.
+                const lastProblem = await Problem.findById(lastSubmission.problemId);
+                if (lastProblem && lastProblem.topic) {
+                    currentTopic = lastProblem.topic;
+                }
+            }
+        }
+
+        // 2. Calculate Progress for this Topic
+        // Get all problems in this topic
+        // Regex for case-insensitive match just in case
+        const topicProblems = await Problem.find({
+            topic: { $regex: new RegExp(`^${currentTopic}$`, 'i') }
+        }).select('_id');
+
+        const totalProblems = topicProblems.length;
+        const topicProblemIds = topicProblems.map(p => p._id.toString());
+
+        // Count how many of these the user has solved
+        // solvedProblemIds stores IDs of solved problems
+        const solvedCount = user.solvedProblemIds
+            ? user.solvedProblemIds.filter(id => topicProblemIds.includes(id)).length
+            : 0;
+
+        const progress = totalProblems > 0 ? Math.round((solvedCount / totalProblems) * 100) : 0;
+
+        // Slugify topic for URL (simple version)
+        topicSlug = currentTopic.toLowerCase().replace(/\s+/g, '-');
+
+        res.json({
+            topic: currentTopic,
+            slug: topicSlug,
+            solvedCount,
+            totalProblems,
+            progress
+        });
+
+    } catch (error) {
+        console.error("Next task error:", error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Get Topic Progress for Sidebar
+router.get('/topic-progress/:uid', async (req, res) => {
+    try {
+        const user = await User.findOne({ uid: req.params.uid });
+        if (!user) return res.status(404).json({ error: "User not found" });
+
+        const Problem = require('../models/Problem');
+
+        // Fetch all problems
+        const problems = await Problem.find({}, 'topic _id');
+
+        const SIDEBAR_TOPICS = [
+            'patterns', 'sorting', 'beginner', 'arrays', 'strings',
+            'binary-search', 'recursion-backtracking', 'linked-lists',
+            'stacks-queues', 'hashing', 'trees', 'dp'
+        ];
+
+        // Initialize stats
+        const stats = {};
+        SIDEBAR_TOPICS.forEach(id => stats[id] = { total: 0, solved: 0 });
+
+        // Helper to get regex matcher for a topic ID
+        const getMatcher = (id) => {
+            switch (id) {
+                case 'arrays': return /array/i;                     // Matches "Arrays", "Arrays & Hashing"
+                case 'hashing': return /hash/i;                     // Matches "Hashing", "Arrays & Hashing"
+                case 'recursion-backtracking': return /recursion|backtracking/i;
+                case 'stacks-queues': return /stack|queue/i;
+                case 'trees': return /tree|graph/i;                 // Matches "Trees", "Trees & Graphs"
+                case 'dp': return /dynamic\s*programming|dp/i;
+                case 'beginner': return /beginner/i;
+                case 'linked-lists': return /linked\s*list/i;
+                case 'binary-search': return /binary\s*search/i;
+                case 'patterns': return /pattern/i;
+                case 'strings': return /string/i;
+                case 'sorting': return /sort/i;
+                default: return new RegExp(id.replace('-', '.*'), 'i');
+            }
+        };
+
+        // Calculate stats
+        const solvedIds = new Set();
+
+        // Add from optimized array
+        if (user.solvedProblemIds) {
+            user.solvedProblemIds.forEach(id => solvedIds.add(id.toString()));
+        }
+
+        // Add from history (fallback/robustness)
+        if (user.submissionHistory) {
+            user.submissionHistory.forEach(s => {
+                if (s.verdict === 'Accepted' && s.problemId) {
+                    solvedIds.add(s.problemId.toString());
+                }
+            });
+        }
+
+        SIDEBAR_TOPICS.forEach(id => {
+            const matcher = getMatcher(id);
+            problems.forEach(p => {
+                if (p.topic && matcher.test(p.topic)) {
+                    stats[id].total++;
+                    if (solvedIds.has(p._id.toString())) {
+                        stats[id].solved++;
+                    }
+                }
+            });
+        });
+
+        res.json(stats);
+
+    } catch (error) {
+        console.error("Topic progress error:", error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Get Weekly Leaderboard
 router.get('/leaderboard/weekly', async (req, res) => {
     try {
