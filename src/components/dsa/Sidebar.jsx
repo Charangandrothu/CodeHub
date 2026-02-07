@@ -1,24 +1,24 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Rocket, Box, GitMerge, Search, Layers, Database, Hash, Code, Puzzle, Filter, Code2, LogOut, User, Settings } from 'lucide-react';
+import { Rocket, Box, GitMerge, Search, Layers, Database, Hash, Code, Puzzle, Filter, Code2, LogOut, User, Settings, Sparkles, Crown } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { motion } from 'framer-motion';
 import logo_img from '../../assets/logo_img.png';
 import { API_URL } from '../../config';
 
-const TOPICS = [
-    { id: 'patterns', label: 'Patterns', icon: Puzzle },
-    { id: 'sorting', label: 'Sorting', icon: Filter },
-    { id: 'beginner', label: 'Beginner', icon: Rocket },
-    { id: 'arrays', label: 'Arrays', icon: Box },
-    { id: 'strings', label: 'Strings', icon: Box },
-    { id: 'binary-search', label: 'Binary Search', icon: Search },
-    { id: 'recursion-backtracking', label: 'Recursion', icon: GitMerge },
-    { id: 'linked-lists', label: 'Linked Lists', icon: Layers },
-    { id: 'stacks-queues', label: 'Stacks & Queues', icon: Database },
-    { id: 'hashing', label: 'Hashing', icon: Hash },
-    { id: 'trees', label: 'Trees & Graphs', icon: GitMerge },
-    { id: 'dp', label: 'Dynamic Programming', icon: Code },
+export const TOPICS = [
+    { id: 'patterns', label: 'Patterns', icon: Puzzle, color: '#a855f7' },
+    { id: 'sorting', label: 'Sorting', icon: Filter, color: '#f97316' },
+    { id: 'beginner', label: 'Beginner', icon: Rocket, color: '#22c55e' },
+    { id: 'arrays', label: 'Arrays', icon: Box, color: '#3b82f6' },
+    { id: 'strings', label: 'Strings', icon: Box, color: '#ec4899' },
+    { id: 'binary-search', label: 'Binary Search', icon: Search, color: '#06b6d4' },
+    { id: 'recursion-backtracking', label: 'Recursion', icon: GitMerge, color: '#ef4444' },
+    { id: 'linked-lists', label: 'Linked Lists', icon: Layers, color: '#14b8a6' },
+    { id: 'stacks-queues', label: 'Stacks & Queues', icon: Database, color: '#6366f1' },
+    { id: 'hashing', label: 'Hashing', icon: Hash, color: '#eab308' },
+    { id: 'trees', label: 'Trees & Graphs', icon: GitMerge, color: '#10b981' },
+    { id: 'dp', label: 'Dynamic Programming', icon: Code, color: '#f43f5e' },
 ];
 
 export default function Sidebar() {
@@ -56,7 +56,12 @@ export default function Sidebar() {
     };
 
     return (
-        <aside className="w-72 h-screen fixed top-0 left-0 flex flex-col bg-[#0a0a0a] border-r border-white/5 z-50 p-6">
+        <motion.aside
+            initial={{ x: -280, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            className="w-72 h-screen fixed top-0 left-0 flex flex-col bg-[#0a0a0a] border-r border-white/5 z-50 p-6"
+        >
             {/* Logo Section */}
             <div
                 className="flex items-center gap-3 mb-10 px-2 shrink-0 cursor-pointer group"
@@ -75,6 +80,34 @@ export default function Sidebar() {
                 </div>
             </div>
 
+            {/* Upgrade & Daily Goal Section */}
+            {userData && !userData.isPro && (
+                <div className="px-2 mb-6 shrink-0 space-y-4">
+                    {/* Upgrade Badge */}
+                    <motion.button
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => navigate('/pricing')}
+                        className="relative w-full flex items-center justify-center gap-2 px-3 py-2 rounded-full bg-gradient-to-r from-amber-500/10 via-yellow-500/10 to-amber-500/10 border border-amber-500/30 shadow-[0_0_15px_-3px_rgba(245,158,11,0.2)] group overflow-hidden cursor-pointer"
+                    >
+                        <motion.div
+                            animate={{ x: ['-200%', '200%'] }}
+                            transition={{ duration: 3, repeat: Infinity, ease: "linear", repeatDelay: 2 }}
+                            className="absolute inset-0 w-1/2 h-full bg-gradient-to-r from-transparent via-amber-400/20 to-transparent skew-x-12 blur-sm"
+                        />
+                        <Sparkles size={14} className="text-amber-400" />
+                        <span className="text-xs font-semibold bg-gradient-to-r from-amber-200 to-yellow-400 bg-clip-text text-transparent group-hover:text-yellow-300 transition-colors">
+                            Upgrade to Pro
+                        </span>
+                        <Crown size={14} className="text-amber-400 fill-amber-400/20" />
+                    </motion.button>
+
+
+                </div>
+            )}
+
             {/* Navigation Topics */}
             <div className="flex-1 overflow-y-auto custom-scrollbar -mx-2 px-2 space-y-1">
                 <h3 className="text-gray-400 text-xs font-bold uppercase tracking-wider mb-4 px-2">
@@ -83,42 +116,61 @@ export default function Sidebar() {
                 {TOPICS.map((topic) => {
                     const active = isActive(topic.id);
                     const Icon = topic.icon;
+                    // Dynamic Active Style
+                    const activeStyle = active ? {
+                        color: topic.color || '#3b82f6',
+                        borderColor: `${topic.color || '#3b82f6'}40`,
+                    } : {};
 
                     return (
                         <button
                             key={topic.id}
                             onClick={() => navigate(`/dsa/${topic.id}`)}
                             className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-all duration-300 group relative overflow-hidden ${active
-                                ? 'bg-blue-600/10 text-white border border-blue-500/30'
+                                ? 'text-white border' // Border color handled by style
                                 : 'text-gray-400 hover:text-white hover:bg-white/5 border border-transparent'
                                 }`}
+                            style={activeStyle}
                         >
                             {active && (
                                 <motion.div
                                     layoutId="active-bg"
-                                    className="absolute inset-0 bg-blue-600/10 rounded-xl"
+                                    className="absolute inset-0 rounded-xl"
                                     initial={false}
                                     transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                                    style={{ backgroundColor: `${topic.color || '#3b82f6'}15` }}
                                 />
                             )}
                             <Icon
                                 size={18}
-                                className={`relative z-10 transition-colors duration-300 ${active ? 'text-blue-400' : 'text-gray-500 group-hover:text-gray-300'}`}
+                                className={`relative z-10 transition-colors duration-300`}
+                                style={{ color: active ? (topic.color || '#3b82f6') : undefined }}
                             />
                             <span className="relative z-10 truncate flex-1 text-left">{topic.label}</span>
 
                             {/* Stats Badge */}
                             {topicStats[topic.id] && (
-                                <span className={`relative z-10 text-[10px] font-medium px-1.5 py-0.5 rounded border transition-colors ${active
-                                    ? 'text-blue-300 bg-blue-500/20 border-blue-500/30'
-                                    : 'text-gray-600 bg-white/5 border-white/5 group-hover:text-gray-400 group-hover:border-white/10'
-                                    }`}>
+                                <span
+                                    className={`relative z-10 text-[10px] font-medium px-1.5 py-0.5 rounded border transition-colors ${!active ? 'text-gray-600 bg-white/5 border-white/5 group-hover:text-gray-400 group-hover:border-white/10' : ''
+                                        }`}
+                                    style={active ? {
+                                        color: topic.color || '#3b82f6',
+                                        backgroundColor: `${topic.color || '#3b82f6'}15`,
+                                        borderColor: `${topic.color || '#3b82f6'}30`
+                                    } : {}}
+                                >
                                     {topicStats[topic.id].solved}/{topicStats[topic.id].total}
                                 </span>
                             )}
 
                             {active && (
-                                <div className="ml-2 w-1.5 h-1.5 rounded-full bg-blue-400 shadow-[0_0_8px_#60a5fa] relative z-10" />
+                                <div
+                                    className="ml-2 w-1.5 h-1.5 rounded-full relative z-10 shadow-[0_0_8px]"
+                                    style={{
+                                        backgroundColor: topic.color || '#3b82f6',
+                                        boxShadow: `0 0 8px ${topic.color || '#3b82f6'}`
+                                    }}
+                                />
                             )}
                         </button>
                     );
@@ -149,6 +201,6 @@ export default function Sidebar() {
                     </button>
                 </div>
             </div>
-        </aside>
+        </motion.aside>
     );
 }

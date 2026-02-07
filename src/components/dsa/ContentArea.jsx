@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { TOPICS } from './Sidebar';
 import { AlertCircle, CheckCircle2, FileCode2, Terminal, RefreshCw, ArrowRight, Trophy } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { API_URL } from '../../config';
@@ -12,8 +13,10 @@ export default function ContentArea() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // Default to 'beginner' if no topic is selected (e.g. on /dsa root)
-    const activeTopicId = topicId || 'beginner';
+    // Default to 'patterns' if no topic is selected
+    const activeTopicId = topicId || 'patterns';
+    const currentTopic = TOPICS.find(t => t.id === activeTopicId) || TOPICS[0];
+    const accentColor = currentTopic?.color || '#3b82f6';
 
     useEffect(() => {
         fetchProblems();
@@ -104,10 +107,15 @@ export default function ContentArea() {
                 animate={{ opacity: 1, y: 0 }}
                 className="bg-gradient-to-br from-[#0a0a0a] to-[#111] border border-white/5 rounded-2xl p-5 relative overflow-hidden group"
             >
-                <div className="absolute inset-0 bg-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+                <div
+                    className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700"
+                    style={{ backgroundColor: `${accentColor}10` }} // 10% opacity
+                />
                 <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-2xl font-bold text-white mb-1 tracking-tight">Problems</h1>
+                        <h1 className="text-2xl font-bold text-white mb-1 tracking-tight">
+                            <span style={{ color: accentColor }}>{currentTopic.label}</span> Problems
+                        </h1>
                         <p className="text-slate-400 text-xs mb-3">Browse and practice coding problems</p>
                         <div className="inline-flex items-center gap-2 text-[10px] font-medium text-slate-500 bg-white/5 px-2.5 py-1 rounded-full border border-white/5">
                             <Terminal size={10} />
@@ -132,11 +140,12 @@ export default function ContentArea() {
                                     initial={{ width: 0 }}
                                     animate={{ width: `${progress}%` }}
                                     transition={{ duration: 1, ease: "easeOut" }}
-                                    className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full"
+                                    className="h-full rounded-full"
+                                    style={{ backgroundColor: accentColor, boxShadow: `0 0 10px ${accentColor}40` }}
                                 />
                             </div>
                             <div className="flex justify-end mt-1">
-                                <span className="text-[10px] font-bold text-blue-400">{progress}% Completed</span>
+                                <span className="text-[10px] font-bold" style={{ color: accentColor }}>{progress}% Completed</span>
                             </div>
                         </div>
                     )}
