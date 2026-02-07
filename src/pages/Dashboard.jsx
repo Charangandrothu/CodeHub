@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -14,14 +14,47 @@ import {
     BrainCircuit,
     Layout,
     Clock,
-    Zap
+    Zap,
+    Crown
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import DailyQuote from '../components/dsa/DailyQuote';
+import { API_URL } from '../config';
 
 const Dashboard = () => {
     const { currentUser, userData } = useAuth();
     const navigate = useNavigate();
+
+    // Weekly Leaderboard State
+    const [weeklyLeaderboard, setWeeklyLeaderboard] = useState([]);
+    const [myWeeklyStats, setMyWeeklyStats] = useState({ rank: null, count: 0 });
+
+    useEffect(() => {
+        const fetchLeaderboard = async () => {
+            try {
+                const res = await fetch(`${API_URL}/api/users/leaderboard/weekly`);
+                if (res.ok) {
+                    const data = await res.json();
+                    setWeeklyLeaderboard(data);
+
+                    if (currentUser) {
+                        const myIndex = data.findIndex(u => u.uid === currentUser.uid);
+                        if (myIndex !== -1) {
+                            setMyWeeklyStats({
+                                rank: myIndex + 1,
+                                count: data[myIndex].weeklySolvedCount
+                            });
+                        } else {
+                            setMyWeeklyStats({ rank: null, count: 0 });
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to fetch leaderboard", err);
+            }
+        };
+        fetchLeaderboard();
+    }, [currentUser]);
 
     const containerVariants = {
         hidden: { opacity: 0 },
@@ -113,11 +146,32 @@ const Dashboard = () => {
 
                         <div className="hidden md:flex items-center gap-6">
                             <div className="text-right">
-                                <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">Weekly Rank</p>
-                                <div className="flex items-end justify-end gap-2">
-                                    <span className="text-xl font-bold text-white">{userData?.stats?.globalRank ? `#${userData.stats.globalRank}` : 'Unranked'}</span>
-                                    <Trophy size={16} className="text-yellow-500 mb-1" />
-                                </div>
+                                <p className="text-xs text-gray-500 font-medium uppercase tracking-wider mb-0.5">Weekly Rank</p>
+                                {myWeeklyStats.rank ? (
+                                    <>
+                                        <div className="flex items-end justify-end gap-2">
+                                            <span className="text-2xl font-bold text-white">#{myWeeklyStats.rank}</span>
+                                            <Trophy size={20} className="text-yellow-500 mb-1" />
+                                        </div>
+                                        <p className="text-[10px] text-emerald-400 font-medium">
+                                            {myWeeklyStats.count} solved • Top {Math.round(((weeklyLeaderboard.length - myWeeklyStats.rank + 1) / weeklyLeaderboard.length) * 100)}% 🚀
+                                        </p>
+                                    </>
+                                ) : userData?.stats?.solvedProblems === 0 ? (
+                                    <>
+                                        <div className="flex items-end justify-end gap-2">
+                                            <span className="text-sm font-bold text-blue-400">New Challenger ⚡</span>
+                                        </div>
+                                        <p className="text-[10px] text-gray-500 mt-1">Solve 1 to join! 💪</p>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className="flex items-end justify-end gap-2">
+                                            <span className="text-sm font-bold text-gray-400">Unranked 😴</span>
+                                        </div>
+                                        <p className="text-[10px] text-orange-400 font-medium mt-1">Wake up & solve! 🔥</p>
+                                    </>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -257,6 +311,43 @@ const Dashboard = () => {
                                     <span className="text-gray-500">Global Rank</span>
                                     <span className="text-white font-mono font-medium">{userData?.stats?.globalRank ? `#${userData.stats.globalRank}` : 'Unranked'}</span>
                                 </div>
+                            </div>
+                        </div>
+
+                        {/* Top Solvers Widget */}
+                        <div className="rounded-2xl border border-white/10 bg-[#0a0a0a]/50 backdrop-blur-xl p-5">
+                            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                                <Trophy size={14} className="text-yellow-500" /> Weekly Top 3
+                            </h3>
+                            <div className="space-y-3">
+                                {weeklyLeaderboard.slice(0, 3).map((user, idx) => (
+                                    <div
+                                        key={user.uid}
+                                        onClick={() => navigate(`/${user.username || user.uid}`)}
+                                        className="flex items-center justify-between p-2 rounded-lg hover:bg-white/5 cursor-pointer transition-colors group"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shadow-lg ${idx === 0 ? "bg-gradient-to-br from-yellow-400 to-amber-600 text-white shadow-yellow-500/20" :
+                                                idx === 1 ? "bg-gradient-to-br from-gray-300 to-gray-500 text-white shadow-gray-500/20" :
+                                                    "bg-gradient-to-br from-orange-400 to-red-500 text-white shadow-orange-500/20"
+                                                }`}>
+                                                {idx + 1}
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-medium text-white max-w-[120px] truncate group-hover:text-blue-400 transition-colors">
+                                                    {user.username || "User"}
+                                                </p>
+                                                <p className="text-[10px] text-gray-500">{user.weeklySolvedCount} solved</p>
+                                            </div>
+                                        </div>
+                                        {idx === 0 && <Crown size={14} className="text-yellow-500" />}
+                                    </div>
+                                ))}
+                                {weeklyLeaderboard.length === 0 && (
+                                    <div className="text-center py-4 text-xs text-gray-500">
+                                        No submissions this week by anyone yet.<br />Be the first!
+                                    </div>
+                                )}
                             </div>
                         </div>
 

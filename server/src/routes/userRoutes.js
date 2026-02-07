@@ -323,4 +323,59 @@ router.delete('/:uid', async (req, res) => {
     }
 });
 
+// Get Weekly Leaderboard
+router.get('/leaderboard/weekly', async (req, res) => {
+    try {
+        const oneWeekAgo = new Date();
+        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+        const leaderboard = await User.aggregate([
+            // Optimization: Filter users who have at least one recent submission
+            {
+                $match: {
+                    "submissionHistory.submittedAt": { $gte: oneWeekAgo }
+                }
+            },
+            { $unwind: "$submissionHistory" },
+            // Filter specific submissions
+            {
+                $match: {
+                    "submissionHistory.verdict": "Accepted",
+                    "submissionHistory.submittedAt": { $gte: oneWeekAgo }
+                }
+            },
+            // Group by User
+            {
+                $group: {
+                    _id: "$uid",
+                    username: { $first: "$username" },
+                    displayName: { $first: "$displayName" },
+                    photoURL: { $first: "$photoURL" },
+                    email: { $first: "$email" },
+                    weeklySolvedProblems: { $addToSet: "$submissionHistory.problemId" },
+                    earliestSolveTime: { $min: "$submissionHistory.submittedAt" }
+                }
+            },
+            // Project
+            {
+                $project: {
+                    uid: "$_id",
+                    username: 1,
+                    displayName: 1,
+                    photoURL: 1,
+                    email: 1,
+                    weeklySolvedCount: { $size: "$weeklySolvedProblems" },
+                    earliestSolveTime: 1
+                }
+            },
+            // Sort
+            { $sort: { weeklySolvedCount: -1, earliestSolveTime: 1 } }
+        ]);
+
+        res.json(leaderboard);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 module.exports = router;
