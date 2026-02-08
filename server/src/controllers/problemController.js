@@ -1,4 +1,5 @@
 const Problem = require("../models/Problem");
+const mongoose = require("mongoose");
 
 // GET /api/problems
 exports.getAllProblems = async (req, res) => {
@@ -7,7 +8,7 @@ exports.getAllProblems = async (req, res) => {
     let query = {};
 
     if (topic) {
-      // Create a regex that allows hyphens in the query to match spaces in the DB
+      // Create a regex that allows hyphens in twhy he query to match spaces in the DB
       // e.g., "binary-search" will match "Binary Search" or "Binary-Search"
       const pattern = topic.split('-').join('[\\s-]');
       query.topic = { $regex: new RegExp(`^${pattern}$`, "i") };
@@ -24,12 +25,21 @@ exports.getAllProblems = async (req, res) => {
 // GET /api/problems/:slug
 exports.getProblemBySlug = async (req, res) => {
   try {
-    const problem = await Problem.findOne({ slug: req.params.slug });
+    const { slug } = req.params;
+    let query = { slug };
+
+    // Allow lookup by ID if it's a valid ObjectId
+    if (mongoose.Types.ObjectId.isValid(slug)) {
+      query = { $or: [{ slug }, { _id: slug }] };
+    }
+
+    const problem = await Problem.findOne(query);
     if (!problem) {
       return res.status(404).json({ message: "Problem not found" });
     }
     res.json(problem);
   } catch (error) {
+    console.error("Error fetching problem:", error);
     res.status(500).json({ message: "Server Error" });
   }
 };

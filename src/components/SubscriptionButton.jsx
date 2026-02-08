@@ -20,7 +20,7 @@ const SubscriptionButton = (props) => {
             // 1. Load Razorpay SDK
             const isLoaded = await loadRazorpay();
             if (!isLoaded) {
-                toast.error("Razorpay SDK failed to load");
+                toast.error("Razorpay SDK failed to load. Check your connection.");
                 setLoading(false);
                 return;
             }
@@ -40,55 +40,72 @@ const SubscriptionButton = (props) => {
             const data = await response.json();
             const { subscriptionId, keyId } = data;
 
+            if (!subscriptionId || !keyId) {
+                throw new Error("Invalid response from server");
+            }
+
             // 3. Open Razorpay Checkout
             const options = {
                 key: keyId,
                 subscription_id: subscriptionId,
                 name: "CodeHubx Pro",
                 description: "Monthly Pro Subscription",
-                image: "https://codehub-jj1e.onrender.com/logopng.png", // User requested custom logo
+                // IMPORTANT: Must be a direct image URL (png/jpg) or base64. 
+                // Do NOT use HTML pages like ibb.co links.
+                image: "https://i.postimg.cc/59gWXgtK/logopayment.png",
                 handler: async function (response) {
-                    // 4. Verify Payment on Backend
-                    const verificationRes = await fetch(`${API_URL}/api/payment/verify-payment`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            razorpay_payment_id: response.razorpay_payment_id,
-                            razorpay_subscription_id: response.razorpay_subscription_id,
-                            razorpay_signature: response.razorpay_signature,
-                            uid: currentUser.uid
-                        })
-                    });
+                    try {
+                        // 4. Verify Payment on Backend
+                        const verificationRes = await fetch(`${API_URL}/api/payment/verify-payment`, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                razorpay_payment_id: response.razorpay_payment_id,
+                                razorpay_subscription_id: response.razorpay_subscription_id,
+                                razorpay_signature: response.razorpay_signature,
+                                uid: currentUser.uid
+                            })
+                        });
 
-                    const verificationData = await verificationRes.json();
+                        const verificationData = await verificationRes.json();
 
-                    if (verificationData.success) {
-                        toast.success("Welcome to CodeHubx Pro!");
-                        await refreshUserData(); // Update context
-                    } else {
-                        toast.error("Payment verification failed!");
+                        if (verificationData.success) {
+                            toast.success("Welcome to CodeHubx Pro!");
+                            await refreshUserData(); // Update context
+                        } else {
+                            toast.error("Payment verification failed!");
+                        }
+                    } catch (error) {
+                        console.error("Verification Error:", error);
+                        toast.error("Verification failed. Contact support.");
                     }
                 },
                 prefill: {
-                    name: currentUser.displayName,
-                    email: currentUser.email,
-                    contact: "" // Can be added if you have it
+                    name: currentUser.displayName || "",
+                    email: currentUser.email || "",
+                    contact: ""
                 },
                 theme: {
                     color: "#3B82F6"
+                },
+                modal: {
+                    ondismiss: function () {
+                        setLoading(false);
+                    }
                 }
             };
 
             const rzp = new window.Razorpay(options);
             rzp.on('payment.failed', function (response) {
+                console.error("Payment Failed:", response.error);
                 toast.error(response.error.description || "Payment Failed");
+                setLoading(false);
             });
             rzp.open();
 
         } catch (error) {
             console.error("Subscription Error:", error);
-            toast.error("Something went wrong");
-        } finally {
+            toast.error(error.message || "Something went wrong");
             setLoading(false);
         }
     };

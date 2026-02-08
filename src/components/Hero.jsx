@@ -108,7 +108,7 @@ const Hero = () => {
           <div className="mt-12 flex items-center gap-8 text-gray-500 text-sm">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-              <span>DSA & System Design</span>
+              <span>DSA</span>
             </div>
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-emerald-500" />
