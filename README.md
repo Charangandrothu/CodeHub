@@ -1,4 +1,4 @@
-# CodeHub 
+# CodeHub 🚀
 
 **CodeHub** is a comprehensive, structured placement preparation platform designed to unify coding practice, aptitude training, and core computer science concepts into a single, cohesive ecosystem. It tracks consistency, measures progress, and provides a premium, test-driven environment for aspirants.
 
