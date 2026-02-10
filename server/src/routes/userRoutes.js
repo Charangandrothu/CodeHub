@@ -195,7 +195,8 @@ router.get('/:uid', async (req, res) => {
 // Update User Profile
 router.put('/:uid', async (req, res) => {
     try {
-        const { role, college, portfolio, github, linkedin, leetcode, codeforces, skills, email, photoURL } = req.body;
+        const { college, portfolio, github, linkedin, leetcode, codeforces, skills, email, photoURL, displayName } = req.body;
+        // Note: role is NOT updated here. Use Admin API.
 
         console.log(`Updating profile for UID: ${req.params.uid}`);
 
@@ -205,8 +206,7 @@ router.put('/:uid', async (req, res) => {
                 $set: {
                     ...(email && { email }), // Only update email if provided (it should be)
                     ...(photoURL && { photoURL }), // Update photoURL if provided
-                    role,
-                    displayName: req.body.displayName, // Allow updating displayName
+                    displayName: displayName || req.body.displayName, // Allow updating displayName
                     college,
                     portfolio,
                     github,
@@ -448,18 +448,18 @@ router.get('/topic-progress/:uid', async (req, res) => {
         // Helper to get regex matcher for a topic ID
         const getMatcher = (id) => {
             switch (id) {
-                case 'arrays': return /array/i;                     // Matches "Arrays", "Arrays & Hashing"
-                case 'hashing': return /hash/i;                     // Matches "Hashing", "Arrays & Hashing"
-                case 'recursion-backtracking': return /recursion|backtracking/i;
-                case 'stacks-queues': return /stack|queue/i;
-                case 'trees': return /tree|graph/i;                 // Matches "Trees", "Trees & Graphs"
-                case 'dp': return /dynamic\s*programming|dp/i;
-                case 'beginner': return /beginner/i;
-                case 'linked-lists': return /linked\s*list/i;
-                case 'binary-search': return /binary\s*search/i;
                 case 'patterns': return /pattern/i;
-                case 'strings': return /string/i;
                 case 'sorting': return /sort/i;
+                case 'beginner': return /beginner/i;
+                case 'arrays': return /array/i;
+                case 'strings': return /string/i;
+                case 'binary-search': return /binary\s*search/i;
+                case 'recursion-backtracking': return /recursion|backtracking/i;
+                case 'linked-lists': return /linked.*list/i;
+                case 'stacks-queues': return /stack|queue/i;
+                case 'hashing': return /hash/i;
+                case 'trees': return /tree|graph/i;
+                case 'dp': return /dynamic|dp/i;
                 default: return new RegExp(id.replace('-', '.*'), 'i');
             }
         };

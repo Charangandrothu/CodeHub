@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { createUserWithEmailAndPassword, updateProfile, signOut } from "firebase/auth";
-import { setDoc, doc } from "firebase/firestore";
-import { auth, db } from '../firebase';
+import { auth } from '../firebase';
 import { useAuth } from '../context/AuthContext';
 import { motion, useMotionValue, useTransform, useSpring } from 'framer-motion'
 import { useNavigate, Link } from 'react-router-dom'
@@ -69,6 +68,7 @@ const SignUp = () => {
       setPasswordError('Password must be at least 8 characters')
       return
     }
+    // SignUp.jsx - Remove Firestore
     setIsLoading(true);
     try {
       // 1. Create User in Auth
@@ -80,15 +80,7 @@ const SignUp = () => {
         displayName: name,
       }).catch(err => console.error("Profile update failed:", err));
 
-      // 3. Save User Details to Firestore - NON-BLOCKING
-      if (db) {
-        setDoc(doc(db, "users", user.uid), {
-          uid: user.uid,
-          name: name,
-          email: email,
-          createdAt: new Date().toISOString(),
-        }).catch(err => console.error("Firestore save failed:", err));
-      }
+      // 3. Sync to MongoDB handled by AuthContext automatically via onAuthStateChanged
 
       console.log("User created:", user);
       await signOut(auth); // Force logout so user has to sign in manually

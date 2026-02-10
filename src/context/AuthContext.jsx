@@ -21,6 +21,7 @@ export const AuthProvider = ({ children }) => {
             setCurrentUser(user);
 
             if (user) {
+                // Fetch MongoDB User Data
                 try {
                     const res = await fetch(`${API_URL}/api/users/sync`, {
                         method: 'POST',
@@ -38,6 +39,7 @@ export const AuthProvider = ({ children }) => {
                     console.error("Failed to fetch user data:", err);
                     setUserData({ isPro: false }); // Default to free on error
                 }
+
             } else {
                 setUserData(null);
             }
