@@ -14,7 +14,7 @@ exports.getAllProblems = async (req, res) => {
       query.topic = { $regex: new RegExp(`^${pattern}$`, "i") };
     }
 
-    const problems = await Problem.find(query).select("title slug difficulty tags topic");
+    const problems = await Problem.find(query).sort({ order: 1 }).select("title slug difficulty tags topic order");
     res.json(problems);
   } catch (error) {
     console.error("Error fetching problems:", error);
@@ -54,6 +54,17 @@ exports.createProblem = async (req, res) => {
   } catch (error) {
     console.error("Error creating problem:", error);
     res.status(500).json({ message: "Server Error", error: error.message });
+  }
+};
+
+// DELETE /api/problems/:id
+exports.deleteProblem = async (req, res) => {
+  try {
+    const deletedProblem = await Problem.findByIdAndDelete(req.params.id);
+    if (!deletedProblem) return res.status(404).json({ message: "Problem not found" });
+    res.json({ message: "Problem deleted" });
+  } catch (error) {
+    res.status(500).json({ message: "Server Error" });
   }
 };
 
