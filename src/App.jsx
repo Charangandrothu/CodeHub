@@ -1,5 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion';
+import ScrollToTop from './components/ScrollToTop';
+import ErrorBoundary from './components/ErrorBoundary';
 import LandingPage from './pages/LandingPage'
 import Navbar from './components/Navbar'
 import Login from './pages/Login'
@@ -13,6 +15,18 @@ import MockTests from './pages/MockTests'
 import Aptitude from './pages/Aptitude'
 import Profile from './pages/Profile'
 import Settings from './pages/Settings'
+
+import Unauthorized from './pages/Unauthorized'
+import NotFound from './pages/NotFound'
+
+// Admin Imports
+import AdminLayout from './layouts/AdminLayout'
+import AdminDashboard from './pages/admin/Dashboard'
+import UsersManagement from './pages/admin/UsersManagement'
+import Payments from './pages/admin/Payments'
+import Problems from './pages/admin/Problems'
+import Categories from './pages/admin/Categories'
+import AdminSettings from './pages/admin/Settings'
 
 import { useAuth } from './context/AuthContext'
 
@@ -73,6 +87,20 @@ function AppRoutes() {
           <Profile />
         </ProtectedRoute>
       } />
+
+      {/* Admin Routes */}
+      <Route path="/unauthorized" element={<Unauthorized />} />
+      <Route path="/admin" element={<AdminLayout />}>
+        <Route index element={<AdminDashboard />} />
+        <Route path="users" element={<UsersManagement />} />
+        <Route path="payments" element={<Payments />} />
+        <Route path="problems" element={<Problems />} />
+        <Route path="categories" element={<Categories />} />
+        <Route path="settings" element={<AdminSettings />} />
+      </Route>
+
+      {/* 404 Not Found */}
+      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 }
@@ -80,10 +108,11 @@ function AppRoutes() {
 const ConditionalNavbar = () => {
   const location = useLocation();
   const isDSAPage = location.pathname.startsWith('/dsa');
+  const isAdminPage = location.pathname.startsWith('/admin');
 
   return (
     <AnimatePresence>
-      {!isDSAPage && <Navbar key="navbar" />}
+      {!isDSAPage && !isAdminPage && <Navbar key="navbar" />}
     </AnimatePresence>
   );
 };
@@ -92,8 +121,11 @@ function App() {
   return (
     <Router>
       <div className="bg-[#0a0a0a] min-h-screen text-white">
-        <ConditionalNavbar />
-        <AppRoutes />
+        <ScrollToTop />
+        <ErrorBoundary>
+          <ConditionalNavbar />
+          <AppRoutes />
+        </ErrorBoundary>
       </div>
     </Router>
   )
