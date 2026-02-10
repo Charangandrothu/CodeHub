@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Rocket, Box, GitMerge, Search, Layers, Database, Hash, Code, Puzzle, Filter, Code2, LogOut, User, Settings, Sparkles, Crown } from 'lucide-react';
+import { Rocket, Box, GitMerge, Search, Layers, Database, Hash, Code, Puzzle, Filter, Code2, LogOut, User, Settings, Sparkles, Crown, Shield } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { motion } from 'framer-motion';
 import logo_img from '../../assets/logo_img.png';
@@ -192,6 +192,15 @@ export default function Sidebar() {
                         </h4>
                         <p className="text-xs text-gray-500 truncate">@{userData?.username || 'user'}</p>
                     </div>
+                    {userData?.role === 'admin' && (
+                        <button
+                            onClick={() => navigate('/admin')}
+                            className="p-2 text-gray-500 hover:text-white hover:bg-white/10 rounded-lg transition-all cursor-pointer"
+                            title="Admin Dashboard"
+                        >
+                            <Shield size={18} />
+                        </button>
+                    )}
                     <button
                         onClick={() => navigate('/settings')}
                         className="p-2 text-gray-500 hover:text-white hover:bg-white/10 rounded-lg transition-all cursor-pointer"

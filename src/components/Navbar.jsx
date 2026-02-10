@@ -8,7 +8,7 @@ import { Button } from './ui/Button';
 import { useAuth } from '../context/AuthContext';
 
 /* Icons */
-import { LogOut, User, Settings, LayoutDashboard, ChevronDown, Crown, Sparkles } from 'lucide-react';
+import { LogOut, User, Settings, LayoutDashboard, ChevronDown, Crown, Sparkles, Shield } from 'lucide-react';
 
 /* Animations */
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from 'framer-motion';
@@ -347,6 +347,18 @@ const Navbar = () => {
                             navigate('/settings');
                           }}
                         />
+                        {userData?.role === 'admin' && (
+                          <div className="pt-2 border-t border-white/5 space-y-1">
+                            <MenuLink
+                              icon={Shield}
+                              label="Admin Panel"
+                              onClick={() => {
+                                setShowProfileMenu(false);
+                                navigate('/admin');
+                              }}
+                            />
+                          </div>
+                        )}
                       </div>
                       <div className="p-2 border-t border-white/5">
                         <button
