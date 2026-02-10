@@ -1,6 +1,7 @@
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
 const User = require('../models/User');
+const Payment = require('../models/Payment');
 
 const razorpay = new Razorpay({
     key_id: process.env.RAZORPAY_KEY_ID,
@@ -24,8 +25,6 @@ exports.createSubscription = async (req, res) => {
             plan_id: plan_id,
             customer_notify: 1, // Notify via email/sms
             total_count: 120, // 10 years (or effectively unlimited for now until cancelled)
-            // quantity: 1,
-            // addons: [],
             notes: {
                 uid: uid
             }
@@ -60,7 +59,19 @@ exports.verifyPayment = async (req, res) => {
             return res.status(400).json({ success: false, message: "Payment verification failed" });
         }
 
-        // Payment is valid, update user in MongoDB
+        // 1. Create Payment Record (for Admin Dashboard)
+        const paymentRecord = new Payment({
+            userId: uid,
+            email: req.body.email || "", // Assuming email is passed or can be fetched
+            amount: 499, // Hardcoded for now based on context, or fetch from plan details
+            plan: 'Pro Monthly',
+            status: 'success',
+            razorpayPaymentId: razorpay_payment_id,
+            razorpayOrderId: razorpay_subscription_id // Using subscription ID as Order ID proxy
+        });
+        await paymentRecord.save();
+
+        // 2. Update User in MongoDB
         const updatedUser = await User.findOneAndUpdate(
             { uid: uid },
             {
