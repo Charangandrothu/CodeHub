@@ -4,7 +4,7 @@ import ProfileSidebar from '../components/profile/ProfileSidebar';
 import SubmissionHeatmap from '../components/profile/SubmissionHeatmap';
 import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
-import { Flame, Trophy, Calendar, MapPin, Briefcase, Activity, CheckCircle2, XCircle, Clock } from 'lucide-react';
+import { Flame, Trophy, Calendar, MapPin, Briefcase, Activity, CheckCircle2, XCircle, Clock, X, Plus } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { API_URL } from '../config';
 
@@ -61,7 +61,8 @@ const Profile = () => {
         portfolio: "",
         leetcode: "",
         codeforces: "",
-        photoURL: ""
+        photoURL: "",
+        skills: []
     });
 
     const AVATARS = [
@@ -89,7 +90,8 @@ const Profile = () => {
                 portfolio: userData.portfolio || "",
                 leetcode: userData.leetcode || "",
                 codeforces: userData.codeforces || "",
-                photoURL: userData.photoURL || currentUser?.photoURL || ""
+                photoURL: userData.photoURL || currentUser?.photoURL || "",
+                skills: userData.skills || []
             });
         }
     }, [userData, currentUser, isOwner]);
@@ -182,11 +184,11 @@ const Profile = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#0a0a0a] pt-28 pb-12 px-4 sm:px-6 lg:px-8 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/10 via-[#0a0a0a] to-[#0a0a0a]">
+        <div className="min-h-screen bg-[#0a0a0a] pt-24 pb-12 px-4 sm:px-6 lg:px-8 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/10 via-[#0a0a0a] to-[#0a0a0a] overflow-x-hidden">
             <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
 
                 {/* Left Sidebar Column - Profile Card */}
-                <div className="lg:col-span-4 xl:col-span-3 lg:sticky lg:top-28 h-fit">
+                <div className="lg:col-span-4 xl:col-span-3 lg:sticky lg:top-10 h-fit">
                     <ProfileSidebar
                         user={userProps}
                         className="w-full"
@@ -195,10 +197,10 @@ const Profile = () => {
                 </div>
 
                 {/* Right Content Column */}
-                <div className="lg:col-span-8 xl:col-span-9 space-y-8">
+                <div className="lg:col-span-8 xl:col-span-9 space-y-6">
 
                     {/* Stats Grid */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-3 gap-4">
                         {stats.map((stat, idx) => (
                             <div
                                 key={stat.label}
@@ -207,8 +209,8 @@ const Profile = () => {
                                 <div className={`p-3 rounded-xl ${stat.bg}`}>
                                     <stat.icon size={20} className={stat.color} />
                                 </div>
-                                <div>
-                                    <p className="text-gray-400 text-xs uppercase tracking-wider font-medium">{stat.label}</p>
+                                <div className="min-w-0">
+                                    <p className="text-gray-400 text-xs uppercase tracking-wider font-medium truncate">{stat.label}</p>
                                     <p className="text-white text-xl font-bold font-mono mt-0.5">{stat.value}</p>
                                 </div>
                             </div>
@@ -276,134 +278,193 @@ const Profile = () => {
 
 
                     {/* Edit Profile Modal */}
-                    {
-                        isEditing && (
-                            <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/80 backdrop-blur-sm">
-                                <motion.div
-                                    initial={{ opacity: 0, scale: 0.95 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    className="bg-[#0f0f0f] border border-white/10 rounded-2xl w-full max-w-lg p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto"
-                                >
-                                    <h2 className="text-xl font-bold text-white mb-4">Edit Profile</h2>
-                                    <p className="text-gray-400 text-sm mb-6">Update your personal details and avatar.</p>
+                    {isEditing && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm overflow-y-auto">
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                                className="bg-[#0f0f0f] border border-white/10 rounded-2xl w-full max-w-2xl shadow-2xl relative flex flex-col max-h-[90vh]"
+                            >
+                                {/* Header */}
+                                <div className="flex items-center justify-between p-6 border-b border-white/10 bg-white/5 rounded-t-2xl">
+                                    <div>
+                                        <h2 className="text-xl font-bold text-white">Edit Profile</h2>
+                                        <p className="text-gray-400 text-sm mt-1">Customize your public presence on CodeHub.</p>
+                                    </div>
+                                    <button
+                                        onClick={() => setIsEditing(false)}
+                                        className="p-2 rounded-full hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+                                    >
+                                        <X size={20} />
+                                    </button>
+                                </div>
 
-                                    <div className="space-y-6">
-                                        {/* Avatar Selection - Added as per request */}
-                                        <div>
-                                            <label className="block text-xs font-medium text-gray-400 mb-3">Choose Avatar</label>
-                                            <div className="grid grid-cols-4 gap-4">
-                                                {AVATARS.map((avatar, index) => (
-                                                    <div
-                                                        key={index}
-                                                        onClick={() => setFormData({ ...formData, photoURL: avatar })}
-                                                        className={`cursor-pointer relative rounded-full p-1 transition-all hover:scale-105 aspect-square flex items-center justify-center ${formData.photoURL === avatar ? 'bg-blue-500 ring-2 ring-blue-500 ring-offset-2 ring-offset-black' : 'bg-transparent hover:bg-white/10'}`}
-                                                    >
-                                                        <img
-                                                            src={avatar}
-                                                            alt={`Avatar ${index + 1}`}
-                                                            className="w-full h-full rounded-full object-cover"
-                                                        />
-                                                        {formData.photoURL === avatar && (
-                                                            <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-full">
-                                                                <div className="bg-blue-500 rounded-full p-1">
-                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-white"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                                                                </div>
+                                {/* Content - Scrollable */}
+                                <div className="p-6 overflow-y-auto space-y-8 custom-scrollbar">
+
+                                    {/* Avatar Section */}
+                                    <div className="space-y-4">
+                                        <label className="block text-sm font-medium text-gray-300">Choose Avatar</label>
+                                        <div className="grid grid-cols-4 sm:grid-cols-6 gap-4">
+                                            {AVATARS.map((avatar, index) => (
+                                                <div
+                                                    key={index}
+                                                    onClick={() => setFormData({ ...formData, photoURL: avatar })}
+                                                    className={`cursor-pointer group relative rounded-full p-1 transition-all hover:scale-105 aspect-square flex items-center justify-center ${formData.photoURL === avatar ? 'bg-gradient-to-tr from-blue-500 to-indigo-500 ring-2 ring-blue-500/50 ring-offset-2 ring-offset-[#0f0f0f]' : 'bg-transparent hover:bg-white/5'}`}
+                                                >
+                                                    <img
+                                                        src={avatar}
+                                                        alt={`Avatar ${index + 1}`}
+                                                        className="w-full h-full rounded-full object-cover group-hover:opacity-90 transition-opacity"
+                                                    />
+                                                    {formData.photoURL === avatar && (
+                                                        <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full animate-in fade-in zoom-in duration-200">
+                                                            <div className="bg-blue-500 rounded-full p-1.5 shadow-lg">
+                                                                <CheckCircle2 size={14} className="text-white" />
                                                             </div>
-                                                        )}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Personal Details */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="space-y-2">
+                                            <label className="block text-sm font-medium text-gray-300">Role</label>
+                                            <div className="relative">
+                                                <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
+                                                <select
+                                                    value={formData.role}
+                                                    onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                                                    className="w-full bg-black/40 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 appearance-none transition-all placeholder:text-gray-600"
+                                                >
+                                                    <option value="Full Stack Developer">Full Stack Developer</option>
+                                                    <option value="Frontend Developer">Frontend Developer</option>
+                                                    <option value="Backend Developer">Backend Developer</option>
+                                                    <option value="CodeHub Admin">CodeHub Admin</option>
+                                                    <option value="Student">Student</option>
+                                                    <option value="Data Scientist">Data Scientist</option>
+                                                    <option value="Competitive Programmer">Competitive Programmer</option>
+                                                </select>
+                                                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">
+                                                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <label className="block text-sm font-medium text-gray-300">College / University</label>
+                                            <div className="relative">
+                                                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
+                                                <input
+                                                    type="text"
+                                                    value={formData.college}
+                                                    onChange={(e) => setFormData({ ...formData, college: e.target.value })}
+                                                    className="w-full bg-black/40 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 transition-all placeholder:text-gray-600"
+                                                    placeholder="e.g. Stanford University"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Skills Section */}
+                                    <div className="space-y-3">
+                                        <label className="block text-sm font-medium text-gray-300">Skills</label>
+                                        <div className="flex flex-wrap gap-2 p-4 bg-black/20 border border-white/5 rounded-xl min-h-[100px]">
+                                            {formData.skills.map((skill, index) => (
+                                                <span key={index} className="inline-flex items-center px-2.5 py-1 rounded-lg text-sm bg-blue-500/10 text-blue-400 border border-blue-500/20 group animate-in fade-in zoom-in duration-200">
+                                                    {skill}
+                                                    <button
+                                                        onClick={() => {
+                                                            const newSkills = formData.skills.filter((_, i) => i !== index);
+                                                            setFormData({ ...formData, skills: newSkills });
+                                                        }}
+                                                        className="ml-1.5 hover:text-white transition-colors"
+                                                    >
+                                                        <X size={14} />
+                                                    </button>
+                                                </span>
+                                            ))}
+                                            <div className="relative flex-1 min-w-[120px]">
+                                                <input
+                                                    type="text"
+                                                    placeholder="Type skill & press Enter..."
+                                                    className="w-full bg-transparent border-none text-white text-sm focus:outline-none placeholder:text-gray-600 py-1"
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter') {
+                                                            e.preventDefault();
+                                                            const val = e.target.value.trim();
+                                                            if (val && !formData.skills.includes(val)) {
+                                                                setFormData({
+                                                                    ...formData,
+                                                                    skills: [...formData.skills, val]
+                                                                });
+                                                                e.target.value = '';
+                                                            }
+                                                        }
+                                                    }}
+                                                />
+                                            </div>
+                                        </div>
+                                        <p className="text-xs text-gray-500">Press Enter to add tags. Click 'x' to remove.</p>
+                                    </div>
+
+                                    {/* Social Links Grid */}
+                                    <div className="space-y-4">
+                                        <label className="block text-sm font-medium text-gray-300">Social Profiles</label>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            {['github', 'linkedin', 'leetcode', 'codeforces'].map((platform) => (
+                                                <div key={platform} className="relative group">
+                                                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 capitalize text-xs font-bold pointer-events-none">
+                                                        {platform}
                                                     </div>
-                                                ))}
-                                            </div>
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-xs font-medium text-gray-400 mb-1">Role</label>
-                                            <select
-                                                value={formData.role}
-                                                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                                                className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 appearance-none"
-                                            >
-                                                <option value="Full Stack Developer">Full Stack Developer</option>
-                                                <option value="Frontend Developer">Frontend Developer</option>
-                                                <option value="Backend Developer">Backend Developer</option>
-                                                <option value="Student">Student</option>
-                                                <option value="Data Scientist">Data Scientist</option>
-                                                <option value="Competitive Programmer">Competitive Programmer</option>
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-medium text-gray-400 mb-1">College / University</label>
-                                            <input
-                                                type="text"
-                                                value={formData.college}
-                                                onChange={(e) => setFormData({ ...formData, college: e.target.value })}
-                                                className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500"
-                                                placeholder="e.g. Stanford University"
-                                            />
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="block text-xs font-medium text-gray-400 mb-1">GitHub Username</label>
-                                                <input
-                                                    type="text"
-                                                    value={formData.github}
-                                                    onChange={(e) => setFormData({ ...formData, github: e.target.value })}
-                                                    className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500"
-                                                    placeholder="username"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs font-medium text-gray-400 mb-1">LinkedIn Username</label>
-                                                <input
-                                                    type="text"
-                                                    value={formData.linkedin}
-                                                    onChange={(e) => setFormData({ ...formData, linkedin: e.target.value })}
-                                                    className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500"
-                                                    placeholder="username"
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="block text-xs font-medium text-gray-400 mb-1">LeetCode Username</label>
-                                                <input
-                                                    type="text"
-                                                    value={formData.leetcode}
-                                                    onChange={(e) => setFormData({ ...formData, leetcode: e.target.value })}
-                                                    className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500"
-                                                    placeholder="username"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs font-medium text-gray-400 mb-1">CodeForces Username</label>
-                                                <input
-                                                    type="text"
-                                                    value={formData.codeforces}
-                                                    onChange={(e) => setFormData({ ...formData, codeforces: e.target.value })}
-                                                    className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500"
-                                                    placeholder="username"
-                                                />
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-medium text-gray-400 mb-1">Portfolio URL (optional)</label>
-                                            <input
-                                                type="text"
-                                                value={formData.portfolio}
-                                                onChange={(e) => setFormData({ ...formData, portfolio: e.target.value })}
-                                                className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500"
-                                                placeholder="https://my-portfolio.com"
-                                            />
+                                                    <input
+                                                        type="text"
+                                                        value={formData[platform]}
+                                                        onChange={(e) => setFormData({ ...formData, [platform]: e.target.value })}
+                                                        className="w-full bg-black/40 border border-white/10 rounded-xl pl-24 pr-4 py-2.5 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 transition-all placeholder:text-gray-700 font-mono text-sm"
+                                                        placeholder="username"
+                                                    />
+                                                </div>
+                                            ))}
                                         </div>
                                     </div>
 
-                                    <div className="flex justify-end gap-3 mt-8">
-                                        <Button variant="ghost" onClick={() => setIsEditing(false)}>Cancel</Button>
-                                        <Button onClick={handleSaveProfile}>Save Changes</Button>
+                                    {/* Portfolio */}
+                                    <div className="space-y-2">
+                                        <label className="block text-sm font-medium text-gray-300">Portfolio</label>
+                                        <input
+                                            type="text"
+                                            value={formData.portfolio}
+                                            onChange={(e) => setFormData({ ...formData, portfolio: e.target.value })}
+                                            className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 transition-all placeholder:text-gray-600 font-mono text-sm"
+                                            placeholder="https://yourportfolio.com"
+                                        />
                                     </div>
-                                </motion.div>
-                            </div>
-                        )
-                    }
+                                </div>
+
+                                {/* Footer */}
+                                <div className="p-6 border-t border-white/10 bg-white/5 rounded-b-2xl flex justify-end gap-3">
+                                    <Button
+                                        variant="ghost"
+                                        onClick={() => setIsEditing(false)}
+                                        className="hover:bg-white/10 text-gray-300"
+                                    >
+                                        Cancel
+                                    </Button>
+                                    <Button
+                                        onClick={handleSaveProfile}
+                                        className="bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/20"
+                                    >
+                                        Save Changes
+                                    </Button>
+                                </div>
+                            </motion.div>
+                        </div>
+                    )}
 
                 </div>
 
