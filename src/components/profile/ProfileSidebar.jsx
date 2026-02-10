@@ -15,7 +15,7 @@ import { Button } from '../ui/Button';
 
 const ProfileSidebar = ({
     user = {
-        profileImageUrl: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=200&auto=format&fit=crop",
+        profileImageUrl: "https://api.dicebear.com/9.x/adventurer/svg?seed=Default",
         isVerified: true,
         username: "alex_dev",
         role: "Full Stack Developer",

@@ -66,16 +66,16 @@ const Profile = () => {
     });
 
     const AVATARS = [
-        // Boys - Verified Hex Codes
-        "https://api.dicebear.com/7.x/avataaars/svg?seed=Alexander&skinColor=ffdbb4&backgroundColor=c0aede",
-        "https://api.dicebear.com/7.x/avataaars/svg?seed=Mason&skinColor=edb98a&backgroundColor=b6e3f4",
-        "https://api.dicebear.com/7.x/avataaars/svg?seed=Ethan&skinColor=ffdbb4&backgroundColor=d1d4f9",
-        "https://api.dicebear.com/7.x/avataaars/svg?seed=Ryan&skinColor=edb98a&backgroundColor=ffdfbf",
-        // Girls - Verified Hex Codes
-        "https://api.dicebear.com/7.x/avataaars/svg?seed=Jessica&skinColor=ffdbb4&backgroundColor=b6e3f4",
-        "https://api.dicebear.com/7.x/avataaars/svg?seed=Lily&skinColor=edb98a&backgroundColor=c0aede",
-        "https://api.dicebear.com/7.x/avataaars/svg?seed=Sophie&skinColor=ffdbb4&backgroundColor=ffdfbf",
-        "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah&skinColor=edb98a&backgroundColor=d1d4f9"
+        // Boys - Trendy Modern (Adventurer Style)
+        "https://api.dicebear.com/9.x/adventurer/svg?seed=Felix&backgroundColor=b6e3f4",
+        "https://api.dicebear.com/9.x/adventurer/svg?seed=Mathew&backgroundColor=c0aede",
+        "https://api.dicebear.com/9.x/adventurer/svg?seed=Avery&backgroundColor=ffdfbf",
+        "https://api.dicebear.com/9.x/adventurer/svg?seed=Brian&backgroundColor=d1d4f9",
+        // Girls - Trendy Modern (Adventurer Style)
+        "https://api.dicebear.com/9.x/adventurer/svg?seed=Liza&backgroundColor=b6e3f4",
+        "https://api.dicebear.com/9.x/adventurer/svg?seed=Maria&backgroundColor=c0aede",
+        "https://api.dicebear.com/9.x/adventurer/svg?seed=Sophia&backgroundColor=ffdfbf",
+        "https://api.dicebear.com/9.x/adventurer/svg?seed=Emery&backgroundColor=d1d4f9"
     ];
 
     // Update local state when user data loads
@@ -98,7 +98,7 @@ const Profile = () => {
 
     // Dynamic User Props from Auth Context + Placeholders where data missing
     const userProps = {
-        profileImageUrl: userData?.photoURL || "https://api.dicebear.com/7.x/avataaars/svg?seed=" + (userData?.uid || "User"),
+        profileImageUrl: userData?.photoURL || "https://api.dicebear.com/9.x/adventurer/svg?seed=" + (userData?.uid || "User"),
         isVerified: userData?.isPro || false,
         username: userData?.username || userData?.displayName || "User",
         role: userData?.role || "Full Stack Developer",

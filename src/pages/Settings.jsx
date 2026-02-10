@@ -194,7 +194,7 @@ const Settings = () => {
                         <div className="relative">
                             <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 p-[2px]">
                                 <img
-                                    src={currentUser?.photoURL || `https://ui-avatars.com/api/?name=${currentUser?.displayName || 'User'}&background=0D8ABC&color=fff`}
+                                    src={currentUser?.photoURL || `https://api.dicebear.com/9.x/adventurer/svg?seed=${currentUser?.displayName || 'User'}`}
                                     alt="Profile"
                                     className="w-full h-full rounded-full object-cover border-2 border-[#1a1a1a]"
                                 />
