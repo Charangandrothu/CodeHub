@@ -3,9 +3,14 @@ const cors = require('cors');
 const problemRoutes = require("./routes/problemRoutes");
 const app = express();
 
+const { limiter } = require("./middleware/rateLimiter");
+
 //Middleware
 app.use(cors());
 app.use(express.json());
+
+// Global Rate Limiting
+app.use(limiter);
 
 // Request Logger
 app.use((req, res, next) => {
