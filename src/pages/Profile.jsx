@@ -42,16 +42,6 @@ const Profile = () => {
 
     const [isEditing, setIsEditing] = useState(false);
 
-    if (notFound) {
-        return (
-            <div className="min-h-screen bg-[#0a0a0a] pt-28 flex flex-col items-center justify-center text-white">
-                <h1 className="text-4xl font-bold mb-4">User Not Found</h1>
-                <p className="text-gray-400">The requested profile does not exist.</p>
-                <Button className="mt-6" onClick={() => window.history.back()}>Go Back</Button>
-            </div>
-        );
-    }
-
     // Local State for Editing Forms
     const [formData, setFormData] = useState({
         role: "Full Stack Developer",
@@ -65,20 +55,6 @@ const Profile = () => {
         skills: []
     });
 
-    const AVATARS = [
-        // Boys - Trendy Modern (Adventurer Style)
-        "https://api.dicebear.com/9.x/adventurer/svg?seed=Felix&backgroundColor=b6e3f4",
-        "https://api.dicebear.com/9.x/adventurer/svg?seed=Mathew&backgroundColor=c0aede",
-        "https://api.dicebear.com/9.x/adventurer/svg?seed=Avery&backgroundColor=ffdfbf",
-        "https://api.dicebear.com/9.x/adventurer/svg?seed=Brian&backgroundColor=d1d4f9",
-        // Girls - Trendy Modern (Adventurer Style)
-        "https://api.dicebear.com/9.x/adventurer/svg?seed=Liza&backgroundColor=b6e3f4",
-        "https://api.dicebear.com/9.x/adventurer/svg?seed=Maria&backgroundColor=c0aede",
-        "https://api.dicebear.com/9.x/adventurer/svg?seed=Sophia&backgroundColor=ffdfbf",
-        "https://api.dicebear.com/9.x/adventurer/svg?seed=Emery&backgroundColor=d1d4f9"
-    ];
-
-    // Update local state when user data loads
     // Update local state when user data loads (only if owner)
     useEffect(() => {
         if (userData && isOwner) {
@@ -95,22 +71,6 @@ const Profile = () => {
             });
         }
     }, [userData, currentUser, isOwner]);
-
-    // Dynamic User Props from Auth Context + Placeholders where data missing
-    const userProps = {
-        profileImageUrl: userData?.photoURL || "https://api.dicebear.com/9.x/adventurer/svg?seed=" + (userData?.uid || "User"),
-        isVerified: userData?.isPro || false,
-        username: userData?.username || userData?.displayName || "User",
-        role: userData?.role || "Full Stack Developer",
-        status: userData?.isPro ? "Pro Member" : "Community Member",
-        college: userData?.college || "University of Code",
-        portfolioUrl: userData?.portfolio || "",
-        github: userData?.github || "",
-        linkedin: userData?.linkedin || "",
-        leetcode: userData?.leetcode || "",
-        codeforces: userData?.codeforces || "",
-        skills: userData?.skills || ["JavaScript", "React", "Problem Solving", "Data Structures", "Algorithms"]
-    };
 
     // Weekly Rank State
     const [weeklyRank, setWeeklyRank] = useState(null);
@@ -142,13 +102,6 @@ const Profile = () => {
 
         fetchWeeklyStats();
     }, [userData]);
-
-    // Stats for the "Premium" look
-    const stats = [
-        { label: "Current Streak", value: userData?.stats?.streak || 0, icon: Flame, color: "text-orange-500", bg: "bg-orange-500/10" },
-        { label: "Weekly Rank", value: weeklyRank ? `#${weeklyRank}` : "Unranked", icon: Trophy, color: "text-yellow-500", bg: "bg-yellow-500/10" },
-        { label: "Problems Solved", value: userData?.stats?.solvedProblems || 0, icon: Calendar, color: "text-blue-500", bg: "bg-blue-500/10" },
-    ];
 
     const handleSaveProfile = async () => {
         if (!currentUser) return;
@@ -182,6 +135,66 @@ const Profile = () => {
             alert("Error updating profile");
         }
     };
+
+    const [avatars, setAvatars] = useState([
+        // Boys - Trendy Modern (Adventurer Style)
+        "https://api.dicebear.com/9.x/adventurer/svg?seed=Felix&backgroundColor=b6e3f4",
+        "https://api.dicebear.com/9.x/adventurer/svg?seed=Mathew&backgroundColor=c0aede",
+        "https://api.dicebear.com/9.x/adventurer/svg?seed=Avery&backgroundColor=ffdfbf",
+        "https://api.dicebear.com/9.x/adventurer/svg?seed=Brian&backgroundColor=d1d4f9",
+        // Girls - Trendy Modern (Adventurer Style)
+        "https://api.dicebear.com/9.x/adventurer/svg?seed=Liza&backgroundColor=b6e3f4",
+        "https://api.dicebear.com/9.x/adventurer/svg?seed=Maria&backgroundColor=c0aede",
+        "https://api.dicebear.com/9.x/adventurer/svg?seed=Sophia&backgroundColor=ffdfbf",
+        "https://api.dicebear.com/9.x/adventurer/svg?seed=Emery&backgroundColor=d1d4f9"
+    ]);
+
+    useEffect(() => {
+        if (currentUser?.photoURL) {
+            setAvatars(prev => {
+                if (!prev.includes(currentUser.photoURL)) {
+                    return [currentUser.photoURL, ...prev];
+                }
+                return prev;
+            });
+        }
+    }, [currentUser]);
+
+    // Dynamic User Props from Auth Context + Placeholders where data missing
+    const userProps = {
+        profileImageUrl: userData?.photoURL || "https://api.dicebear.com/9.x/adventurer/svg?seed=" + (userData?.uid || "User"),
+        isVerified: userData?.isPro || false,
+        username: userData?.username || userData?.displayName || userData?.fullName || "User",
+        role: userData?.role || "Full Stack Developer",
+        status: userData?.isPro ? "Pro Member" : "Community Member",
+        college: userData?.college || "University of Code",
+        portfolioUrl: userData?.portfolio || "",
+        github: userData?.github || "",
+        linkedin: userData?.linkedin || "",
+        leetcode: userData?.leetcode || "",
+        codeforces: userData?.codeforces || "",
+        skills: userData?.skills || ["JavaScript", "React", "Problem Solving", "Data Structures", "Algorithms"]
+    };
+
+    // Stats for the "Premium" look
+    const stats = [
+        { label: "Current Streak", value: userData?.stats?.streak || 0, icon: Flame, color: "text-orange-500", bg: "bg-orange-500/10" },
+        { label: "Weekly Rank", value: weeklyRank ? `#${weeklyRank}` : "Unranked", icon: Trophy, color: "text-yellow-500", bg: "bg-yellow-500/10" },
+        { label: "Problems Solved", value: userData?.stats?.solvedProblems || 0, icon: Calendar, color: "text-blue-500", bg: "bg-blue-500/10" },
+    ];
+
+    if (notFound) {
+        if (currentUser && (!authUser?.profileCompleted)) {
+            return <Navigate to="/complete-profile" replace />;
+        }
+        return (
+            <div className="min-h-screen bg-[#0a0a0a] pt-28 flex flex-col items-center justify-center text-white">
+                <h1 className="text-4xl font-bold mb-4">User Not Found</h1>
+                <p className="text-gray-400">The requested profile does not exist.</p>
+                <Button className="mt-6" onClick={() => window.history.back()}>Go Back</Button>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-[#0a0a0a] pt-24 pb-12 px-4 sm:px-6 lg:px-8 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/10 via-[#0a0a0a] to-[#0a0a0a] overflow-x-hidden">
@@ -307,7 +320,7 @@ const Profile = () => {
                                     <div className="space-y-4">
                                         <label className="block text-sm font-medium text-gray-300">Choose Avatar</label>
                                         <div className="grid grid-cols-4 sm:grid-cols-6 gap-4">
-                                            {AVATARS.map((avatar, index) => (
+                                            {avatars.map((avatar, index) => (
                                                 <div
                                                     key={index}
                                                     onClick={() => setFormData({ ...formData, photoURL: avatar })}
@@ -341,11 +354,11 @@ const Profile = () => {
                                                     onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                                                     className="w-full bg-black/40 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 appearance-none transition-all placeholder:text-gray-600"
                                                 >
+                                                    <option value="Student">Student</option>
                                                     <option value="Full Stack Developer">Full Stack Developer</option>
                                                     <option value="Frontend Developer">Frontend Developer</option>
                                                     <option value="Backend Developer">Backend Developer</option>
-                                                    <option value="CodeHub Admin">CodeHub Admin</option>
-                                                    <option value="Student">Student</option>
+
                                                     <option value="Data Scientist">Data Scientist</option>
                                                     <option value="Competitive Programmer">Competitive Programmer</option>
                                                 </select>
