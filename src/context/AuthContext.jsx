@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from '../firebase';
+import { getUserDocument } from '../services/userService';
 import LoadingScreen from '../components/LoadingScreen';
 
 import { API_URL } from '../config';
@@ -22,6 +23,7 @@ export const AuthProvider = ({ children }) => {
 
             if (user) {
                 // Fetch MongoDB User Data
+                let mongoData = null;
                 try {
                     const res = await fetch(`${API_URL}/api/users/sync`, {
                         method: 'POST',
@@ -33,12 +35,22 @@ export const AuthProvider = ({ children }) => {
                             photoURL: user.photoURL
                         })
                     });
-                    const data = await res.json();
-                    setUserData(data);
+                    if (res.ok) {
+                        mongoData = await res.json();
+                    }
                 } catch (err) {
-                    console.error("Failed to fetch user data:", err);
-                    setUserData({ isPro: false }); // Default to free on error
+                    console.error("Failed to fetch MongoDB user data:", err);
                 }
+
+                // Fetch Firestore User Data
+                let firestoreData = null;
+                try {
+                    firestoreData = await getUserDocument(user.uid);
+                } catch (err) {
+                    console.error("Failed to fetch Firestore user data:", err);
+                }
+
+                setUserData({ ...mongoData, ...firestoreData });
 
             } else {
                 setUserData(null);
@@ -57,11 +69,14 @@ export const AuthProvider = ({ children }) => {
     const refreshUserData = async () => {
         if (currentUser) {
             try {
-                const res = await fetch(`${API_URL}/api/users/${currentUser.uid}`);
-                const data = await res.json();
-                setUserData(data);
+                // Refresh both sources
+                const [mongoRes, firestoreData] = await Promise.all([
+                    fetch(`${API_URL}/api/users/${currentUser.uid}`).then(r => r.ok ? r.json() : null).catch(() => null),
+                    getUserDocument(currentUser.uid)
+                ]);
+                setUserData({ ...mongoRes, ...firestoreData });
             } catch (err) {
-                console.error("Failed to fetch user data:", err);
+                console.error("Failed to refresh user data:", err);
             }
         }
     };
