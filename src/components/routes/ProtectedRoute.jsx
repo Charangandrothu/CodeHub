@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import LoadingScreen from '../LoadingScreen';
 
 const ProtectedRoute = ({ children }) => {
-    const { currentUser, loading } = useAuth();
+    const { currentUser, userData, loading } = useAuth();
 
     if (loading) {
         return <LoadingScreen />;
@@ -13,6 +13,8 @@ const ProtectedRoute = ({ children }) => {
     if (!currentUser) {
         return <Navigate to="/login" replace />;
     }
+
+
 
     return children;
 };
