@@ -291,11 +291,15 @@ const Navbar = () => {
                   className="flex items-center gap-2 p-1 pl-2 pr-3 rounded-full border border-white/10 hover:bg-white/5 hover:border-white/20 transition-all duration-300 group"
                 >
                   <div className="relative w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-xs ring-2 ring-[#0a0a0a] group-hover:ring-purple-500/50 transition-all overflow-hidden">
-                    {userData?.photoURL || currentUser.photoURL ? (
-                      <img src={userData?.photoURL || currentUser.photoURL} alt="Profile" className="w-full h-full object-cover" />
-                    ) : (
-                      currentUser.displayName ? currentUser.displayName[0].toUpperCase() : (currentUser.email ? currentUser.email[0].toUpperCase() : 'U')
-                    )}
+                    <img
+                      src={userData?.photoURL || currentUser.photoURL || `https://api.dicebear.com/9.x/adventurer/svg?seed=${userData?.username || currentUser.email?.split('@')[0] || 'User'}`}
+                      alt="Profile"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = `https://api.dicebear.com/9.x/adventurer/svg?seed=${userData?.username || currentUser.email?.split('@')[0] || 'User'}`;
+                      }}
+                    />
                     {/* Pro Indicator Helper on Avatar */}
                     {isProUser && (
                       <div className="absolute inset-0 border-2 border-amber-400/50 rounded-full" />
@@ -332,10 +336,12 @@ const Navbar = () => {
                           icon={User}
                           label="My Profile"
                           onClick={() => {
-                            setShowProfileMenu(false);
-                            const rawName = userData?.username || currentUser?.displayName || currentUser?.email?.split('@')[0] || 'profile';
-                            const username = rawName.toLowerCase().replace(/[^a-z0-9]/g, '');
-                            navigate(`/${username}`);
+                            if (!userData?.username || !userData?.profileCompleted) {
+                              setShowProfileMenu(false);
+                              navigate('/complete-profile');
+                              return;
+                            }
+                            navigate(`/${userData.username}`);
                           }}
                         />
                         <MenuLink icon={LayoutDashboard} label="Dashboard" onClick={() => navigate('/dashboard')} />
@@ -375,23 +381,19 @@ const Navbar = () => {
               </div>
             ) : (
               <div className="flex items-center gap-3">
-                <Button
-                  variant="ghost"
-                  onClick={() => navigate('/login')}
-                  className="text-gray-300 hover:text-white font-medium hover:bg-white/5 transition-all duration-300"
-                >
-                  Login
-                </Button>
                 <motion.div
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
                   <Button
                     variant="primary"
-                    onClick={() => navigate('/signup')}
-                    className="relative overflow-hidden !bg-white !text-black !border-0 font-semibold shadow-[0_0_20px_rgba(255,255,255,0.3)] hover:shadow-[0_0_25px_rgba(255,255,255,0.5)] transition-shadow duration-300"
+                    onClick={() => navigate('/login')}
+                    className="relative overflow-hidden !bg-white !text-black !border-0 font-semibold shadow-[0_0_20px_rgba(255,255,255,0.3)] hover:shadow-[0_0_25px_rgba(255,255,255,0.5)] transition-shadow duration-300 group"
                   >
-                    <span className="relative z-10">Sign up</span>
+                    <span className="relative z-10 flex items-center gap-2">
+                      <span>Login</span>
+                      <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                    </span>
                     <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 opacity-0 hover:opacity-100 transition-opacity duration-300" />
                   </Button>
                 </motion.div>

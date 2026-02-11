@@ -181,12 +181,28 @@ export default function Sidebar() {
             <div className="mt-6 pt-6 border-t border-white/10 shrink-0">
                 <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 transition-colors cursor-pointer group">
                     <img
-                        src={userData?.photoURL || currentUser?.photoURL || `https://ui-avatars.com/api/?name=${userData?.displayName || 'User'}&background=random`}
+                        src={userData?.photoURL || currentUser?.photoURL || `https://api.dicebear.com/9.x/adventurer/svg?seed=${userData?.username || currentUser?.email?.split('@')[0] || 'User'}`}
                         alt="Profile"
-                        className="w-10 h-10 rounded-full border-2 border-white/10 group-hover:border-blue-500/50 transition-colors"
-                        onClick={() => navigate(`/${userData?.username}`)}
+                        className="w-10 h-10 rounded-full border-2 border-white/10 group-hover:border-blue-500/50 transition-colors object-cover"
+                        onClick={() => {
+                            if (!userData?.profileCompleted) {
+                                navigate('/complete-profile');
+                            } else {
+                                navigate(`/${userData?.username}`);
+                            }
+                        }}
+                        onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = `https://api.dicebear.com/9.x/adventurer/svg?seed=${userData?.username || currentUser?.email?.split('@')[0] || 'User'}`;
+                        }}
                     />
-                    <div className="flex-1 min-w-0" onClick={() => navigate(`/${userData?.username}`)}>
+                    <div className="flex-1 min-w-0" onClick={() => {
+                        if (!userData?.profileCompleted) {
+                            navigate('/complete-profile');
+                        } else {
+                            navigate(`/${userData?.username}`);
+                        }
+                    }}>
                         <h4 className="text-sm font-semibold text-white truncate group-hover:text-blue-400 transition-colors">
                             {userData?.displayName || currentUser?.displayName || 'User'}
                         </h4>
