@@ -1,5 +1,6 @@
 const express = require("express");
 const axios = require("axios");
+const redis = require("../config/redis");
 
 const router = express.Router();
 
@@ -484,6 +485,12 @@ router.post("/submit", async (req, res) => {
                 }
 
                 await userUpdate.save();
+
+                // Invalidate user cache
+                await redis.del(`cache:/api/users/${userId}`);
+                if (userUpdate.username) {
+                    await redis.del(`cache:/api/users/handle/${userUpdate.username}`);
+                }
             }
         } catch (updateErr) {
             console.error("Failed to update user stats:", updateErr);

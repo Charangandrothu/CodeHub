@@ -9,10 +9,16 @@ const {
   deleteProblem
 } = require("../controllers/problemController");
 
-router.get("/", getAllProblems);
+const cacheMiddleware = require("../middleware/cache");
+
+// Cache the list of problems for 60 seconds
+router.get("/", cacheMiddleware(60), getAllProblems);
+
 router.post("/", createProblem);
 router.put("/:id", updateProblem);
 router.delete("/:id", deleteProblem);
-router.get("/:slug", getProblemBySlug);
+
+// Cache individual problem details for 5 minutes (300 seconds)
+router.get("/:slug", cacheMiddleware(300), getProblemBySlug);
 
 module.exports = router;

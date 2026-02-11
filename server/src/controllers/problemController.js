@@ -1,5 +1,31 @@
 const Problem = require("../models/Problem");
 const mongoose = require("mongoose");
+const redis = require("../config/redis");
+
+const clearCache = async (pattern) => {
+  try {
+    const stream = redis.scanStream({
+      match: pattern,
+      count: 100
+    });
+
+    stream.on("data", (keys) => {
+      if (keys.length) {
+        const pipeline = redis.pipeline();
+        keys.forEach((key) => {
+          pipeline.del(key);
+        });
+        pipeline.exec();
+      }
+    });
+
+    stream.on("end", () => {
+      console.log(`Cache cleared for pattern: ${pattern}`);
+    });
+  } catch (err) {
+    console.error("Cache clear error:", err);
+  }
+};
 
 // GET /api/problems
 exports.getAllProblems = async (req, res) => {
@@ -50,6 +76,10 @@ exports.createProblem = async (req, res) => {
     console.log("Received POST request body:", req.body);
     const newProblem = new Problem(req.body);
     const savedProblem = await newProblem.save();
+
+    // Invalidate cache for problem lists
+    await clearCache("cache:/api/problems*");
+
     res.status(201).json(savedProblem);
   } catch (error) {
     console.error("Error creating problem:", error);
@@ -62,6 +92,13 @@ exports.deleteProblem = async (req, res) => {
   try {
     const deletedProblem = await Problem.findByIdAndDelete(req.params.id);
     if (!deletedProblem) return res.status(404).json({ message: "Problem not found" });
+
+    // Invalidate cache
+    await clearCache("cache:/api/problems*");
+    if (deletedProblem.slug) {
+      await redis.del(`cache:/api/problems/${deletedProblem.slug}`);
+    }
+
     res.json({ message: "Problem deleted" });
   } catch (error) {
     res.status(500).json({ message: "Server Error" });
@@ -86,6 +123,12 @@ exports.updateProblem = async (req, res) => {
 
     if (!problem) {
       return res.status(404).json({ message: "Problem not found" });
+    }
+
+    // Invalidate cache
+    await clearCache("cache:/api/problems*");
+    if (problem.slug) {
+      await redis.del(`cache:/api/problems/${problem.slug}`);
     }
 
     res.json(problem);
