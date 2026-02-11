@@ -5,7 +5,8 @@ import ErrorBoundary from './components/ErrorBoundary';
 import LandingPage from './pages/LandingPage'
 import Navbar from './components/Navbar'
 import Login from './pages/Login'
-import SignUp from './pages/SignUp'
+
+import CompleteProfile from './pages/CompleteProfile'
 import Dashboard from './pages/Dashboard'
 import DSA from './pages/DSA'
 import TopicPage from './pages/TopicPage'
@@ -43,7 +44,8 @@ function AppRoutes() {
           <Login />
         </PublicRoute>
       } />
-      <Route path="/signup" element={<SignUp />} />
+
+      <Route path="/complete-profile" element={<CompleteProfile />} />
       <Route path="/pricing" element={<Pricing />} />
 
       {/* Protected Routes - Only for authenticated users */}
