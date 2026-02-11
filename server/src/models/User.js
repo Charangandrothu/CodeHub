@@ -64,6 +64,7 @@ const userSchema = new mongoose.Schema({
         invoiceId: String,
         plan: String // e.g. "Pro Monthly"
     }],
+    profileCompleted: { type: Boolean, default: false }, // New field
     updatedAt: { type: Date, default: Date.now }
 });
 

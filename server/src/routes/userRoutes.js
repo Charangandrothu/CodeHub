@@ -1,8 +1,21 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
+const redis = require('../config/redis');
+const cacheMiddleware = require('../middleware/cache');
 
 // Sync User (Create if not exists)
+// Check Username Availability
+router.get('/check-username/:username', async (req, res) => {
+    try {
+        const { username } = req.params;
+        const user = await User.findOne({ username: username.toLowerCase() });
+        res.json({ available: !user });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 router.post('/sync', async (req, res) => {
     const { uid, email, displayName, photoURL } = req.body;
 
@@ -37,6 +50,14 @@ router.post('/sync', async (req, res) => {
                 user.displayName = displayName || user.displayName;
                 user.photoURL = photoURL || user.photoURL;
                 await user.save();
+            }
+        }
+
+        if (user) {
+            // Invalidate cache
+            await redis.del(`cache:/api/users/${uid}`);
+            if (user.username) {
+                await redis.del(`cache:/api/users/handle/${user.username}`);
             }
         }
 
@@ -98,7 +119,7 @@ const calculateStreak = (history) => {
 };
 
 // Get User by Username (Handle)
-router.get('/handle/:username', async (req, res) => {
+router.get('/handle/:username', cacheMiddleware(60), async (req, res) => {
     try {
         const handle = req.params.username.toLowerCase();
 
@@ -143,7 +164,7 @@ router.get('/handle/:username', async (req, res) => {
 });
 
 // Get User Status (by UID)
-router.get('/:uid', async (req, res) => {
+router.get('/:uid', cacheMiddleware(60), async (req, res) => {
     try {
         const user = await User.findOne({ uid: req.params.uid });
         if (!user) {
@@ -192,6 +213,50 @@ router.get('/:uid', async (req, res) => {
     }
 });
 
+// Complete Profile (Set Username)
+router.post('/complete-profile', async (req, res) => {
+    try {
+        const { uid, username } = req.body;
+
+        if (!uid || !username) {
+            return res.status(400).json({ error: "Missing uid or username" });
+        }
+
+        const sanitizedUsername = username.toLowerCase().trim();
+
+        // 1. Check if username exists (globally)
+        const existingUser = await User.findOne({ username: sanitizedUsername });
+        if (existingUser && existingUser.uid !== uid) {
+            return res.status(400).json({ error: "Username is already taken" });
+        }
+
+        // 2. Update User
+        const user = await User.findOneAndUpdate(
+            { uid },
+            {
+                $set: {
+                    username: sanitizedUsername,
+                    profileCompleted: true,
+                    updatedAt: new Date()
+                }
+            },
+            { new: true }
+        );
+
+        if (!user) {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        // Invalidate cache
+        await redis.del(`cache:/api/users/${uid}`);
+
+        res.json({ success: true, user });
+    } catch (error) {
+        console.error("Complete profile error:", error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Update User Profile
 router.put('/:uid', async (req, res) => {
     try {
@@ -204,9 +269,9 @@ router.put('/:uid', async (req, res) => {
             { uid: req.params.uid },
             {
                 $set: {
-                    ...(email && { email }), // Only update email if provided (it should be)
-                    ...(photoURL && { photoURL }), // Update photoURL if provided
-                    displayName: displayName || req.body.displayName, // Allow updating displayName
+                    ...(email && { email }), // Only update email if provided
+                    ...(photoURL && { photoURL }),
+                    displayName: displayName || req.body.displayName,
                     college,
                     portfolio,
                     github,
@@ -218,6 +283,7 @@ router.put('/:uid', async (req, res) => {
                 },
                 $setOnInsert: {
                     isPro: false,
+                    profileCompleted: false, // Default if creating new
                     stats: {
                         streak: 0,
                         solvedProblems: 0,
@@ -228,11 +294,17 @@ router.put('/:uid', async (req, res) => {
                     }
                 }
             },
-            { new: true, upsert: true, setDefaultsOnInsert: true } // Create if not exists
+            { new: true, upsert: true, setDefaultsOnInsert: true }
         );
 
         if (!updatedUser) {
             return res.status(404).json({ error: "User not found" });
+        }
+
+        // Invalidate cache
+        await redis.del(`cache:/api/users/${req.params.uid}`);
+        if (updatedUser.username) {
+            await redis.del(`cache:/api/users/handle/${updatedUser.username}`);
         }
 
         res.json(updatedUser);
@@ -276,6 +348,10 @@ router.post('/update-time', async (req, res) => {
 
         await user.save();
 
+        await user.save();
+
+        await redis.del(`cache:/api/users/${uid}`);
+
         res.json({ success: true, timeSpent: user.stats.timeSpent });
     } catch (error) {
         console.error("Time update error:", error);
@@ -304,6 +380,9 @@ router.put('/preferences/:uid', async (req, res) => {
         }
 
         await user.save();
+
+        await redis.del(`cache:/api/users/${req.params.uid}`);
+
         res.json(user);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -502,7 +581,7 @@ router.get('/topic-progress/:uid', async (req, res) => {
 });
 
 // Get Weekly Leaderboard
-router.get('/leaderboard/weekly', async (req, res) => {
+router.get('/leaderboard/weekly', cacheMiddleware(300), async (req, res) => {
     try {
         const oneWeekAgo = new Date();
         oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
