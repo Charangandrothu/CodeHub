@@ -263,9 +263,9 @@ const Login = () => {
               transition={{ delay: 0.5 }}
               className="flex justify-end"
             >
-              <a href="#" className="text-xs text-gray-400 hover:text-white transition-colors">
+              <Link to="/forgot-password" className="text-xs text-gray-400 hover:text-white transition-colors">
                 Forgot password?
-              </a>
+              </Link>
             </motion.div>
 
             {/* Login Button with Sweep Effect */}

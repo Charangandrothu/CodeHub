@@ -341,10 +341,18 @@ const Navbar = () => {
                               navigate('/complete-profile');
                               return;
                             }
+                            setShowProfileMenu(false);
                             navigate(`/${userData.username}`);
                           }}
                         />
-                        <MenuLink icon={LayoutDashboard} label="Dashboard" onClick={() => navigate('/dashboard')} />
+                        <MenuLink
+                          icon={LayoutDashboard}
+                          label="Dashboard"
+                          onClick={() => {
+                            setShowProfileMenu(false);
+                            navigate('/dashboard');
+                          }}
+                        />
                         <MenuLink
                           icon={Settings}
                           label="Settings"

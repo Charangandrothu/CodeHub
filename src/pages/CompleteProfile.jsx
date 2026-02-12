@@ -96,16 +96,9 @@ const CompleteProfile = () => {
             if (currentUser) {
                 // Update Password if provided (Firebase requires this separate call)
                 // Note: This might require re-authentication if it's been a while, but for new signups it should work.
-                try {
-                    await updatePassword(currentUser, password);
-                } catch (pwErr) {
-                    console.error("Password update error", pwErr);
-                    // Continue even if password update fails (e.g. Google auth doesn't need it necessarily, 
-                    // but user flow implies setting it for email/pass login later)
-                    // But generally for Google Sign In users, updatePassword might error if they haven't set one before?
-                    // Actually updatePassword works for any provider if they want to add a password, 
-                    // but usually requires re-auth. For fresh signup context it might be okay.
-                }
+                // Update Password if provided
+                // This will link the password provider to the account if not already present
+                await updatePassword(currentUser, password);
 
                 await updateProfile(currentUser, { displayName: username });
             }

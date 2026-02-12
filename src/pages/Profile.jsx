@@ -44,8 +44,8 @@ const Profile = () => {
 
     // Local State for Editing Forms
     const [formData, setFormData] = useState({
-        role: "Full Stack Developer",
-        college: "University of Code",
+        role: "Student",
+        college: "",
         github: "",
         linkedin: "",
         portfolio: "",
@@ -59,7 +59,7 @@ const Profile = () => {
     useEffect(() => {
         if (userData && isOwner) {
             setFormData({
-                role: userData.role || "Full Stack Developer",
+                role: userData.role || "Student",
                 college: userData.college || "University of Code",
                 github: userData.github || "",
                 linkedin: userData.linkedin || "",
@@ -124,6 +124,13 @@ const Profile = () => {
 
             if (res.ok) {
                 await refreshUserData(); // Refresh context
+
+                // If we are currently viewing the profile via the username route,
+                // we need to manually update the local fetchedUser state to reflect changes immediately.
+                if (username) {
+                    setFetchedUser(data);
+                }
+
                 console.log("User data refreshed");
                 setIsEditing(false);
             } else {
@@ -358,7 +365,7 @@ const Profile = () => {
                                                     <option value="Full Stack Developer">Full Stack Developer</option>
                                                     <option value="Frontend Developer">Frontend Developer</option>
                                                     <option value="Backend Developer">Backend Developer</option>
-
+                                                    {userData?.role === 'admin' && <option value="admin">CodeHub Admin</option>}
                                                     <option value="Data Scientist">Data Scientist</option>
                                                     <option value="Competitive Programmer">Competitive Programmer</option>
                                                 </select>

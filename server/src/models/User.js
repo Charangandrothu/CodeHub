@@ -28,7 +28,7 @@ const userSchema = new mongoose.Schema({
     }],
     // Profile Details
     displayName: { type: String, default: "" }, // Added displayName
-    role: { type: String, default: "Full Stack Developer" },
+    role: { type: String, default: "Student" },
     college: { type: String, default: "" },
     portfolio: { type: String, default: "" },
     github: { type: String, default: "" },

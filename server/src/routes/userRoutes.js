@@ -164,7 +164,7 @@ router.get('/handle/:username', cacheMiddleware(60), async (req, res) => {
 });
 
 // Get User Status (by UID)
-router.get('/:uid', cacheMiddleware(60), async (req, res) => {
+router.get('/:uid', cacheMiddleware(2), async (req, res) => {
     try {
         const user = await User.findOne({ uid: req.params.uid });
         if (!user) {
@@ -260,8 +260,7 @@ router.post('/complete-profile', async (req, res) => {
 // Update User Profile
 router.put('/:uid', async (req, res) => {
     try {
-        const { college, portfolio, github, linkedin, leetcode, codeforces, skills, email, photoURL, displayName } = req.body;
-        // Note: role is NOT updated here. Use Admin API.
+        const { college, portfolio, github, linkedin, leetcode, codeforces, skills, email, photoURL, displayName, role } = req.body;
 
         console.log(`Updating profile for UID: ${req.params.uid}`);
 
@@ -271,6 +270,7 @@ router.put('/:uid', async (req, res) => {
                 $set: {
                     ...(email && { email }), // Only update email if provided
                     ...(photoURL && { photoURL }),
+                    ...(role && role !== 'admin' && { role }), // Allow role update but prevent setting 'admin'
                     displayName: displayName || req.body.displayName,
                     college,
                     portfolio,
