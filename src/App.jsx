@@ -6,6 +6,7 @@ import LandingPage from './pages/LandingPage'
 import Navbar from './components/Navbar'
 import Login from './pages/Login'
 import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword from './pages/ResetPassword'
 
 import CompleteProfile from './pages/CompleteProfile'
 import Dashboard from './pages/Dashboard'
@@ -44,6 +45,11 @@ function AppRoutes() {
       <Route path="/forgot-password" element={
         <PublicRoute>
           <ForgotPassword />
+        </PublicRoute>
+      } />
+      <Route path="/reset-password" element={
+        <PublicRoute>
+          <ResetPassword />
         </PublicRoute>
       } />
 
