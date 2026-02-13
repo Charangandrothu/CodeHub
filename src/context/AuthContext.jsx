@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from '../firebase';
 import { getUserDocument } from '../services/userService';
@@ -16,14 +16,21 @@ export const AuthProvider = ({ children }) => {
     const [currentUser, setCurrentUser] = useState(null);
     const [userData, setUserData] = useState(null); // Stores MongoDB user details (isPro, etc.)
     const [loading, setLoading] = useState(true);
+    const isMounted = useRef(true);
 
     useEffect(() => {
+        isMounted.current = true; // Reset on mount
+
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
+            if (!isMounted.current) return;
+
             setCurrentUser(user);
 
             if (user) {
-                // Fetch MongoDB User Data
-                let mongoData = null;
+                // Determine if we need to sync or just fetch
+                let fetchedData = null;
+
+                // 1. Try Sync (Create/Update based on Firebase Auth)
                 try {
                     const res = await fetch(`${API_URL}/api/users/sync`, {
                         method: 'POST',
@@ -35,31 +42,42 @@ export const AuthProvider = ({ children }) => {
                             photoURL: user.photoURL
                         })
                     });
+
                     if (res.ok) {
-                        mongoData = await res.json();
+                        fetchedData = await res.json();
                     }
                 } catch (err) {
-                    console.error("Failed to fetch MongoDB user data:", err);
+                    console.error("Failed to sync/fetch MongoDB user data:", err);
                 }
 
-                // Fetch Firestore User Data
-                let firestoreData = null;
-                try {
-                    firestoreData = await getUserDocument(user.uid);
-                } catch (err) {
-                    console.error("Failed to fetch Firestore user data:", err);
+                // 2. Fallback: If Sync failed, try explicit Get
+                if (!fetchedData) {
+                    try {
+                        fetchedData = await getUserDocument(user.uid);
+                    } catch (err) {
+                        console.error("Failed to fetch fallback user data:", err);
+                    }
                 }
 
-                setUserData({ ...mongoData, ...firestoreData });
+                if (isMounted.current) {
+                    setUserData(fetchedData || null);
+                }
 
             } else {
-                setUserData(null);
+                if (isMounted.current) {
+                    setUserData(null);
+                }
             }
 
-            setLoading(false);
+            if (isMounted.current) {
+                setLoading(false);
+            }
         });
 
-        return unsubscribe;
+        return () => {
+            isMounted.current = false;
+            unsubscribe();
+        };
     }, []);
 
     const logout = () => {
@@ -69,12 +87,11 @@ export const AuthProvider = ({ children }) => {
     const refreshUserData = async () => {
         if (currentUser) {
             try {
-                // Refresh both sources
-                const [mongoRes, firestoreData] = await Promise.all([
-                    fetch(`${API_URL}/api/users/${currentUser.uid}`).then(r => r.ok ? r.json() : null).catch(() => null),
-                    getUserDocument(currentUser.uid)
-                ]);
-                setUserData({ ...mongoRes, ...firestoreData });
+                // Use getUserDocument for refresh (lighter than sync)
+                const data = await getUserDocument(currentUser.uid);
+                if (isMounted.current) {
+                    setUserData(data);
+                }
             } catch (err) {
                 console.error("Failed to refresh user data:", err);
             }

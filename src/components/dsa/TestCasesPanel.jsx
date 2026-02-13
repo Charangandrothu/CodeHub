@@ -21,7 +21,7 @@ const TestCasesPanel = ({
     return (
         <div className="flex flex-col h-full bg-[#1A1A1A]">
             {/* Tabs for Cases */}
-            <div className="flex gap-2 mb-4 overflow-x-auto pb-2 shrink-0 custom-scrollbar px-1 pt-2">
+            <div className="flex gap-2 mb-1 overflow-x-auto pb-1 shrink-0 custom-scrollbar px-1 pt-1">
                 {testCases.map((_, i) => {
                     const result = testCaseResults ? testCaseResults[i] : null;
                     const isSelected = i === activeTestCase;
@@ -48,7 +48,7 @@ const TestCasesPanel = ({
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                             onClick={() => setActiveTestCase(i)}
-                            className={`relative flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold border transition-all shrink-0 ${statusClasses}`}
+                            className={`relative flex items-center gap-2 px-3 py-1 rounded-lg text-xs font-bold border transition-all shrink-0 ${statusClasses}`}
                         >
                             <span>Case {i + 1}</span>
                             {result && (
@@ -69,7 +69,7 @@ const TestCasesPanel = ({
             </div>
 
             {/* Results / Input Area */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar space-y-5 px-1 pb-2">
+            <div className="flex-1 overflow-y-auto custom-scrollbar px-1 pb-2">
                 <AnimatePresence mode="wait">
                     {testCaseResults && testCaseResults[activeTestCase] ? (
                         <motion.div
@@ -78,18 +78,18 @@ const TestCasesPanel = ({
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -10 }}
                             transition={{ duration: 0.2 }}
-                            className="space-y-6"
+                            className="space-y-1"
                         >
                             {/* Verdict Badge */}
-                            <div className={`p-4 rounded-xl border flex items-center gap-4 relative overflow-hidden group ${testCaseResults[activeTestCase].status === "Accepted"
-                                    ? "bg-gradient-to-r from-green-500/10 to-green-900/10 border-green-500/20 text-green-400"
-                                    : "bg-gradient-to-r from-red-500/10 to-red-900/10 border-red-500/20 text-red-400"
+                            <div className={`p-2 rounded-xl border flex items-center gap-2 relative overflow-hidden group ${testCaseResults[activeTestCase].status === "Accepted"
+                                ? "bg-gradient-to-r from-green-500/10 to-green-900/10 border-green-500/20 text-green-400"
+                                : "bg-gradient-to-r from-red-500/10 to-red-900/10 border-red-500/20 text-red-400"
                                 }`}>
                                 {/* Glow Effect */}
                                 <div className={`absolute top-0 right-0 w-24 h-24 rounded-full blur-3xl opacity-20 -mr-10 -mt-10 ${testCaseResults[activeTestCase].status === "Accepted" ? "bg-green-400" : "bg-red-500"
                                     }`} />
 
-                                <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${testCaseResults[activeTestCase].status === "Accepted" ? "bg-green-500/20" : "bg-red-500/20"
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${testCaseResults[activeTestCase].status === "Accepted" ? "bg-green-500/20" : "bg-red-500/20"
                                     }`}>
                                     {testCaseResults[activeTestCase].status === "Accepted"
                                         ? <CheckCircle2 size={20} className="drop-shadow-[0_0_5px_rgba(74,222,128,0.5)]" />
@@ -109,7 +109,7 @@ const TestCasesPanel = ({
                                 <motion.div
                                     initial={{ opacity: 0, height: 0 }}
                                     animate={{ opacity: 1, height: 'auto' }}
-                                    className="bg-red-500/5 border border-red-500/20 rounded-xl p-4"
+                                    className="bg-red-500/5 border border-red-500/20 rounded-xl p-2"
                                 >
                                     <div className="text-[10px] text-red-400 font-bold mb-2 uppercase tracking-wider flex items-center gap-2">
                                         <AlertCircle size={12} />
@@ -120,24 +120,23 @@ const TestCasesPanel = ({
                             )}
 
                             {/* Input Section */}
-                            <div className="space-y-2">
+                            <div className="space-y-1">
                                 <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider pl-1">Input</label>
                                 <div className="group relative">
-                                    <div className="absolute inset-0 bg-gradient-to-r from-zinc-800 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-xl pointer-events-none" />
-                                    <pre className="bg-[#0a0a0a] rounded-xl p-4 text-[11px] font-mono text-zinc-300 border border-zinc-800/50 whitespace-pre-wrap transition-colors group-hover:border-zinc-700/50 shadow-inner">
+                                    <pre className="bg-[#0a0a0a] rounded-xl p-2 text-[11px] font-mono text-zinc-300 border border-zinc-800/50 whitespace-pre-wrap transition-colors group-hover:border-zinc-700/50 shadow-inner">
                                         {testCaseResults[activeTestCase].input}
                                     </pre>
                                 </div>
                             </div>
 
                             {/* Split View for Output */}
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
+                            <div className="grid grid-cols-2 gap-2">
+                                <div className="space-y-1">
                                     <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider pl-1">Your Output</label>
                                     <div className="relative group">
-                                        <pre className={`bg-[#0a0a0a] rounded-xl p-4 text-[11px] font-mono border min-h-[3rem] whitespace-pre-wrap transition-all shadow-inner ${testCaseResults[activeTestCase].status === "Accepted" || !testCaseResults[activeTestCase].actual
-                                                ? "text-zinc-300 border-zinc-800/50"
-                                                : "text-red-400 border-red-500/20 bg-red-900/5"
+                                        <pre className={`bg-[#0a0a0a] rounded-xl p-2 text-[11px] font-mono border min-h-[3rem] whitespace-pre-wrap transition-all shadow-inner ${testCaseResults[activeTestCase].status === "Accepted" || !testCaseResults[activeTestCase].actual
+                                            ? "text-zinc-300 border-zinc-800/50"
+                                            : "text-red-400 border-red-500/20 bg-red-900/5"
                                             }`}>
                                             {testCaseResults[activeTestCase].actual || (testCaseResults[activeTestCase].error ? <span className="text-zinc-600 italic">No Output</span> : "")}
                                         </pre>
@@ -145,7 +144,7 @@ const TestCasesPanel = ({
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider pl-1">Expected Output</label>
-                                    <pre className="bg-[#0a0a0a] rounded-xl p-4 text-[11px] font-mono text-green-400 border border-zinc-800/50 whitespace-pre-wrap shadow-inner">
+                                    <pre className="bg-[#0a0a0a] rounded-xl p-2 text-[11px] font-mono text-green-400 border border-zinc-800/50 whitespace-pre-wrap shadow-inner">
                                         {testCaseResults[activeTestCase].expected}
                                     </pre>
                                 </div>
@@ -158,7 +157,7 @@ const TestCasesPanel = ({
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            className="space-y-6"
+                            className="space-y-2"
                         >
                             {runStatus === 'running' ? (
                                 <div className="h-40 flex flex-col items-center justify-center space-y-4 opacity-50">
@@ -174,17 +173,17 @@ const TestCasesPanel = ({
                                 <>
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider pl-1">Input</label>
-                                        <pre className="bg-[#0a0a0a] rounded-xl p-4 text-[11px] font-mono text-zinc-300 border border-zinc-800/50 whitespace-pre-wrap shadow-inner">
+                                        <pre className="bg-[#0a0a0a] rounded-xl p-2 text-[11px] font-mono text-zinc-300 border border-zinc-800/50 whitespace-pre-wrap shadow-inner">
                                             {testCases[activeTestCase]?.input || ""}
                                         </pre>
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider pl-1">Expected Output</label>
-                                        <pre className="bg-[#0a0a0a] rounded-xl p-4 text-[11px] font-mono text-green-400 border border-zinc-800/50 whitespace-pre-wrap shadow-inner">
+                                        <pre className="bg-[#0a0a0a] rounded-xl p-2 text-[11px] font-mono text-green-400 border border-zinc-800/50 whitespace-pre-wrap shadow-inner">
                                             {testCases[activeTestCase]?.output || ""}
                                         </pre>
                                     </div>
-                                    <div className="pt-10 flex flex-col items-center justify-center text-zinc-700 space-y-3">
+                                    <div className="pt-4 flex flex-col items-center justify-center text-zinc-700 space-y-3">
                                         <motion.div
                                             whileHover={{ scale: 1.1, rotate: 10 }}
                                             className="p-4 rounded-2xl bg-zinc-900/50 border border-zinc-800/50 shadow-xl"

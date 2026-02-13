@@ -2,20 +2,36 @@ import React, { useState, useEffect } from 'react'
 import { motion, useMotionValue, useTransform, useSpring } from 'framer-motion'
 import { useNavigate, Link } from 'react-router-dom'
 import { Mail, Lock, ArrowRight, Loader2, Eye, EyeOff } from 'lucide-react'
-import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth'
-import { auth, googleProvider } from '../firebase'
+import { signInWithEmailAndPassword, signInWithPopup, updatePassword } from 'firebase/auth'
+import { doc, updateDoc } from 'firebase/firestore'
+import { auth, googleProvider, db } from '../firebase'
 import { createFirestoreUser, getUserDocument } from '../services/userService'
 import pythonGlass from '../assets/pythonglass.png'
 import javaGlass from '../assets/javaglass.png'
 
+import { useAuth } from '../context/AuthContext'
+
 const Login = () => {
   const navigate = useNavigate()
+  const { currentUser, userData } = useAuth();
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [isGoogleLoginProcessing, setIsGoogleLoginProcessing] = useState(false)
   const [focusedField, setFocusedField] = useState(null)
   const [error, setError] = useState('')
+
+  // Redirect if already logged in (and not currently processing a Google login which needs to run its own logic)
+  useEffect(() => {
+    if (currentUser && !isLoading && !isGoogleLoginProcessing) {
+      if (userData?.profileCompleted && userData?.username) {
+        navigate('/dashboard'); // Or landing page '/' if that's the desired dashboard
+      } else if (userData && (!userData.profileCompleted || !userData.username)) {
+        navigate('/complete-profile');
+      }
+    }
+  }, [currentUser, userData, isLoading, isGoogleLoginProcessing, navigate]);
 
   // Mouse parallax effect
   const mouseX = useMotionValue(0)
@@ -47,13 +63,33 @@ const Login = () => {
   }, [mouseX, mouseY])
 
   const handleGoogleLogin = async () => {
+    setIsGoogleLoginProcessing(true);
     try {
       const result = await signInWithPopup(auth, googleProvider);
-      const user = result.user;
+      const user = result.user; // This triggers AuthContext update -> currentUser set
 
-      const { isNew, userData } = await createFirestoreUser(user);
+      const { isNew, userData: newUserData } = await createFirestoreUser(user);
 
-      if (isNew || !userData?.profileCompleted) {
+      if (isNew) {
+        // Generate random password for new Google users
+        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
+        let randomPassword = "";
+        for (let i = 0; i < 16; i++) {
+          randomPassword += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+
+        try {
+          // Set the random password
+          await updatePassword(user, randomPassword);
+          // Update Firestore to reflect password exists
+          await updateDoc(doc(db, "users", user.uid), { hasPassword: true });
+        } catch (pwError) {
+          console.error("Error setting initial random password:", pwError);
+          // Don't block login if this fails, just log it
+        }
+
+        navigate('/complete-profile');
+      } else if (!newUserData?.profileCompleted || !newUserData?.username) {
         navigate('/complete-profile');
       } else {
         navigate('/');
@@ -61,6 +97,7 @@ const Login = () => {
     } catch (error) {
       console.error("Google Login Error:", error);
       setError("Failed to sign in with Google");
+      setIsGoogleLoginProcessing(false); // Reset only on error, otherwise we navigate away
     }
   };
 
@@ -84,11 +121,13 @@ const Login = () => {
         return;
       }
 
+      // If they logged in with password but Firestore says they don't have one, update it.
       if (userData && !userData.hasPassword) {
-        // This case is rare if they signed in with password, but good for safety
-        setError("Please login with Google.");
-        await auth.signOut();
-        return;
+        try {
+          await updateDoc(doc(db, "users", user.uid), { hasPassword: true });
+        } catch (err) {
+          console.error("Failed to update hasPassword flag:", err);
+        }
       }
 
       console.log('Login success:', user)

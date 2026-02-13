@@ -4,7 +4,7 @@ import { auth } from '../firebase';
 import { checkUsernameExists, completeUserProfile } from '../services/userService';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Loader2, User, Key, CheckCircle2, AlertCircle, ShieldCheck, Sparkles, ArrowRight, XCircle } from 'lucide-react';
+import { Loader2, User, Key, CheckCircle2, AlertCircle, ShieldCheck, Sparkles, ArrowRight, XCircle, Eye, EyeOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const CompleteProfile = () => {
@@ -14,6 +14,7 @@ const CompleteProfile = () => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
     const [usernameAvailable, setUsernameAvailable] = useState(null); // null = nothing, true = available, false = taken
@@ -262,12 +263,19 @@ const CompleteProfile = () => {
                                             <Key size={18} />
                                         </div>
                                         <input
-                                            type="password"
+                                            type={showPassword ? "text" : "password"}
                                             value={password}
                                             onChange={(e) => setPassword(e.target.value)}
-                                            className="w-full bg-black/20 border-2 border-white/5 rounded-xl py-3.5 pl-12 pr-4 text-white font-medium placeholder:text-gray-600 focus:outline-none focus:border-purple-500/50 focus:shadow-[0_0_20px_rgba(168,85,247,0.1)] transition-all duration-300"
+                                            className="w-full bg-black/20 border-2 border-white/5 rounded-xl py-3.5 pl-12 pr-12 text-white font-medium placeholder:text-gray-600 focus:outline-none focus:border-purple-500/50 focus:shadow-[0_0_20px_rgba(168,85,247,0.1)] transition-all duration-300"
                                             placeholder="••••••••"
                                         />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors cursor-pointer"
+                                        >
+                                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                        </button>
                                     </div>
                                 </div>
 
@@ -280,12 +288,19 @@ const CompleteProfile = () => {
                                             <Key size={18} />
                                         </div>
                                         <input
-                                            type="password"
+                                            type={showPassword ? "text" : "password"}
                                             value={confirmPassword}
                                             onChange={(e) => setConfirmPassword(e.target.value)}
-                                            className="w-full bg-black/20 border-2 border-white/5 rounded-xl py-3.5 pl-12 pr-4 text-white font-medium placeholder:text-gray-600 focus:outline-none focus:border-purple-500/50 focus:shadow-[0_0_20px_rgba(168,85,247,0.1)] transition-all duration-300"
+                                            className="w-full bg-black/20 border-2 border-white/5 rounded-xl py-3.5 pl-12 pr-12 text-white font-medium placeholder:text-gray-600 focus:outline-none focus:border-purple-500/50 focus:shadow-[0_0_20px_rgba(168,85,247,0.1)] transition-all duration-300"
                                             placeholder="••••••••"
                                         />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors cursor-pointer"
+                                        >
+                                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                        </button>
                                     </div>
                                 </div>
                             </div>
