@@ -47,11 +47,7 @@ function AppRoutes() {
           <ForgotPassword />
         </PublicRoute>
       } />
-      <Route path="/reset-password" element={
-        <PublicRoute>
-          <ResetPassword />
-        </PublicRoute>
-      } />
+      <Route path="/reset-password" element={<ResetPassword />} />
 
       <Route path="/complete-profile" element={<CompleteProfile />} />
       <Route path="/pricing" element={<Pricing />} />
