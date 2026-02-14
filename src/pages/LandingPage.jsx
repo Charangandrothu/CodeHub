@@ -12,7 +12,7 @@ const LandingPage = () => {
             {/* Ad placement: Below Hero, before Features */}
             <div className="bg-[#0a0a0a] px-4 sm:px-6">
                 <div className="max-w-5xl mx-auto">
-                    <AdBanner adSlot="1234567890" className="py-2" />
+                    <AdBanner adSlot="9351763178" className="py-2" />
                 </div>
             </div>
             <Features />

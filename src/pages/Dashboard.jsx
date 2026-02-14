@@ -293,7 +293,7 @@ const Dashboard = () => {
                         {/* Ad placement — between progress cards and sidebar, free users only */}
                         {!userData?.isPro && (
                             <motion.div variants={itemVariants}>
-                                <AdBanner adSlot="3456789012" className="rounded-2xl overflow-hidden" />
+                                <AdBanner adSlot="9723288525" className="rounded-2xl overflow-hidden" />
                             </motion.div>
                         )}
                     </div>

@@ -950,7 +950,7 @@ export default function QuestionPage() {
                                 {/* Ad placement — below problem description, safe location */}
                                 {!userData?.isPro && (
                                     <div className="mt-8 pt-4 border-t border-[#262626]">
-                                        <AdBanner adSlot="2345678901" className="py-1" />
+                                        <AdBanner adSlot="2786354821" className="py-1" />
                                     </div>
                                 )}
                             </div>
