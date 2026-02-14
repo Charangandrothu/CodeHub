@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import DailyQuote from '../components/dsa/DailyQuote';
+import AdBanner from '../components/AdBanner';
 import { API_URL } from '../config';
 
 const Dashboard = () => {
@@ -288,6 +289,13 @@ const Dashboard = () => {
                                 />
                             </div>
                         </motion.div>
+
+                        {/* Ad placement — between progress cards and sidebar, free users only */}
+                        {!userData?.isPro && (
+                            <motion.div variants={itemVariants}>
+                                <AdBanner adSlot="3456789012" className="rounded-2xl overflow-hidden" />
+                            </motion.div>
+                        )}
                     </div>
 
                     {/* Sidebar (1 Col) - Activity & Stats */}

@@ -9,6 +9,7 @@ import { useAuth } from '../context/AuthContext';
 import logo_img from '../assets/logo_img.png';
 import { API_URL } from '../config';
 import { sendAIMessage, fetchAIUsage, AI_PROVIDERS, fetchAvailableProviders } from '../services/aiService';
+import AdBanner from '../components/AdBanner';
 
 export default function QuestionPage() {
     const { slug } = useParams();
@@ -945,6 +946,13 @@ export default function QuestionPage() {
                                         </ul>
                                     </div>
                                 )}
+
+                                {/* Ad placement — below problem description, safe location */}
+                                {!userData?.isPro && (
+                                    <div className="mt-8 pt-4 border-t border-[#262626]">
+                                        <AdBanner adSlot="2345678901" className="py-1" />
+                                    </div>
+                                )}
                             </div>
                         )}
 
@@ -1410,10 +1418,10 @@ export default function QuestionPage() {
                                                                 }
                                                             }}
                                                             className={`w-full flex items-center gap-3 px-4 py-2.5 text-left text-xs transition-colors ${provider.healthy === false
-                                                                    ? 'opacity-40 cursor-not-allowed'
-                                                                    : selectedProvider === provider.id
-                                                                        ? 'bg-indigo-500/10 text-white'
-                                                                        : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                                                                ? 'opacity-40 cursor-not-allowed'
+                                                                : selectedProvider === provider.id
+                                                                    ? 'bg-indigo-500/10 text-white'
+                                                                    : 'text-gray-400 hover:bg-white/5 hover:text-white'
                                                                 }`}
                                                             disabled={provider.healthy === false}
                                                         >
