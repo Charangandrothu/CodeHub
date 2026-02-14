@@ -1,43 +1,29 @@
-import { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 
-/**
- * AdBanner — Reusable Google AdSense ad component.
- * Only renders for free (non-Pro) users.
- * 
- * @param {string} adSlot   — The AdSense ad slot ID
- * @param {string} adFormat — Ad format (default: "auto")
- * @param {string} className — Additional wrapper classes
- */
-const AdBanner = ({ adSlot, adFormat = 'auto', className = '' }) => {
+const SmallAdBanner = ({ adSlot, className = '' }) => {
     const { userData } = useAuth();
+    const isPro = userData?.isPro === true;
     const adRef = useRef(null);
     const pushed = useRef(false);
 
-    // Don't render for Pro users
-    const isPro = userData?.isPro === true;
-
     useEffect(() => {
-        // Guard: skip if Pro, already pushed, or SSR
-        if (isPro || pushed.current) return;
-        if (typeof window === 'undefined') return;
-
-        try {
-            const adsbygoogle = window.adsbygoogle || [];
-            adsbygoogle.push({});
-            pushed.current = true;
-        } catch (err) {
-            // Silently handle - ad blocker or AdSense not loaded
-            console.warn('AdSense push failed:', err.message);
+        if (!isPro && typeof window !== 'undefined' && !pushed.current && adRef.current) {
+            try {
+                (window.adsbygoogle = window.adsbygoogle || []).push({});
+                pushed.current = true;
+            } catch (err) {
+                console.error("AdSense error:", err);
+            }
         }
     }, [isPro]);
 
-    // Don't render anything for Pro users
     if (isPro) return null;
 
     return (
         <div className={`flex justify-center items-center my-4 ${className}`}>
             <ins
+                ref={adRef}
                 className="adsbygoogle"
                 style={{
                     display: 'inline-block',
@@ -45,10 +31,13 @@ const AdBanner = ({ adSlot, adFormat = 'auto', className = '' }) => {
                     maxWidth: '728px',
                     height: '90px'
                 }}
-                ref={adRef}
                 data-ad-client="ca-pub-6907980845698047"
                 data-ad-slot={adSlot}
             >
+                {/* Mobile Fallback Style via CSS if needed, but style prop handles the main sizing. 
+                    For strict 320x50 on mobile, we can use media queries on the wrapper or override styles.
+                    Here we set 100% width/90px height, which AdSense will fill responsively.
+                */}
             </ins>
             <style jsx>{`
                 @media (max-width: 768px) {
@@ -68,4 +57,4 @@ const AdBanner = ({ adSlot, adFormat = 'auto', className = '' }) => {
     );
 };
 
-export default AdBanner;
+export default SmallAdBanner;

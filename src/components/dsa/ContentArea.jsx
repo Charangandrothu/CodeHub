@@ -5,6 +5,7 @@ import { AlertCircle, CheckCircle2, FileCode2, Terminal, RefreshCw, ArrowRight, 
 import { motion } from 'framer-motion';
 import { API_URL } from '../../config';
 import { useAuth } from '../../context/AuthContext';
+import SmallAdBanner from '../SmallAdBanner';
 
 export default function ContentArea() {
     const { topicId } = useParams();
@@ -167,50 +168,57 @@ export default function ContentArea() {
                     </div>
                 ) : (
                     /* Problem Rows */
-                    problems.map((problem) => (
-                        <Link
-                            key={problem._id || problem.slug}
-                            to={`/problem/${problem.slug}`}
-                            className="group relative flex flex-col sm:flex-row sm:items-center justify-between p-5 rounded-xl bg-[#0a0a0a]/60 hover:bg-[#0a0a0a] border border-white/5 hover:border-purple-500/20 hover:shadow-[0_0_20px_rgba(168,85,247,0.05)] transition-all duration-300"
-                        >
-                            <div className="flex-1 min-w-0 mb-4 sm:mb-0">
-                                <div className="flex items-center gap-3 mb-2">
-                                    <h3 className="text-lg font-semibold text-slate-200 group-hover:text-white truncate transition-colors">
-                                        {problem.title}
-                                    </h3>
-                                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] uppercase font-bold tracking-wider border ${getDifficultyColor(problem.difficulty)}`}>
-                                        {problem.difficulty}
-                                    </span>
-                                </div>
-
-                                <div className="flex items-center flex-wrap gap-2">
-                                    {problem.tags && problem.tags.map((tag, idx) => (
-                                        <span
-                                            key={idx}
-                                            className="px-2 py-1 text-xs text-slate-500 bg-white/5 rounded-md border border-white/5 group-hover:border-white/10 transition-colors"
-                                        >
-                                            {tag}
+                    /* Problem Rows */
+                    problems.map((problem, index) => (
+                        <div key={problem._id || problem.slug}>
+                            <Link
+                                to={`/problem/${problem.slug}`}
+                                className="group relative flex flex-col sm:flex-row sm:items-center justify-between p-5 rounded-xl bg-[#0a0a0a]/60 hover:bg-[#0a0a0a] border border-white/5 hover:border-purple-500/20 hover:shadow-[0_0_20px_rgba(168,85,247,0.05)] transition-all duration-300"
+                            >
+                                <div className="flex-1 min-w-0 mb-4 sm:mb-0">
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <h3 className="text-lg font-semibold text-slate-200 group-hover:text-white truncate transition-colors">
+                                            {problem.title}
+                                        </h3>
+                                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] uppercase font-bold tracking-wider border ${getDifficultyColor(problem.difficulty)}`}>
+                                            {problem.difficulty}
                                         </span>
-                                    ))}
-                                </div>
-                            </div>
-
-                            <div className="flex items-center gap-4 sm:ml-6">
-                                {isProblemSolved(problem._id) && (
-                                    <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold animate-in fade-in duration-500">
-                                        <CheckCircle2 size={14} />
-                                        <span>Solved</span>
                                     </div>
-                                )}
-                                <div className="flex -space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform translate-x-2 group-hover:translate-x-0">
-                                    {/* Subtle avatar pile or similar visual for premium feel could go here */}
+
+                                    <div className="flex items-center flex-wrap gap-2">
+                                        {problem.tags && problem.tags.map((tag, idx) => (
+                                            <span
+                                                key={idx}
+                                                className="px-2 py-1 text-xs text-slate-500 bg-white/5 rounded-md border border-white/5 group-hover:border-white/10 transition-colors"
+                                            >
+                                                {tag}
+                                            </span>
+                                        ))}
+                                    </div>
                                 </div>
-                                <div className="flex items-center text-sm font-medium text-slate-500 group-hover:text-purple-400 transition-colors">
-                                    Solve
-                                    <ArrowRight size={16} className="ml-1 transform group-hover:translate-x-1 transition-transform" />
+
+                                <div className="flex items-center gap-4 sm:ml-6">
+                                    {isProblemSolved(problem._id) && (
+                                        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold animate-in fade-in duration-500">
+                                            <CheckCircle2 size={14} />
+                                            <span>Solved</span>
+                                        </div>
+                                    )}
+                                    <div className="flex -space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform translate-x-2 group-hover:translate-x-0">
+                                        {/* Subtle avatar pile or similar visual for premium feel could go here */}
+                                    </div>
+                                    <div className="flex items-center text-sm font-medium text-slate-500 group-hover:text-purple-400 transition-colors">
+                                        Solve
+                                        <ArrowRight size={16} className="ml-1 transform group-hover:translate-x-1 transition-transform" />
+                                    </div>
                                 </div>
-                            </div>
-                        </Link>
+                            </Link>
+
+                            {/* Compact Ad Banner after every 4 items */}
+                            {(index + 1) % 4 === 0 && (
+                                <SmallAdBanner adSlot="6789012345" className="border-t border-b border-white/5 py-4 bg-[#0a0a0a]/30" />
+                            )}
+                        </div>
                     ))
                 )}
             </div>
