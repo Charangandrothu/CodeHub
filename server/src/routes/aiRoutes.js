@@ -1,24 +1,17 @@
 const express = require('express');
-const axios = require('axios');
 const router = express.Router();
 const User = require('../models/User');
+const { checkCooldown, checkProRateLimit, routeAIRequest, getHealthyProviders } = require('../services/aiRouter');
+const { PROVIDER_CONFIG, getAvailableProviders } = require('../services/providers');
 
-// Middleware to verify user (Adapted for existing app pattern)
+// ─── Auth Middleware ───
 const verifyUser = async (req, res, next) => {
     try {
         const { userId } = req.body;
-
-        // Fallback to checking headers if userId not in body (though Frontend should send it)
-        // In a real app we'd verify the token. Here we trust the client's UID for now as per app pattern.
-        if (!userId) {
-            return res.status(401).json({ message: "Unauthorized: Missing userId" });
-        }
+        if (!userId) return res.status(401).json({ message: "Unauthorized: Missing userId" });
 
         const user = await User.findOne({ uid: userId });
-
-        if (!user) {
-            return res.status(404).json({ message: "User not found" });
-        }
+        if (!user) return res.status(404).json({ message: "User not found" });
 
         req.user = user;
         next();
@@ -28,177 +21,226 @@ const verifyUser = async (req, res, next) => {
     }
 };
 
-// 4️⃣ 🔥 VERY IMPORTANT — Smart Prompt (Use This)
-// 4️⃣ 🔥 PREMIUM SYSTEM PROMPT (Fixed for Natural Chat)
-// 4️⃣ 🔥 ULTRA-FAST PREMIUM PROMPT (Optimized)
-function buildPrompt(data) {
-    const {
-        problemTitle,
-        problemDescription,
-        userCode,
-        language,
-        userQuestion,
-        isPro
-    } = data;
+// ─── System Prompt Builder ───
+function buildSystemPrompt(isPro) {
+    return `You are the AI coding assistant inside CodeHubX — a premium competitive programming platform.
 
-    // Truncate logic to save tokens
-    const shortDesc = problemDescription.length > 500 ? problemDescription.substring(0, 500) + "..." : problemDescription;
-    const shortCode = userCode.length > 1000 ? userCode.substring(0, 1000) + "..." : userCode;
+RULES:
+- Be concise and precise. No filler text.
+- If greeting → respond briefly and warmly.
+- If debugging → analyze only the relevant code section, explain the bug, suggest the fix.
+- If asking for a hint → give a conceptual approach without full code.
+- If asking for full solution → provide clean, commented code block only.
+- If asking about time/space complexity → analyze clearly with Big-O notation.
+- Use markdown code blocks with language tags for any code.
+- Keep responses under 300 words unless user asks for detail.
 
-    return `
-You are the AI assistant inside CodeHubX.
-
-Be concise and natural.
-No decorative formatting.
-No headings.
-No unnecessary markdown.
-No repeating the full problem.
-
-If greeting → respond briefly.
-If debugging → analyze only relevant part.
-If hint → guide conceptually.
-If full solution → provide clean code block only.
-
-Keep responses short unless user asks for detail.
-
-ACCESS: ${isPro ? "PRO" : "FREE"}
-
-Context:
-Title: ${problemTitle}
-Problem: ${shortDesc}
-Code:
-${shortCode}
-
-Language: ${language}
-Question: ${userQuestion}
-`;
+ACCESS LEVEL: ${isPro ? "PRO (full access, detailed analysis)" : "FREE (concise responses)"}`;
 }
 
-// 5️⃣ Kimi Service (Kimi 2.5)
-const generateKimiResponse = async (prompt) => {
-    try {
-        const response = await axios.post(
-            "https://integrate.api.nvidia.com/v1/chat/completions",
-            {
-                model: "meta/llama-3.1-405b-instruct", // Fallback to Llama 3.1 405B (Kimi not found)
-                messages: [
-                    {
-                        role: "system",
-                        content: "You are a friendly, concise coding assistant."
-                    },
-                    {
-                        role: "user",
-                        content: prompt
-                    }
-                ],
-                temperature: 0.2, // Reduced for precision
-                max_tokens: 350,   // Reduced for speed
-                stream: false      // Streaming handled on frontend if implemented, but here we return full response for now
-            },
-            {
-                headers: {
-                    Authorization: `Bearer ${process.env.NVIDIA_API_KEY}`,
-                    "Content-Type": "application/json"
-                }
-            }
-        );
+// ─── User Prompt Builder ───
+function buildUserPrompt(data) {
+    const { problemTitle, problemDescription, userCode, language, userQuestion } = data;
+    const shortDesc = problemDescription?.length > 500 ? problemDescription.substring(0, 500) + "..." : (problemDescription || "");
+    const shortCode = userCode?.length > 1500 ? userCode.substring(0, 1500) + "..." : (userCode || "");
 
-        return response.data.choices[0].message.content;
-    } catch (err) {
-        if (err.response) {
-            console.error("Kimi API Error Status:", err.response.status);
-            console.error("Kimi API Error Data:", JSON.stringify(err.response.data, null, 2));
-        } else {
-            console.error("Kimi API Error Message:", err.message);
-        }
-        throw new Error("AI Service Failed: " + (err.response?.data?.error?.message || err.message));
+    return `Problem: ${problemTitle}
+Description: ${shortDesc}
+Language: ${language}
+User Code:
+\`\`\`${language}
+${shortCode}
+\`\`\`
+Question: ${userQuestion}`;
+}
+
+// ─── Quick Response for Casual Queries ───
+function getQuickResponse(question) {
+    const q = question.trim().toLowerCase();
+    if (q.length < 10 && ['hi', 'hello', 'hii', 'hey'].includes(q)) {
+        return "Hello 👋 How can I help you with this problem?";
     }
-};
+    if (q.length < 15 && q.includes('help')) {
+        return "I'm here to help! Ask me about your approach, debug your code, or request hints for the problem.";
+    }
+    return null;
+}
 
-// 3️⃣ Backend Route
-router.post("/problem-help", verifyUser, async (req, res) => {
+// ─── GET /api/ai/providers — Available providers list with health ───
+router.get('/providers', async (req, res) => {
+    try {
+        const available = getAvailableProviders();
+        const healthStatuses = await getHealthyProviders();
+        const healthMap = {};
+        healthStatuses.forEach(h => { healthMap[h.id] = h.healthy; });
+
+        const providers = available.map(key => ({
+            id: key,
+            name: PROVIDER_CONFIG[key].name,
+            model: PROVIDER_CONFIG[key].model,
+            healthy: healthMap[key] !== false
+        }));
+        res.json({ providers });
+    } catch (err) {
+        console.error('Provider list error:', err);
+        res.status(500).json({ providers: [] });
+    }
+});
+
+// ─── GET /api/ai/usage — User's AI usage info ───
+router.get('/usage/:uid', async (req, res) => {
+    try {
+        const user = await User.findOne({ uid: req.params.uid });
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        // Reset daily counter for free users if new day
+        const now = new Date();
+        const lastReset = user.lastAiResetDate ? new Date(user.lastAiResetDate) : new Date(0);
+        const isNewDay = now.toDateString() !== lastReset.toDateString();
+
+        if (isNewDay && !user.isPro) {
+            user.aiUsage = 0;
+            user.lastAiResetDate = now;
+            await user.save();
+        }
+
+        res.json({
+            isPro: user.isPro,
+            aiUsage: user.aiUsage,
+            maxUsage: user.isPro ? null : 3, // null = unlimited (rate-limited instead)
+            plan: user.isPro ? 'PRO' : 'FREE'
+        });
+    } catch (err) {
+        console.error("Usage fetch error:", err);
+        res.status(500).json({ message: "Failed to fetch usage" });
+    }
+});
+
+// ─── POST /api/ai/chat — Main AI Chat Endpoint ───
+router.post('/chat', verifyUser, async (req, res) => {
     try {
         const {
-            problemTitle,
-            problemDescription,
-            userCode,
-            language,
-            userQuestion
+            problemTitle, problemDescription, userCode,
+            language, userQuestion, selectedProvider
         } = req.body;
 
-        // 💰 Monetization Logic (Check Limit)
-        // Check reset logic for daily limit (assuming standard daily reset logic if absent)
-        const now = new Date();
-        const lastReset = req.user.lastAiResetDate ? new Date(req.user.lastAiResetDate) : new Date(0);
-        const isSameDay = now.getDate() === lastReset.getDate() &&
-            now.getMonth() === lastReset.getMonth() &&
-            now.getFullYear() === lastReset.getFullYear();
-
-        if (!isSameDay) {
-            req.user.aiUsage = 0;
-            req.user.lastAiResetDate = now;
-            await req.user.save();
+        if (!userQuestion?.trim()) {
+            return res.status(400).json({ message: "Message cannot be empty" });
         }
 
-        if (!req.user.isPro && req.user.aiUsage >= 3) {
-            return res.status(403).json({
-                message: "Daily AI limit reached. Upgrade to Pro."
+        // Quick response for greetings (no credits used)
+        const quick = getQuickResponse(userQuestion);
+        if (quick) return res.json({ answer: quick, provider: selectedProvider || 'nvidia' });
+
+        // ── 1. Cooldown check (3s between requests) ──
+        const cooldown = await checkCooldown(req.user.uid);
+        if (!cooldown.allowed) {
+            return res.status(429).json({
+                message: `Please wait ${cooldown.retryAfter}s between requests.`,
+                retryAfter: cooldown.retryAfter,
+                type: 'cooldown'
             });
         }
 
-        // 🔥 Instant Response for Short/Casual Queries
-        const cleanQuestion = userQuestion.trim().toLowerCase();
-        if (cleanQuestion.length < 10 && (
-            cleanQuestion === 'hi' ||
-            cleanQuestion === 'hello' ||
-            cleanQuestion === 'hii' ||
-            cleanQuestion === 'hey' ||
-            cleanQuestion.includes('help')
-        )) {
-            return res.json({ answer: "Hello 👋\nHow can I help you with this problem?" });
+        // ── 2. Rate limit check ──
+        const now = new Date();
+        const lastReset = req.user.lastAiResetDate ? new Date(req.user.lastAiResetDate) : new Date(0);
+        const isNewDay = now.toDateString() !== lastReset.toDateString();
+
+        if (!req.user.isPro) {
+            // Free user: 3 total per day
+            if (isNewDay) {
+                req.user.aiUsage = 0;
+                req.user.lastAiResetDate = now;
+                await req.user.save();
+            }
+
+            if (req.user.aiUsage >= 3) {
+                return res.status(403).json({
+                    message: "Daily AI limit reached. Upgrade to Pro for unlimited access.",
+                    type: 'limit'
+                });
+            }
+        } else {
+            // Pro user: 5 per 5 min sliding window
+            const rateCheck = await checkProRateLimit(req.user.uid);
+            if (!rateCheck.allowed) {
+                return res.status(429).json({
+                    message: `Pro rate limit reached. Try again in ${rateCheck.retryAfter}s.`,
+                    retryAfter: rateCheck.retryAfter,
+                    remaining: 0,
+                    type: 'rate_limit'
+                });
+            }
         }
 
-        // 🔒 Secure Atomic Limit Check & Increment
-        // This prevents race conditions where users could send 100 requests at once
+        // ── 3. Atomically increment usage for free users ──
         if (!req.user.isPro) {
-            const updatedUser = await User.findOneAndUpdate(
+            const updated = await User.findOneAndUpdate(
                 { _id: req.user._id, aiUsage: { $lt: 3 } },
                 { $inc: { aiUsage: 1 } },
                 { new: true }
             );
-
-            if (!updatedUser) {
-                return res.status(403).json({ message: "Daily AI limit reached. Upgrade to Pro." });
+            if (!updated) {
+                return res.status(403).json({
+                    message: "Daily AI limit reached. Upgrade to Pro.",
+                    type: 'limit'
+                });
             }
         } else {
-            // Just track usage for Pro users
             await User.findByIdAndUpdate(req.user._id, { $inc: { aiUsage: 1 } });
         }
 
-        const prompt = buildPrompt({
-            problemTitle,
-            problemDescription,
-            userCode,
-            language,
-            userQuestion,
-            isPro: req.user.isPro
+        // ── 4. Build prompts ──
+        const systemPrompt = buildSystemPrompt(req.user.isPro);
+        const userPrompt = buildUserPrompt({
+            problemTitle, problemDescription, userCode, language, userQuestion
         });
 
-        let answer;
+        // ── 5. Route to provider with fallback ──
+        const provider = selectedProvider && PROVIDER_CONFIG[selectedProvider]
+            ? selectedProvider
+            : 'nvidia'; // default
+
         try {
-            answer = await generateKimiResponse(prompt);
-        } catch (apiError) {
-            // ↩️ Refund credit/stat if the AI fails
+            const result = await routeAIRequest(provider, systemPrompt, userPrompt);
+
+            res.json({
+                answer: result.response,
+                provider: result.provider,
+                remaining: req.user.isPro ? undefined : Math.max(0, 2 - (req.user.aiUsage || 0))
+            });
+        } catch (aiErr) {
+            // Refund credit on failure
             await User.findByIdAndUpdate(req.user._id, { $inc: { aiUsage: -1 } });
-            throw apiError;
+
+            if (aiErr.message === 'ALL_PROVIDERS_BUSY') {
+                return res.status(503).json({
+                    message: "All AI providers are currently busy. Please try again in a moment.",
+                    type: 'providers_busy'
+                });
+            }
+            throw aiErr;
         }
 
-        res.json({ answer });
-
     } catch (err) {
-        console.error("AI Route Error:", err);
+        console.error("[AI Chat Error]:", err);
         res.status(500).json({ message: "AI failed to generate response." });
     }
+});
+
+// ─── Legacy endpoint redirect (backward compatibility) ───
+router.post('/problem-help', verifyUser, async (req, res) => {
+    // Forward to new /chat endpoint logic
+    req.body.selectedProvider = 'nvidia';
+    req.body.userQuestion = req.body.userQuestion || req.body.message;
+
+    // Re-use the chat handler by calling the route
+    const chatHandler = router.stack.find(r => r.route?.path === '/chat');
+    if (chatHandler) {
+        return chatHandler.route.stack[1].handle(req, res);
+    }
+    res.status(500).json({ message: "Route forwarding failed" });
 });
 
 module.exports = router;

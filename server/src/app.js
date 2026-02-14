@@ -6,6 +6,7 @@ const app = express();
 const { limiter } = require("./middleware/rateLimiter");
 
 //Middleware
+app.disable("x-powered-by");
 app.use(cors());
 app.use(express.json());
 
