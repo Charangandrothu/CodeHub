@@ -65,6 +65,11 @@ const userSchema = new mongoose.Schema({
         plan: String // e.g. "Pro Monthly"
     }],
     profileCompleted: { type: Boolean, default: false }, // New field
+
+    // AI Usage
+    aiUsage: { type: Number, default: 0 },
+    lastAiResetDate: { type: Date, default: Date.now },
+
     updatedAt: { type: Date, default: Date.now }
 });
 

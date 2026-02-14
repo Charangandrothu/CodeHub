@@ -37,6 +37,9 @@ app.use('/api/payment', paymentRoutes);
 const adminRoutes = require("./routes/adminRoutes");
 app.use('/api/admin', adminRoutes);
 
+const aiRoutes = require("./routes/aiRoutes");
+app.use('/api/ai', aiRoutes);
+
 // Global Error Handler
 app.use((err, req, res, next) => {
   console.error("Global Error:", err.stack);
