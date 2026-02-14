@@ -59,7 +59,9 @@ exports.getProblemBySlug = async (req, res) => {
       query = { $or: [{ slug }, { _id: slug }] };
     }
 
-    const problem = await Problem.findOne(query);
+    // Exclude hidden test cases and internal fields like __v
+    const problem = await Problem.findOne(query).select('-testCases.hidden -__v');
+
     if (!problem) {
       return res.status(404).json({ message: "Problem not found" });
     }

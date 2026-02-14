@@ -380,8 +380,8 @@ router.post("/submit", async (req, res) => {
                     stdout: result.stdout || "",
                     stderr: result.stderr || "Time limit exceeded",
                     failedTestCase: {
-                        input: testCase.input,
-                        expected: testCase.output,
+                        input: "Hidden Case",
+                        expected: "Hidden",
                         actual: "Time Limit Exceeded"
                     },
                     totalTestCases: hiddenCases.length,
@@ -395,8 +395,8 @@ router.post("/submit", async (req, res) => {
                     stdout: result.stdout || "",
                     stderr: result.stderr || result.status?.description,
                     failedTestCase: {
-                        input: testCase.input,
-                        expected: testCase.output,
+                        input: "Hidden Case",
+                        expected: "Hidden",
                         actual: "Runtime Error"
                     },
                     totalTestCases: hiddenCases.length,
@@ -412,9 +412,9 @@ router.post("/submit", async (req, res) => {
                     stdout: result.stdout || "",
                     stderr: "",
                     failedTestCase: {
-                        input: testCase.input,
-                        expected: testCase.output,
-                        actual: result.stdout || ""
+                        input: "Hidden Case",
+                        expected: "Hidden",
+                        actual: "Hidden"
                     },
                     totalTestCases: hiddenCases.length,
                     passedTestCases: index
