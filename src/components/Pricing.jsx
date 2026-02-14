@@ -176,10 +176,10 @@ const Pricing = () => {
                             {selectedPlan === 'monthly' ? 'Upgrade Now' : 'Select Plan'} <ArrowRight size={16} className={`transition-transform ${selectedPlan === 'monthly' ? 'group-hover:translate-x-1' : ''}`} />
                         </SubscriptionButton>
 
-                        <div className="mt-4 flex items-center justify-center gap-1.5 text-[10px] text-gray-500">
+                        {/* <div className="mt-4 flex items-center justify-center gap-1.5 text-[10px] text-gray-500">
                             <ShieldCheck size={12} className="text-green-500" />
                             7-day money-back guarantee
-                        </div>
+                        </div> */}
                     </PricingCard>
 
 

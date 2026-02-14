@@ -96,7 +96,8 @@ const Navbar = () => {
     { name: 'Home', path: '/' },
     { name: 'Features', path: '/#features' },
     { name: 'Pricing', path: '/#pricing' },
-    { name: 'About', path: '/#about' },
+    { name: 'About', path: '/about' },
+    { name: 'Privacy', path: '/privacy-policy' },
   ];
 
   return (
