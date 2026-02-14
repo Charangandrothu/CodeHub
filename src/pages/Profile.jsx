@@ -7,6 +7,7 @@ import { motion } from 'framer-motion';
 import { Flame, Trophy, Calendar, MapPin, Briefcase, Activity, CheckCircle2, XCircle, Clock, X, Plus } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { API_URL } from '../config';
+import AdBanner from '../components/AdBanner';
 
 const Profile = () => {
     const { currentUser, userData: authUser, refreshUserData } = useAuth();
@@ -294,6 +295,11 @@ const Profile = () => {
                                 <p>No recent activity</p>
                             </div>
                         )}
+                    </div>
+
+                    {/* Non-intrusive Ad at the bottom of profile content */}
+                    <div className="mt-6">
+                        <AdBanner adSlot="5678901234" className="rounded-2xl overflow-hidden" />
                     </div>
 
 

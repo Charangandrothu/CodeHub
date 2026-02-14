@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Target, Sparkles, Rocket, Eye, Brain, BarChart3, Map, Zap, BookOpen, Calculator, FlaskConical, ExternalLink } from 'lucide-react';
 import Footer from '../components/Footer';
+import AdBanner from '../components/AdBanner';
 
 const fadeUp = {
     hidden: { opacity: 0, y: 30 },
@@ -209,6 +210,11 @@ const About = () => {
                             index={2}
                         />
                     </div>
+                </div>
+
+                {/* Non-intrusive ad in section gap */}
+                <div className="mb-20 max-w-3xl mx-auto">
+                    <AdBanner adSlot="9351763178" />
                 </div>
 
                 {/* Vision for the Future */}
