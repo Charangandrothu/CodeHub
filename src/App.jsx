@@ -21,6 +21,8 @@ import Settings from './pages/Settings'
 
 import Unauthorized from './pages/Unauthorized'
 import NotFound from './pages/NotFound'
+import About from './pages/About'
+import PrivacyPolicy from './pages/PrivacyPolicy'
 
 // Admin Imports
 import AdminLayout from './layouts/AdminLayout'
@@ -51,6 +53,8 @@ function AppRoutes() {
 
       <Route path="/complete-profile" element={<CompleteProfile />} />
       <Route path="/pricing" element={<Pricing />} />
+      <Route path="/about" element={<About />} />
+      <Route path="/privacy-policy" element={<PrivacyPolicy />} />
 
       {/* Protected Routes - Only for authenticated users */}
       <Route path="/dashboard" element={
