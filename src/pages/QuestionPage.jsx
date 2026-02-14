@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Play, Send, RefreshCw, AlertCircle, CheckCircle2, Copy, FileText, LayoutList, History, Code2, Check, X, Zap, Clock, Cpu, TrendingUp, Lock } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { ChevronLeft, Play, Send, RefreshCw, AlertCircle, CheckCircle2, Copy, FileText, LayoutList, History, Code2, Check, X, Zap, Clock, Cpu, TrendingUp, Lock, Move } from 'lucide-react';
+import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import CodeEditor from '../components/dsa/CodeEditor';
 import TestCasesPanel from '../components/dsa/TestCasesPanel';
 import SubmissionResultPanel from '../components/dsa/SubmissionResultPanel';
@@ -29,6 +29,22 @@ export default function QuestionPage() {
     const [activeTestCase, setActiveTestCase] = useState(0);
     const [submissionResult, setSubmissionResult] = useState(null);
     const [testCaseResults, setTestCaseResults] = useState(null); // Stores results for sample cases
+
+    // AI State
+    const [showAI, setShowAI] = useState(false);
+    const [input, setInput] = useState("");
+    const [messages, setMessages] = useState([]);
+    const [loadingAI, setLoadingAI] = useState(false);
+    const messagesEndRef = useRef(null);
+    const dragControls = useDragControls();
+
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
+
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages, loadingAI, showAI]);
 
     const handleLanguageChange = (e) => {
         const newLang = e.target.value;
@@ -205,7 +221,69 @@ export default function QuestionPage() {
                 });
             }
         }
+        setRunStatus("idle");
     };
+
+    const handleAskAI = async () => {
+        if (!input.trim()) return;
+
+        // Optimistic Check for Pro Limit
+        if (currentUser && userData && !userData.isPro && (userData.aiUsage >= 3)) {
+            setLimitModal({
+                show: true,
+                type: 'ai',
+                message: "You have reached your daily AI limit."
+            });
+            return;
+        }
+
+        const userMessage = { role: "user", content: input };
+        setMessages(prev => [...prev, userMessage]);
+        setInput(""); // Clear immediately
+        setLoadingAI(true);
+
+        try {
+            const res = await fetch(`${API_URL}/api/ai/problem-help`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    problemTitle: problem.title,
+                    problemDescription: problem.description,
+                    userCode: code,
+                    language,
+                    userQuestion: userMessage.content,
+                    userId: currentUser?.uid
+                })
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                if (res.status === 403) {
+                    // Limit Reached - Remove the user's message and show modal
+                    setMessages(prev => prev.filter(m => m !== userMessage));
+                    setLimitModal({
+                        show: true,
+                        type: 'ai',
+                        message: data.message || "Daily AI limit reached. Upgrade to Pro."
+                    });
+                } else {
+                    const errorMessage = "❌ Error: " + (data.message || "AI failed.");
+                    setMessages(prev => [...prev, { role: "assistant", content: errorMessage, isError: true }]);
+                }
+            } else {
+                setMessages(prev => [...prev, { role: "assistant", content: data.answer }]);
+                if (refreshUserData) refreshUserData();
+            }
+        } catch (err) {
+            setMessages(prev => [...prev, { role: "assistant", content: "❌ Error: Failed to connect.", isError: true }]);
+        } finally {
+            setLoadingAI(false);
+        }
+    };
+
 
     const submitCode = async () => {
         setRunStatus("submitting");
@@ -634,6 +712,7 @@ export default function QuestionPage() {
                             </span>
                         )}
                     </div>
+
                 </div>
             </header>
 
@@ -666,7 +745,9 @@ export default function QuestionPage() {
                             </div>
 
                             <h3 className="text-lg font-bold text-white text-center mb-2">
-                                {limitModal.type === 'run' ? 'Daily Run Limit Reached' : 'Submission Limit Reached'}
+                                {limitModal.type === 'run' ? 'Daily Run Limit Reached' :
+                                    limitModal.type === 'ai' ? 'Daily AI Limit Reached' :
+                                        'Submission Limit Reached'}
                             </h3>
 
                             <p className="text-zinc-400 text-sm text-center mb-6 leading-relaxed">
@@ -1178,6 +1259,178 @@ export default function QuestionPage() {
                     </div >
                 </motion.div >
             </div >
+            {/* Premium AI Assistant UI */}
+            <AnimatePresence>
+                {showAI && (
+                    <motion.div
+                        initial={{ y: "100%", opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        exit={{ y: "100%", opacity: 0 }}
+                        transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                        className="fixed bottom-24 right-6 w-[380px] h-[600px] max-h-[80vh] bg-[#111827]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl z-[60] flex flex-col overflow-hidden font-sans origin-bottom-right"
+                    >
+                        {/* Header */}
+                        <div className="flex items-center justify-between px-5 py-4 border-b border-white/5 bg-gradient-to-r from-indigo-500/5 to-transparent">
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center shadow-lg shadow-indigo-500/20 overflow-hidden">
+                                    <img src={logo_img} alt="CodeHub AI" className="w-full h-full object-cover opacity-90" />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-white text-[15px] tracking-tight">AI Assistant</h3>
+                                    <p className="text-[11px] text-gray-400 font-medium">Pro Coding Companion</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setShowAI(false)}
+                                className="p-2 rounded-full hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        {/* Chat Area */}
+                        <div className="flex-1 overflow-y-auto p-5 custom-scrollbar space-y-5 bg-gradient-to-b from-[#111827] to-[#0f1117]">
+                            {messages.length === 0 && (
+                                <div className="flex flex-col items-center justify-center h-full text-center px-8">
+                                    <div className="w-16 h-16 bg-gradient-to-br from-indigo-500/10 to-blue-500/10 rounded-2xl flex items-center justify-center mb-6 border border-indigo-500/20 shadow-[0_0_30px_rgba(99,102,241,0.1)]">
+                                        <Code2 size={28} className="text-indigo-400" />
+                                    </div>
+                                    <h4 className="text-white font-semibold mb-2">How can I help you?</h4>
+                                    <p className="text-sm text-gray-500 leading-relaxed max-w-[240px]">
+                                        Ask me to debugging code, explain logic, or optimize your solution.
+                                    </p>
+                                </div>
+                            )}
+
+                            {messages.map((msg, idx) => (
+                                <motion.div
+                                    key={idx}
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ duration: 0.3 }}
+                                    className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                                >
+                                    <div
+                                        className={`max-w-[85%] rounded-2xl p-3.5 text-sm leading-relaxed shadow-sm relative group ${msg.role === 'user'
+                                            ? 'bg-[#2563eb] text-white rounded-tr-sm shadow-blue-900/20'
+                                            : msg.isError
+                                                ? 'bg-red-500/10 border border-red-500/20 text-red-200 rounded-tl-sm'
+                                                : 'bg-[#1f2937] text-gray-200 rounded-tl-sm border border-white/5'
+                                            }`}
+                                        onClick={() => {
+                                            if (msg.isError && msg.content.includes("Daily AI limit reached")) {
+                                                navigate('/pricing');
+                                            }
+                                        }}
+                                        style={{ cursor: msg.isError && msg.content.includes("Daily") ? "pointer" : "default" }}
+                                    >
+                                        <div className="whitespace-pre-wrap font-sans text-[13.5px]">
+                                            {msg.content}
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            ))}
+
+                            {loadingAI && (
+                                <motion.div
+                                    initial={{ opacity: 0, scale: 0.9 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    className="flex justify-start"
+                                >
+                                    <div className="bg-[#1f2937] rounded-2xl rounded-tl-sm p-4 border border-white/5 flex gap-1.5 items-center w-fit shadow-lg">
+                                        <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                                        <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                                        <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce" />
+                                    </div>
+                                </motion.div>
+                            )}
+                            <div ref={messagesEndRef} />
+                        </div>
+
+                        {/* Input Area */}
+                        <div className="p-5 border-t border-white/5 bg-[#111827]">
+                            <div className={`relative flex items-center bg-[#1f2937] border border-white/5 rounded-xl transition-all duration-300 focus-within:ring-2 focus-within:ring-indigo-500/50 focus-within:border-indigo-500/50 focus-within:shadow-[0_0_15px_rgba(99,102,241,0.15)]`}>
+                                <input
+                                    type="text"
+                                    value={input}
+                                    onChange={(e) => setInput(e.target.value)}
+                                    placeholder="Ask about this problem..."
+                                    className="w-full bg-transparent border-none text-sm text-white placeholder:text-gray-500 focus:outline-none focus:ring-0 px-4 py-3.5"
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            e.preventDefault();
+                                            handleAskAI();
+                                        }
+                                    }}
+                                />
+                                <button
+                                    onClick={handleAskAI}
+                                    disabled={loadingAI || !input.trim()}
+                                    className="mr-2 p-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-indigo-500/20 shrink-0 group"
+                                >
+                                    <Send size={15} className={`group-hover:translate-x-0.5 transition-transform ${loadingAI ? "opacity-0" : "opacity-100"}`} />
+                                    {loadingAI && <div className="absolute inset-0 flex items-center justify-center"><div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" /></div>}
+                                </button>
+                            </div>
+                            {!userData?.isPro && (
+                                <div className="mt-3 flex items-center justify-between px-1 text-[10px] font-medium tracking-wide">
+                                    <span className="text-gray-500">
+                                        Daily Usage: <span className={userData?.aiUsage >= 3 ? "text-red-400 font-bold" : "text-gray-300"}>{userData?.aiUsage || 0}/3</span>
+                                    </span>
+                                    {userData?.aiUsage >= 2 && (
+                                        <span
+                                            className="text-indigo-400 cursor-pointer hover:text-indigo-300 transition-colors flex items-center gap-1"
+                                            onClick={() => navigate('/pricing')}
+                                        >
+                                            Upgrade to Pro <Zap size={10} className="fill-current" />
+                                        </span>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Floating Action Button (FAB) Container */}
+            <motion.div
+                className="fixed bottom-6 right-6 z-50 flex flex-col items-center gap-2 group pointer-events-auto"
+                drag
+                dragListener={false}
+                dragMomentum={false}
+                dragConstraints={containerRef}
+                dragControls={dragControls}
+                style={{ touchAction: "none" }}
+            >
+                {/* Drag Handle - Only visible on hover */}
+                <div
+                    className="cursor-move p-2 bg-[#1f2937]/90 backdrop-blur-md border border-white/10 rounded-full text-zinc-400 hover:text-white hover:bg-indigo-500/20 hover:border-indigo-500/30 transition-all duration-300 opacity-0 group-hover:opacity-100 absolute -top-10 shadow-lg"
+                    onPointerDown={(e) => dragControls.start(e)}
+                    title="Drag to move"
+                >
+                    <Move size={14} />
+                </div>
+
+                {/* Main Clickable Button */}
+                <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => setShowAI(!showAI)}
+                    className="w-[56px] h-[56px] bg-gradient-to-tr from-indigo-600 to-blue-600 rounded-full shadow-[0_0_20px_rgba(79,70,229,0.4)] hover:shadow-[0_0_30px_rgba(79,70,229,0.6)] flex items-center justify-center transition-all duration-300 border border-white/10 relative"
+                >
+                    {/* Pulsing Ring Animation */}
+                    <div className="absolute inset-0 rounded-full border border-indigo-400/50 animate-ping opacity-20" />
+
+                    <div className="absolute inset-0 bg-white blur-lg opacity-20 rounded-full group-hover:opacity-40 transition-opacity" />
+                    <span className="text-2xl relative z-10 drop-shadow-md">🤖</span>
+                </motion.button>
+
+                {/* Tooltip Label */}
+                <div className="absolute right-16 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-[#1f2937]/90 backdrop-blur-md border border-white/10 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none shadow-xl">
+                    <span className="text-xs font-medium text-white">Ask AI Assistant</span>
+                    <div className="absolute right-[-4px] top-1/2 -translate-y-1/2 w-2 h-2 bg-[#1f2937]/90 rotate-45 border-r border-t border-white/10" />
+                </div>
+            </motion.div>
         </div >
     );
 }
