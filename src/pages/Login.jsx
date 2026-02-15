@@ -96,8 +96,14 @@ const Login = () => {
       }
     } catch (error) {
       console.error("Google Login Error:", error);
-      setError("Failed to sign in with Google");
-      setIsGoogleLoginProcessing(false); // Reset only on error, otherwise we navigate away
+
+      // If user is actually authenticated (e.g. post-login script failed), don't show error
+      if (auth.currentUser) {
+        navigate('/');
+      } else {
+        setError("Failed to sign in with Google");
+        setIsGoogleLoginProcessing(false);
+      }
     }
   };
 
