@@ -26,6 +26,15 @@ router.post('/sync', async (req, res) => {
     try {
         let user = await User.findOne({ uid });
 
+        // Check if new user and registrations are allowed
+        if (!user) {
+            const PlatformSettings = require('../models/PlatformSettings');
+            const settings = await PlatformSettings.findById('PLATFORM_SETTINGS');
+            if (settings && settings.allowRegistrations === false) {
+                return res.status(403).json({ error: "Registrations are currently closed by the administrator." });
+            }
+        }
+
         if (!user) {
             user = new User({
                 uid,
