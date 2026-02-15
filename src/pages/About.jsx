@@ -266,7 +266,7 @@ const About = () => {
                             </div>
                         </SocialLink>
 
-                        <SocialLink href="https://www.linkedin.com/company/111519342/" label="Connect on LinkedIn">
+                        <SocialLink href="https://www.linkedin.com/company/111519342/" label="Follow on LinkedIn">
                             {/* LinkedIn Icon */}
                             <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-white/5 border border-white/10 group-hover:bg-emerald-500/10 group-hover:border-emerald-500/20 transition-all duration-300">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="text-gray-400 group-hover:text-emerald-400 transition-colors">

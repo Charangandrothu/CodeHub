@@ -86,6 +86,7 @@ const Pricing = () => {
 
                         <div className="space-y-3 mb-6 flex-1">
                             <Feature text="Basic DSA Problems (Easy only)" />
+                            <Feature text="Ad-supported" />
                             <Feature text="Daily Run Limit (3/day)" />
                             <Feature text="Limited Submissions (3)" />
                             <Feature text="Limited AI Debug & Explanations" />
@@ -157,6 +158,7 @@ const Pricing = () => {
 
                         <div className="space-y-3 mb-6 flex-1">
                             <Feature text="Full DSA Library (Easy → Hard)" highlight={selectedPlan === 'monthly'} />
+                            <Feature text="100% Ad-Free Experience" icon={Sparkles} highlightColor="text-pink-400" highlight={selectedPlan === 'monthly'} />
 
                             <Feature text="AI Debug & Explanations" icon={Zap} highlightColor="text-amber-400" highlight={selectedPlan === 'monthly'} />
                             <Feature text="Hidden & Edge Test Cases" highlight={selectedPlan === 'monthly'} />
