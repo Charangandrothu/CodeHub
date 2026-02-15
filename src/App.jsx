@@ -23,6 +23,7 @@ import Unauthorized from './pages/Unauthorized'
 import NotFound from './pages/NotFound'
 import About from './pages/About'
 import PrivacyPolicy from './pages/PrivacyPolicy'
+import Maintenance from './pages/Maintenance'
 
 // Admin Imports
 import AdminLayout from './layouts/AdminLayout'
@@ -39,6 +40,24 @@ import PublicRoute from './components/routes/PublicRoute';
 import ProtectedRoute from './components/routes/ProtectedRoute';
 
 function AppRoutes() {
+  const { userData, platformSettings } = useAuth();
+  const location = useLocation();
+
+  if (platformSettings?.maintenanceMode) {
+    const isAdmin = userData?.role === 'admin';
+    const isLogin = location.pathname === '/login';
+    const isAdminRoute = location.pathname.startsWith('/admin');
+
+    // If not admin, not on login page, and not accessing admin routes -> Show Maintenance
+    if (!isAdmin && !isLogin && !isAdminRoute) {
+      return (
+        <Routes>
+          <Route path="*" element={<Maintenance />} />
+        </Routes>
+      );
+    }
+  }
+
   return (
     <Routes>
       {/* Public Routes - Only for non-authenticated users */}

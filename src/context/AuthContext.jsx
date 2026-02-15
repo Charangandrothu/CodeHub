@@ -14,10 +14,37 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }) => {
     const [currentUser, setCurrentUser] = useState(null);
-    const [userData, setUserData] = useState(null); // Stores MongoDB user details (isPro, etc.)
-    const [loading, setLoading] = useState(true);
+    const [userData, setUserData] = useState(null);
+    const [loading, setLoading] = useState(true); // Main loading state
+    const [platformSettings, setPlatformSettings] = useState({ maintenanceMode: false, allowRegistrations: true });
+
+    // Internal counters to track parallel loading
+    const [authInitialized, setAuthInitialized] = useState(false);
+    const [settingsInitialized, setSettingsInitialized] = useState(false);
+
     const isMounted = useRef(true);
 
+    // 1. Fetch Platform Settings
+    useEffect(() => {
+        const fetchSettings = async () => {
+            try {
+                const res = await fetch(`${API_URL}/api/platform`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (isMounted.current) {
+                        setPlatformSettings(data);
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to fetch platform settings:", err);
+            } finally {
+                if (isMounted.current) setSettingsInitialized(true);
+            }
+        };
+        fetchSettings();
+    }, []);
+
+    // 2. Auth Listener
     useEffect(() => {
         isMounted.current = true; // Reset on mount
 
@@ -70,7 +97,7 @@ export const AuthProvider = ({ children }) => {
             }
 
             if (isMounted.current) {
-                setLoading(false);
+                setAuthInitialized(true);
             }
         });
 
@@ -79,6 +106,13 @@ export const AuthProvider = ({ children }) => {
             unsubscribe();
         };
     }, []);
+
+    // Combined Loading Effect
+    useEffect(() => {
+        if (authInitialized && settingsInitialized) {
+            setLoading(false);
+        }
+    }, [authInitialized, settingsInitialized]);
 
     const logout = () => {
         return signOut(auth);
@@ -101,6 +135,7 @@ export const AuthProvider = ({ children }) => {
     const value = {
         currentUser,
         userData,
+        platformSettings,
         logout,
         refreshUserData
     };
