@@ -32,7 +32,20 @@ const Problems = () => {
             hidden: []
         },
         examples: [],
-        constraints: []
+        constraints: [],
+        theory: {
+            videoTitle: '',
+            videoUrl: '',
+            explanation: '',
+            timeComplexity: { value: '', explanation: '' },
+            spaceComplexity: { value: '', explanation: '' },
+            solutionCode: {
+                javascript: '',
+                python: '',
+                java: '',
+                cpp: ''
+            }
+        }
     };
 
     const [formData, setFormData] = useState(initialFormState);
@@ -114,7 +127,8 @@ const Problems = () => {
             setFormData({
                 ...problem,
                 tags: Array.isArray(problem.tags) ? problem.tags.join(', ') : problem.tags,
-                starterCode: problem.starterCode || { javascript: '', python: '' }
+                starterCode: problem.starterCode || { javascript: '', python: '' },
+                theory: problem.theory || { videoTitle: '', videoUrl: '', explanation: '', timeComplexity: { value: '', explanation: '' }, spaceComplexity: { value: '', explanation: '' }, solutionCode: { javascript: '', python: '', java: '', cpp: '' } }
             });
             setJsonEditorContent({
                 testCases: JSON.stringify(problem.testCases || { visible: [], hidden: [] }, null, 2),
@@ -288,6 +302,183 @@ const Problems = () => {
                                         })}
                                         options={{ minimap: { enabled: false }, fontSize: 12 }}
                                     />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Theory / Editorial Section */}
+                        <div className="bg-[#111] p-6 rounded-xl border border-gray-800 space-y-4">
+                            <h3 className="text-lg font-bold text-white border-b border-gray-800 pb-2 flex items-center gap-2">
+                                <span className="text-yellow-400">📖</span> Theory / Editorial
+                            </h3>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-sm text-gray-400 block mb-1">Video Title</label>
+                                    <input
+                                        type="text"
+                                        value={formData.theory?.videoTitle || ''}
+                                        onChange={(e) => setFormData({
+                                            ...formData,
+                                            theory: { ...formData.theory, videoTitle: e.target.value }
+                                        })}
+                                        className="w-full bg-[#1a1a1a] border border-gray-800 rounded p-2 text-white"
+                                        placeholder="e.g. Two Sum - Complete Explanation"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-sm text-gray-400 block mb-1">YouTube Video URL</label>
+                                    <input
+                                        type="url"
+                                        value={formData.theory?.videoUrl || ''}
+                                        onChange={(e) => setFormData({
+                                            ...formData,
+                                            theory: { ...formData.theory, videoUrl: e.target.value }
+                                        })}
+                                        className="w-full bg-[#1a1a1a] border border-gray-800 rounded p-2 text-white"
+                                        placeholder="https://youtube.com/watch?v=..."
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="text-sm text-gray-400 block mb-1">Explanation (supports line breaks)</label>
+                                <textarea
+                                    value={formData.theory?.explanation || ''}
+                                    onChange={(e) => setFormData({
+                                        ...formData,
+                                        theory: { ...formData.theory, explanation: e.target.value }
+                                    })}
+                                    className="w-full h-40 bg-[#1a1a1a] border border-gray-800 rounded p-2 text-white font-mono text-sm"
+                                    placeholder="Write a detailed explanation of the approach, time/space complexity, and key insights..."
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <label className="text-sm text-gray-400 block mb-1">Time Complexity</label>
+                                    <input
+                                        type="text"
+                                        value={formData.theory?.timeComplexity?.value || ''}
+                                        onChange={(e) => setFormData({
+                                            ...formData,
+                                            theory: { ...formData.theory, timeComplexity: { ...formData.theory?.timeComplexity, value: e.target.value } }
+                                        })}
+                                        className="w-full bg-[#1a1a1a] border border-gray-800 rounded p-2 text-white font-mono"
+                                        placeholder="e.g. O(n)"
+                                    />
+                                    <textarea
+                                        value={formData.theory?.timeComplexity?.explanation || ''}
+                                        onChange={(e) => setFormData({
+                                            ...formData,
+                                            theory: { ...formData.theory, timeComplexity: { ...formData.theory?.timeComplexity, explanation: e.target.value } }
+                                        })}
+                                        className="w-full h-16 bg-[#1a1a1a] border border-gray-800 rounded p-2 text-white text-sm"
+                                        placeholder="Why this time complexity?"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm text-gray-400 block mb-1">Space Complexity</label>
+                                    <input
+                                        type="text"
+                                        value={formData.theory?.spaceComplexity?.value || ''}
+                                        onChange={(e) => setFormData({
+                                            ...formData,
+                                            theory: { ...formData.theory, spaceComplexity: { ...formData.theory?.spaceComplexity, value: e.target.value } }
+                                        })}
+                                        className="w-full bg-[#1a1a1a] border border-gray-800 rounded p-2 text-white font-mono"
+                                        placeholder="e.g. O(1)"
+                                    />
+                                    <textarea
+                                        value={formData.theory?.spaceComplexity?.explanation || ''}
+                                        onChange={(e) => setFormData({
+                                            ...formData,
+                                            theory: { ...formData.theory, spaceComplexity: { ...formData.theory?.spaceComplexity, explanation: e.target.value } }
+                                        })}
+                                        className="w-full h-16 bg-[#1a1a1a] border border-gray-800 rounded p-2 text-white text-sm"
+                                        placeholder="Why this space complexity?"
+                                    />
+                                </div>
+                            </div>
+
+                            <h4 className="text-sm font-semibold text-gray-300 pt-2 border-t border-gray-800">Solution Code</h4>
+
+                            <div className="space-y-3">
+                                <div className="space-y-1">
+                                    <label className="text-sm text-gray-400">JavaScript Solution</label>
+                                    <div className="h-36 border border-gray-800 rounded overflow-hidden">
+                                        <Editor
+                                            height="100%"
+                                            defaultLanguage="javascript"
+                                            theme="vs-dark"
+                                            value={formData.theory?.solutionCode?.javascript || ''}
+                                            onChange={(val) => setFormData({
+                                                ...formData,
+                                                theory: {
+                                                    ...formData.theory,
+                                                    solutionCode: { ...formData.theory?.solutionCode, javascript: val }
+                                                }
+                                            })}
+                                            options={{ minimap: { enabled: false }, fontSize: 12 }}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-sm text-gray-400">Python Solution</label>
+                                    <div className="h-36 border border-gray-800 rounded overflow-hidden">
+                                        <Editor
+                                            height="100%"
+                                            defaultLanguage="python"
+                                            theme="vs-dark"
+                                            value={formData.theory?.solutionCode?.python || ''}
+                                            onChange={(val) => setFormData({
+                                                ...formData,
+                                                theory: {
+                                                    ...formData.theory,
+                                                    solutionCode: { ...formData.theory?.solutionCode, python: val }
+                                                }
+                                            })}
+                                            options={{ minimap: { enabled: false }, fontSize: 12 }}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-sm text-gray-400">Java Solution</label>
+                                    <div className="h-36 border border-gray-800 rounded overflow-hidden">
+                                        <Editor
+                                            height="100%"
+                                            defaultLanguage="java"
+                                            theme="vs-dark"
+                                            value={formData.theory?.solutionCode?.java || ''}
+                                            onChange={(val) => setFormData({
+                                                ...formData,
+                                                theory: {
+                                                    ...formData.theory,
+                                                    solutionCode: { ...formData.theory?.solutionCode, java: val }
+                                                }
+                                            })}
+                                            options={{ minimap: { enabled: false }, fontSize: 12 }}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-sm text-gray-400">C++ Solution</label>
+                                    <div className="h-36 border border-gray-800 rounded overflow-hidden">
+                                        <Editor
+                                            height="100%"
+                                            defaultLanguage="cpp"
+                                            theme="vs-dark"
+                                            value={formData.theory?.solutionCode?.cpp || ''}
+                                            onChange={(val) => setFormData({
+                                                ...formData,
+                                                theory: {
+                                                    ...formData.theory,
+                                                    solutionCode: { ...formData.theory?.solutionCode, cpp: val }
+                                                }
+                                            })}
+                                            options={{ minimap: { enabled: false }, fontSize: 12 }}
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         </div>

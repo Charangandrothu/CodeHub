@@ -10,6 +10,126 @@ import logo_img from '../assets/logo_img.png';
 import { API_URL } from '../config';
 import { sendAIMessage, fetchAIUsage, AI_PROVIDERS, fetchAvailableProviders } from '../services/aiService';
 import AdBanner from '../components/AdBanner';
+import Editor from '@monaco-editor/react';
+
+// Editorial Code Viewer sub-component
+function EditorialCodeViewer({ solutionCode, defaultLang = 'javascript' }) {
+    const [activeLang, setActiveLang] = React.useState(defaultLang);
+    const [copied, setCopied] = React.useState(false);
+
+    const languages = [
+        { id: 'javascript', label: 'JavaScript', monacoLang: 'javascript', icon: 'JS', color: 'from-yellow-500 to-amber-600', textColor: 'text-yellow-400', bgColor: 'bg-yellow-500/10', borderColor: 'border-yellow-500/20' },
+        { id: 'python', label: 'Python', monacoLang: 'python', icon: 'PY', color: 'from-blue-500 to-cyan-500', textColor: 'text-blue-400', bgColor: 'bg-blue-500/10', borderColor: 'border-blue-500/20' },
+        { id: 'java', label: 'Java', monacoLang: 'java', icon: 'JV', color: 'from-orange-500 to-red-500', textColor: 'text-orange-400', bgColor: 'bg-orange-500/10', borderColor: 'border-orange-500/20' },
+        { id: 'cpp', label: 'C++', monacoLang: 'cpp', icon: 'C+', color: 'from-cyan-500 to-blue-600', textColor: 'text-cyan-400', bgColor: 'bg-cyan-500/10', borderColor: 'border-cyan-500/20' },
+    ].filter(lang => solutionCode[lang.id]?.trim());
+
+    if (languages.length === 0) return null;
+
+    const currentLang = languages.find(l => l.id === activeLang) || languages[0];
+    const currentCode = solutionCode[currentLang.id] || '';
+    const lineCount = currentCode.split('\n').length;
+
+    const handleCopy = () => {
+        navigator.clipboard.writeText(currentCode);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="rounded-2xl border border-[#262626] overflow-hidden relative group"
+        >
+            {/* Gradient glow effect on hover */}
+            <div className={`absolute -inset-[1px] bg-gradient-to-r ${currentLang.color} rounded-2xl opacity-0 group-hover:opacity-[0.08] transition-opacity duration-500 pointer-events-none blur-sm`} />
+
+            {/* Header */}
+            <div className="relative bg-gradient-to-r from-[#1a1a2e] to-[#16161a] px-5 py-3.5 flex items-center justify-between border-b border-[#262626]">
+                {/* Decorative dots */}
+                <div className="absolute top-0 right-0 w-32 h-full overflow-hidden pointer-events-none opacity-30">
+                    <div className="absolute top-2 right-4 w-1 h-1 rounded-full bg-purple-400/40" />
+                    <div className="absolute top-5 right-10 w-0.5 h-0.5 rounded-full bg-blue-400/40" />
+                    <div className="absolute bottom-3 right-6 w-1 h-1 rounded-full bg-cyan-400/30" />
+                </div>
+
+                <div className="flex items-center gap-3">
+                    <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${currentLang.color} flex items-center justify-center shadow-lg`}>
+                        <Code2 size={16} className="text-white" />
+                    </div>
+                    <div>
+                        <span className="text-[13px] font-bold text-white tracking-tight">Solution Code</span>
+                        <span className="text-[10px] text-zinc-500 ml-2 font-mono">{lineCount} lines</span>
+                    </div>
+                </div>
+
+                <motion.button
+                    whileHover={{ scale: 1.04 }}
+                    whileTap={{ scale: 0.96 }}
+                    onClick={handleCopy}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all duration-300 border backdrop-blur-sm ${copied
+                        ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30 shadow-emerald-500/10 shadow-lg'
+                        : 'bg-white/5 text-zinc-400 border-white/10 hover:bg-white/10 hover:text-white hover:border-white/20'
+                        }`}
+                >
+                    {copied ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
+                    {copied ? 'Copied!' : 'Copy'}
+                </motion.button>
+            </div>
+
+            {/* Language Pills */}
+            <div className="flex items-center gap-1.5 px-4 py-2.5 bg-[#111]/80 border-b border-[#262626] overflow-x-auto">
+                {languages.map(lang => (
+                    <motion.button
+                        key={lang.id}
+                        whileHover={{ scale: 1.03 }}
+                        whileTap={{ scale: 0.97 }}
+                        onClick={() => setActiveLang(lang.id)}
+                        className={`relative flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all duration-300 border ${currentLang.id === lang.id
+                            ? `${lang.bgColor} ${lang.textColor} ${lang.borderColor} shadow-sm`
+                            : 'bg-transparent text-zinc-500 border-transparent hover:bg-white/5 hover:text-zinc-300'
+                            }`}
+                    >
+                        <span className={`text-[9px] font-black ${currentLang.id === lang.id ? lang.textColor : 'text-zinc-600'} transition-colors`}>
+                            {lang.icon}
+                        </span>
+                        {lang.label}
+                    </motion.button>
+                ))}
+            </div>
+
+            {/* Code Editor (read-only) */}
+            <div className="h-[320px] bg-[#0d1117]">
+                <Editor
+                    height="100%"
+                    language={currentLang.monacoLang}
+                    theme="vs-dark"
+                    value={currentCode}
+                    options={{
+                        readOnly: true,
+                        minimap: { enabled: false },
+                        fontSize: 13,
+                        fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', Menlo, monospace",
+                        scrollBeyondLastLine: false,
+                        lineNumbers: 'on',
+                        renderLineHighlight: 'none',
+                        padding: { top: 16, bottom: 16 },
+                        smoothScrolling: true,
+                        cursorBlinking: 'smooth',
+                        lineDecorationsWidth: 0,
+                        overviewRulerBorder: false,
+                        scrollbar: {
+                            verticalScrollbarSize: 6,
+                            horizontalScrollbarSize: 6,
+                        },
+                    }}
+                />
+            </div>
+        </motion.div>
+    );
+}
 
 export default function QuestionPage() {
     const { slug } = useParams();
@@ -18,7 +138,7 @@ export default function QuestionPage() {
     const [problem, setProblem] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [activeTab, setActiveTab] = useState('description');
+    const [activeTab, setActiveTab] = useState(() => localStorage.getItem("codehub-activeTab") || 'description');
     const [language, setLanguage] = useState(() => localStorage.getItem("codehub-language") || "javascript");
     const [code, setCode] = useState(() => {
         if (!slug) return '';
@@ -848,7 +968,7 @@ export default function QuestionPage() {
                         ].map((tab) => (
                             <button
                                 key={tab.id}
-                                onClick={() => setActiveTab(tab.id)}
+                                onClick={() => { setActiveTab(tab.id); localStorage.setItem("codehub-activeTab", tab.id); }}
                                 className={`relative px-4 py-3 text-xs font-medium transition-colors flex items-center gap-2 group ${activeTab === tab.id
                                     ? 'text-white'
                                     : 'text-[#737373] hover:text-[#a3a3a3]'
@@ -866,8 +986,8 @@ export default function QuestionPage() {
                         ))}
                     </div>
 
-                    {/* Fixed Title Section - Hidden on Submissions Tab */}
-                    {activeTab !== 'submissions' && (
+                    {/* Fixed Title Section - Only on Description Tab */}
+                    {activeTab === 'description' && (
                         <div className="px-5 py-4 border-b border-[#262626] bg-[#1A1A1A] shrink-0">
                             <div className="flex items-center justify-between gap-4 mb-3">
                                 <h2 className="text-2xl font-bold text-white m-0 tracking-tight leading-tight">
@@ -956,6 +1076,176 @@ export default function QuestionPage() {
                             </div>
                         )}
 
+                        {activeTab === 'editorial' && (
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ duration: 0.3 }}
+                                className="space-y-5"
+                            >
+                                {/* No editorial content fallback */}
+                                {(!problem.theory || (!problem.theory.videoUrl && !problem.theory.explanation && !problem.theory.timeComplexity?.value && !problem.theory.spaceComplexity?.value && !problem.theory.solutionCode?.javascript && !problem.theory.solutionCode?.python)) ? (
+                                    <motion.div
+                                        initial={{ opacity: 0, scale: 0.95 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        className="flex-1 flex flex-col items-center justify-center text-center py-20"
+                                    >
+                                        <div className="relative mb-5">
+                                            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-yellow-500/10 to-orange-500/5 border border-yellow-500/10 flex items-center justify-center">
+                                                <LayoutList size={32} className="text-yellow-500/40" />
+                                            </div>
+                                            <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-yellow-500/20 animate-ping" />
+                                        </div>
+                                        <p className="text-[15px] font-semibold text-zinc-300 mb-1">Editorial Coming Soon</p>
+                                        <p className="text-xs text-zinc-600 max-w-[200px]">The detailed editorial for this problem is being prepared</p>
+                                    </motion.div>
+                                ) : (
+                                    <>
+                                        {/* Video Section — Premium YouTube Card */}
+                                        {problem.theory?.videoUrl && (
+                                            <motion.div
+                                                initial={{ opacity: 0, y: 8 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ delay: 0.05 }}
+                                            >
+                                                <a
+                                                    href={problem.theory.videoUrl}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="block group relative rounded-2xl overflow-hidden border border-[#262626] hover:border-red-500/30 transition-all duration-500"
+                                                >
+                                                    {/* Background gradient */}
+                                                    <div className="absolute inset-0 bg-gradient-to-br from-red-950/30 via-[#141414] to-[#141414] group-hover:from-red-950/50 transition-all duration-500" />
+
+                                                    {/* Subtle glow */}
+                                                    <div className="absolute -top-10 -left-10 w-40 h-40 bg-red-500/5 rounded-full blur-3xl group-hover:bg-red-500/10 transition-all duration-700 pointer-events-none" />
+
+                                                    <div className="relative p-5 flex items-center gap-5">
+                                                        {/* Play Button */}
+                                                        <div className="relative shrink-0">
+                                                            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center shadow-xl shadow-red-500/20 group-hover:shadow-red-500/40 group-hover:scale-105 transition-all duration-300">
+                                                                <Play size={26} className="text-white ml-1 fill-white" />
+                                                            </div>
+                                                            {/* Pulse ring */}
+                                                            <div className="absolute inset-0 rounded-2xl border-2 border-red-500/30 animate-ping opacity-0 group-hover:opacity-100 transition-opacity" style={{ animationDuration: '2s' }} />
+                                                        </div>
+
+                                                        {/* Text */}
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="flex items-center gap-2 mb-1.5">
+                                                                <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-red-500 shrink-0">
+                                                                    <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0C.488 3.45.029 5.804 0 12c.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0C23.512 20.55 23.971 18.196 24 12c-.029-6.185-.484-8.549-4.385-8.816zM9 16.5v-9l7.5 4.5L9 16.5z" />
+                                                                </svg>
+                                                                <span className="text-[10px] font-bold text-red-400/70 uppercase tracking-widest">Video Explanation</span>
+                                                            </div>
+                                                            <h3 className="text-[15px] font-bold text-white group-hover:text-red-200 transition-colors truncate leading-tight">
+                                                                {problem.theory.videoTitle || 'Watch Video Explanation'}
+                                                            </h3>
+                                                            <p className="text-[10px] text-zinc-600 font-mono truncate mt-1.5 group-hover:text-zinc-500 transition-colors">
+                                                                youtube.com • Opens in new tab
+                                                            </p>
+                                                        </div>
+
+                                                        {/* Arrow */}
+                                                        <div className="hidden sm:flex items-center justify-center w-10 h-10 rounded-xl bg-white/5 text-zinc-600 group-hover:bg-red-500/10 group-hover:text-red-400 transition-all duration-300 shrink-0">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                                                                <polyline points="15 3 21 3 21 9" />
+                                                                <line x1="10" y1="14" x2="21" y2="3" />
+                                                            </svg>
+                                                        </div>
+                                                    </div>
+                                                </a>
+                                            </motion.div>
+                                        )}
+
+                                        {/* Explanation Section — Rich Text */}
+                                        {problem.theory?.explanation && (
+                                            <motion.div
+                                                initial={{ opacity: 0, y: 8 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ delay: 0.15 }}
+                                                className="rounded-2xl border border-[#262626] overflow-hidden relative"
+                                            >
+                                                {/* Header with accent */}
+                                                <div className="relative bg-gradient-to-r from-[#141420] to-[#141414] px-5 py-3.5 border-b border-[#262626]">
+                                                    <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-gradient-to-b from-blue-500 to-cyan-500 rounded-r" />
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500/20 to-cyan-500/10 border border-blue-500/20 flex items-center justify-center">
+                                                            <Brain size={16} className="text-blue-400" />
+                                                        </div>
+                                                        <div>
+                                                            <span className="text-[13px] font-bold text-white tracking-tight">Approach & Explanation</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Content */}
+                                                <div className="p-5 bg-[#111]/60">
+                                                    <div className="text-[13px] leading-[1.85] text-[#c4c4c4] whitespace-pre-wrap font-sans selection:bg-blue-500/20">
+                                                        {problem.theory.explanation}
+                                                    </div>
+                                                </div>
+                                            </motion.div>
+                                        )}
+
+                                        {/* Solution Code Section */}
+                                        {problem.theory?.solutionCode && (
+                                            <EditorialCodeViewer solutionCode={problem.theory.solutionCode} defaultLang={language} />
+                                        )}
+
+                                        {/* Complexity Badges */}
+                                        {(problem.theory?.timeComplexity?.value || problem.theory?.spaceComplexity?.value) && (
+                                            <motion.div
+                                                initial={{ opacity: 0, y: 8 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ delay: 0.2 }}
+                                                className="grid grid-cols-2 gap-3"
+                                            >
+                                                {problem.theory.timeComplexity?.value && (
+                                                    <div className="relative rounded-2xl border border-[#262626] overflow-hidden group hover:border-emerald-500/20 transition-colors duration-300">
+                                                        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                                                        <div className="relative p-4">
+                                                            <div className="flex items-center gap-3.5 mb-2">
+                                                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500/15 to-emerald-600/5 border border-emerald-500/15 flex items-center justify-center shrink-0">
+                                                                    <Clock size={18} className="text-emerald-400" />
+                                                                </div>
+                                                                <div className="min-w-0">
+                                                                    <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-0.5">Time</p>
+                                                                    <p className="text-[15px] font-bold text-emerald-400 font-mono tracking-tight truncate">{problem.theory.timeComplexity.value}</p>
+                                                                </div>
+                                                            </div>
+                                                            {problem.theory.timeComplexity.explanation && (
+                                                                <p className="text-[11px] leading-relaxed text-zinc-500 mt-2 pl-[3.375rem]">{problem.theory.timeComplexity.explanation}</p>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {problem.theory.spaceComplexity?.value && (
+                                                    <div className="relative rounded-2xl border border-[#262626] overflow-hidden group hover:border-violet-500/20 transition-colors duration-300">
+                                                        <div className="absolute inset-0 bg-gradient-to-br from-violet-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                                                        <div className="relative p-4">
+                                                            <div className="flex items-center gap-3.5 mb-2">
+                                                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500/15 to-violet-600/5 border border-violet-500/15 flex items-center justify-center shrink-0">
+                                                                    <Database size={18} className="text-violet-400" />
+                                                                </div>
+                                                                <div className="min-w-0">
+                                                                    <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-0.5">Space</p>
+                                                                    <p className="text-[15px] font-bold text-violet-400 font-mono tracking-tight truncate">{problem.theory.spaceComplexity.value}</p>
+                                                                </div>
+                                                            </div>
+                                                            {problem.theory.spaceComplexity.explanation && (
+                                                                <p className="text-[11px] leading-relaxed text-zinc-500 mt-2 pl-[3.375rem]">{problem.theory.spaceComplexity.explanation}</p>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </motion.div>
+                                        )}
+                                    </>
+                                )}
+                            </motion.div>
+                        )}
                         {activeTab === 'submissions' && (
                             <div className="h-full flex flex-col">
                                 {runStatus === 'submitting' ? (

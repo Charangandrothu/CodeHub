@@ -27,6 +27,26 @@ const problemSchema = new mongoose.Schema(
       visible: [{ input: String, output: String }],
       hidden: [{ input: String, output: String }],
     },
+    // Theory / Editorial
+    theory: {
+      videoTitle: { type: String, default: '' },
+      videoUrl: { type: String, default: '' },   // YouTube link
+      explanation: { type: String, default: '' }, // Rich text / markdown explanation
+      timeComplexity: {
+        value: { type: String, default: '' },       // e.g. "O(n)"
+        explanation: { type: String, default: '' },  // e.g. "We iterate through the array once"
+      },
+      spaceComplexity: {
+        value: { type: String, default: '' },       // e.g. "O(1)"
+        explanation: { type: String, default: '' },  // e.g. "Only constant extra space used"
+      },
+      solutionCode: {
+        javascript: { type: String, default: '' },
+        python: { type: String, default: '' },
+        java: { type: String, default: '' },
+        cpp: { type: String, default: '' },
+      }
+    },
   },
   { timestamps: true }
 );
