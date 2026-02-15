@@ -30,7 +30,7 @@ router.use(verifyAdmin);
 router.get('/stats', async (req, res) => {
     try {
         const totalUsers = await User.countDocuments();
-        const proUsers = await User.countDocuments({ role: 'pro' }); // or 'isPro': true
+        const proUsers = await User.countDocuments({ isPro: true });
         const activeProblems = await Problem.countDocuments();
         const payments = await Payment.find();
         const totalRevenue = payments.reduce((acc, p) => acc + (p.amount || 0), 0);
@@ -58,8 +58,41 @@ router.get('/users', async (req, res) => {
 
 router.put('/users/:uid/role', async (req, res) => {
     try {
-        const { role } = req.body;
-        const user = await User.findOneAndUpdate({ uid: req.params.uid }, { role }, { new: true });
+        const { role, promotionCode } = req.body;
+
+        // Verify promotion code for sensitive role changes
+        if (role === 'admin') {
+            const expectedCode = process.env.ADMIN_PROMOTE_CODE;
+            if (!promotionCode || promotionCode !== expectedCode) {
+                return res.status(403).json({ error: "Invalid admin promotion code." });
+            }
+        } else if (role === 'pro') {
+            const expectedCode = process.env.PRO_PROMOTE_CODE;
+            if (!promotionCode || promotionCode !== expectedCode) {
+                return res.status(403).json({ error: "Invalid pro promotion code." });
+            }
+        }
+
+        const updateFields = { role };
+
+        // If promoting to 'pro', also set isPro: true
+        if (role === 'pro') {
+            updateFields.isPro = true;
+        }
+
+        // If demoting from pro, reset isPro
+        if (role === 'user') {
+            updateFields.isPro = false;
+        }
+
+        const user = await User.findOneAndUpdate(
+            { uid: req.params.uid },
+            updateFields,
+            { new: true }
+        );
+
+        if (!user) return res.status(404).json({ error: "User not found" });
+
         res.json(user);
     } catch (err) {
         res.status(500).json({ error: err.message });
