@@ -50,20 +50,6 @@ const AdBanner = ({ adSlot, adFormat = 'auto', className = '' }) => {
                 data-ad-slot={adSlot}
             >
             </ins>
-            <style jsx>{`
-                @media (max-width: 768px) {
-                    .adsbygoogle {
-                        width: 320px !important;
-                        height: 50px !important;
-                    }
-                }
-                @media (min-width: 769px) {
-                    .adsbygoogle {
-                        width: 728px !important;
-                        height: 90px !important;
-                    }
-                }
-            `}</style>
         </div>
     );
 };
