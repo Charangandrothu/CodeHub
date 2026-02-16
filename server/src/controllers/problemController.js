@@ -52,6 +52,8 @@ exports.getAllProblems = async (req, res) => {
 exports.getProblemBySlug = async (req, res) => {
   try {
     const { slug } = req.params;
+    const { uid } = req.query; // Check UID from query params
+
     let query = { slug };
 
     // Allow lookup by ID if it's a valid ObjectId
@@ -60,11 +62,51 @@ exports.getProblemBySlug = async (req, res) => {
     }
 
     // Exclude hidden test cases and internal fields like __v
-    const problem = await Problem.findOne(query).select('-testCases.hidden -__v');
+    const problem = await Problem.findOne(query).select('-testCases.hidden -__v').lean();
 
     if (!problem) {
       return res.status(404).json({ message: "Problem not found" });
     }
+
+    // Check user pro status
+    let isPro = false;
+    if (uid) {
+      const User = require("../models/User"); // Import locally to avoid circular deps if any
+      const user = await User.findOne({ uid });
+      if (user && user.isPro) {
+        isPro = true;
+      }
+    }
+
+    // Sanitize theory for non-pro users
+    if (!isPro && problem.theory) {
+      // Keep structure but hide actual content
+      problem.theory = {
+        videoUrl: problem.theory.videoUrl ? "LOCKED" : null,
+        videoTitle: problem.theory.videoTitle, // Keep title for UI
+        explanation: problem.theory.explanation ? "This content is locked for free users. Upgrade to Pro to view the full explanation." : null,
+        solutionCode: problem.theory.solutionCode ? { javascript: "// Locked", python: "# Locked", java: "// Locked", cpp: "// Locked" } : null,
+        timeComplexity: problem.theory.timeComplexity ? { value: problem.theory.timeComplexity.value, explanation: "Locked" } : null, // Keep value for teaser? Or hide executing
+        spaceComplexity: problem.theory.spaceComplexity ? { value: problem.theory.spaceComplexity.value, explanation: "Locked" } : null
+      };
+
+      // Actually, user requested to HIDE everything from network
+      // If we send "Locked", the network tab shows "Locked". User wants "hide from network also console tabs".
+      // But frontend expects SOME structure to render the blurred UI.
+      // If I return NULL, the frontend shows "Coming Soon".
+      // I will return a minimal structure that triggers the "Blurred" UI but contains NO real data.
+
+      if (problem.theory.videoUrl || problem.theory.explanation) {
+        problem.theory = {
+          videoUrl: "LOCKED",
+          explanation: "LOCKED",
+          solutionCode: { javascript: "// LOCKED" }
+        };
+      } else {
+        problem.theory = null;
+      }
+    }
+
     res.json(problem);
   } catch (error) {
     console.error("Error fetching problem:", error);

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, ChevronDown, Play, Send, RefreshCw, AlertCircle, CheckCircle2, Copy, FileText, LayoutList, History, Code2, Check, X, Zap, Clock, Cpu, TrendingUp, Lock, Move, Database, Brain } from 'lucide-react';
+import { ChevronLeft, ChevronDown, Play, Send, RefreshCw, AlertCircle, CheckCircle2, Copy, FileText, LayoutList, History, Code2, Check, X, Zap, Clock, Cpu, TrendingUp, Lock, Move, Database, Brain, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import CodeEditor from '../components/dsa/CodeEditor';
 import TestCasesPanel from '../components/dsa/TestCasesPanel';
@@ -569,7 +569,7 @@ export default function QuestionPage() {
                 }
 
                 setLoading(true);
-                const response = await fetch(`${API_URL}/api/problems/${slug}`);
+                const response = await fetch(`${API_URL}/api/problems/${slug}?uid=${currentUser?.uid || ''}`);
 
                 if (!response.ok) {
                     throw new Error('Problem not found');
@@ -595,7 +595,7 @@ export default function QuestionPage() {
         if (slug) {
             fetchProblem();
         }
-    }, [slug, language]);
+    }, [slug, language, currentUser?.uid]);
 
     // Fetch latest submission when tab changes to 'submissions'
     useEffect(() => {
@@ -1100,149 +1100,220 @@ export default function QuestionPage() {
                                         <p className="text-xs text-zinc-600 max-w-[200px]">The detailed editorial for this problem is being prepared</p>
                                     </motion.div>
                                 ) : (
-                                    <>
-                                        {/* Video Section — Premium YouTube Card */}
-                                        {problem.theory?.videoUrl && (
-                                            <motion.div
-                                                initial={{ opacity: 0, y: 8 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                transition={{ delay: 0.05 }}
-                                            >
-                                                <a
-                                                    href={problem.theory.videoUrl}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="block group relative rounded-2xl overflow-hidden border border-[#262626] hover:border-red-500/30 transition-all duration-500"
+                                    <div className="relative w-full">
+                                        <div className={`space-y-5 ${!userData?.isPro ? "blur-sm opacity-50 pointer-events-none select-none filter transition-all duration-700" : ""}`}>
+                                            {/* Video Section — Premium YouTube Card */}
+                                            {problem.theory?.videoUrl && (
+                                                <motion.div
+                                                    initial={{ opacity: 0, y: 8 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    transition={{ delay: 0.05 }}
                                                 >
-                                                    {/* Background gradient */}
-                                                    <div className="absolute inset-0 bg-gradient-to-br from-red-950/30 via-[#141414] to-[#141414] group-hover:from-red-950/50 transition-all duration-500" />
+                                                    <a
+                                                        href={problem.theory.videoUrl}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="block group relative rounded-2xl overflow-hidden border border-[#262626] hover:border-red-500/30 transition-all duration-500"
+                                                    >
+                                                        {/* Background gradient */}
+                                                        <div className="absolute inset-0 bg-gradient-to-br from-red-950/30 via-[#141414] to-[#141414] group-hover:from-red-950/50 transition-all duration-500" />
 
-                                                    {/* Subtle glow */}
-                                                    <div className="absolute -top-10 -left-10 w-40 h-40 bg-red-500/5 rounded-full blur-3xl group-hover:bg-red-500/10 transition-all duration-700 pointer-events-none" />
+                                                        {/* Subtle glow */}
+                                                        <div className="absolute -top-10 -left-10 w-40 h-40 bg-red-500/5 rounded-full blur-3xl group-hover:bg-red-500/10 transition-all duration-700 pointer-events-none" />
 
-                                                    <div className="relative p-5 flex items-center gap-5">
-                                                        {/* Play Button */}
-                                                        <div className="relative shrink-0">
-                                                            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center shadow-xl shadow-red-500/20 group-hover:shadow-red-500/40 group-hover:scale-105 transition-all duration-300">
-                                                                <Play size={26} className="text-white ml-1 fill-white" />
+                                                        <div className="relative p-5 flex items-center gap-5">
+                                                            {/* Play Button */}
+                                                            <div className="relative shrink-0">
+                                                                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center shadow-xl shadow-red-500/20 group-hover:shadow-red-500/40 group-hover:scale-105 transition-all duration-300">
+                                                                    <Play size={26} className="text-white ml-1 fill-white" />
+                                                                </div>
+                                                                {/* Pulse ring */}
+                                                                <div className="absolute inset-0 rounded-2xl border-2 border-red-500/30 animate-ping opacity-0 group-hover:opacity-100 transition-opacity" style={{ animationDuration: '2s' }} />
                                                             </div>
-                                                            {/* Pulse ring */}
-                                                            <div className="absolute inset-0 rounded-2xl border-2 border-red-500/30 animate-ping opacity-0 group-hover:opacity-100 transition-opacity" style={{ animationDuration: '2s' }} />
-                                                        </div>
 
-                                                        {/* Text */}
-                                                        <div className="flex-1 min-w-0">
-                                                            <div className="flex items-center gap-2 mb-1.5">
-                                                                <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-red-500 shrink-0">
-                                                                    <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0C.488 3.45.029 5.804 0 12c.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0C23.512 20.55 23.971 18.196 24 12c-.029-6.185-.484-8.549-4.385-8.816zM9 16.5v-9l7.5 4.5L9 16.5z" />
+                                                            {/* Text */}
+                                                            <div className="flex-1 min-w-0">
+                                                                <div className="flex items-center gap-2 mb-1.5">
+                                                                    <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-red-500 shrink-0">
+                                                                        <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0C.488 3.45.029 5.804 0 12c.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0C23.512 20.55 23.971 18.196 24 12c-.029-6.185-.484-8.549-4.385-8.816zM9 16.5v-9l7.5 4.5L9 16.5z" />
+                                                                    </svg>
+                                                                    <span className="text-[10px] font-bold text-red-400/70 uppercase tracking-widest">Video Explanation</span>
+                                                                </div>
+                                                                <h3 className="text-[15px] font-bold text-white group-hover:text-red-200 transition-colors truncate leading-tight">
+                                                                    {problem.theory.videoTitle || 'Watch Video Explanation'}
+                                                                </h3>
+                                                                <p className="text-[10px] text-zinc-600 font-mono truncate mt-1.5 group-hover:text-zinc-500 transition-colors">
+                                                                    youtube.com • Opens in new tab
+                                                                </p>
+                                                            </div>
+
+                                                            {/* Arrow */}
+                                                            <div className="hidden sm:flex items-center justify-center w-10 h-10 rounded-xl bg-white/5 text-zinc-600 group-hover:bg-red-500/10 group-hover:text-red-400 transition-all duration-300 shrink-0">
+                                                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                                                                    <polyline points="15 3 21 3 21 9" />
+                                                                    <line x1="10" y1="14" x2="21" y2="3" />
                                                                 </svg>
-                                                                <span className="text-[10px] font-bold text-red-400/70 uppercase tracking-widest">Video Explanation</span>
                                                             </div>
-                                                            <h3 className="text-[15px] font-bold text-white group-hover:text-red-200 transition-colors truncate leading-tight">
-                                                                {problem.theory.videoTitle || 'Watch Video Explanation'}
-                                                            </h3>
-                                                            <p className="text-[10px] text-zinc-600 font-mono truncate mt-1.5 group-hover:text-zinc-500 transition-colors">
-                                                                youtube.com • Opens in new tab
-                                                            </p>
                                                         </div>
+                                                    </a>
+                                                </motion.div>
+                                            )}
 
-                                                        {/* Arrow */}
-                                                        <div className="hidden sm:flex items-center justify-center w-10 h-10 rounded-xl bg-white/5 text-zinc-600 group-hover:bg-red-500/10 group-hover:text-red-400 transition-all duration-300 shrink-0">
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                                                                <polyline points="15 3 21 3 21 9" />
-                                                                <line x1="10" y1="14" x2="21" y2="3" />
-                                                            </svg>
-                                                        </div>
-                                                    </div>
-                                                </a>
-                                            </motion.div>
-                                        )}
-
-                                        {/* Explanation Section — Rich Text */}
-                                        {problem.theory?.explanation && (
-                                            <motion.div
-                                                initial={{ opacity: 0, y: 8 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                transition={{ delay: 0.15 }}
-                                                className="rounded-2xl border border-[#262626] overflow-hidden relative"
-                                            >
-                                                {/* Header with accent */}
-                                                <div className="relative bg-gradient-to-r from-[#141420] to-[#141414] px-5 py-3.5 border-b border-[#262626]">
-                                                    <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-gradient-to-b from-blue-500 to-cyan-500 rounded-r" />
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500/20 to-cyan-500/10 border border-blue-500/20 flex items-center justify-center">
-                                                            <Brain size={16} className="text-blue-400" />
-                                                        </div>
-                                                        <div>
-                                                            <span className="text-[13px] font-bold text-white tracking-tight">Approach & Explanation</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                {/* Content */}
-                                                <div className="p-5 bg-[#111]/60">
-                                                    <div className="text-[13px] leading-[1.85] text-[#c4c4c4] whitespace-pre-wrap font-sans selection:bg-blue-500/20">
-                                                        {problem.theory.explanation}
-                                                    </div>
-                                                </div>
-                                            </motion.div>
-                                        )}
-
-                                        {/* Solution Code Section */}
-                                        {problem.theory?.solutionCode && (
-                                            <EditorialCodeViewer solutionCode={problem.theory.solutionCode} defaultLang={language} />
-                                        )}
-
-                                        {/* Complexity Badges */}
-                                        {(problem.theory?.timeComplexity?.value || problem.theory?.spaceComplexity?.value) && (
-                                            <motion.div
-                                                initial={{ opacity: 0, y: 8 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                transition={{ delay: 0.2 }}
-                                                className="grid grid-cols-2 gap-3"
-                                            >
-                                                {problem.theory.timeComplexity?.value && (
-                                                    <div className="relative rounded-2xl border border-[#262626] overflow-hidden group hover:border-emerald-500/20 transition-colors duration-300">
-                                                        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                                                        <div className="relative p-4">
-                                                            <div className="flex items-center gap-3.5 mb-2">
-                                                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500/15 to-emerald-600/5 border border-emerald-500/15 flex items-center justify-center shrink-0">
-                                                                    <Clock size={18} className="text-emerald-400" />
-                                                                </div>
-                                                                <div className="min-w-0">
-                                                                    <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-0.5">Time</p>
-                                                                    <p className="text-[15px] font-bold text-emerald-400 font-mono tracking-tight truncate">{problem.theory.timeComplexity.value}</p>
-                                                                </div>
+                                            {/* Explanation Section — Rich Text */}
+                                            {problem.theory?.explanation && (
+                                                <motion.div
+                                                    initial={{ opacity: 0, y: 8 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    transition={{ delay: 0.15 }}
+                                                    className="rounded-2xl border border-[#262626] overflow-hidden relative"
+                                                >
+                                                    {/* Header with accent */}
+                                                    <div className="relative bg-gradient-to-r from-[#141420] to-[#141414] px-5 py-3.5 border-b border-[#262626]">
+                                                        <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-gradient-to-b from-blue-500 to-cyan-500 rounded-r" />
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500/20 to-cyan-500/10 border border-blue-500/20 flex items-center justify-center">
+                                                                <Brain size={16} className="text-blue-400" />
                                                             </div>
-                                                            {problem.theory.timeComplexity.explanation && (
-                                                                <p className="text-[11px] leading-relaxed text-zinc-500 mt-2 pl-[3.375rem]">{problem.theory.timeComplexity.explanation}</p>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                )}
-                                                {problem.theory.spaceComplexity?.value && (
-                                                    <div className="relative rounded-2xl border border-[#262626] overflow-hidden group hover:border-violet-500/20 transition-colors duration-300">
-                                                        <div className="absolute inset-0 bg-gradient-to-br from-violet-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                                                        <div className="relative p-4">
-                                                            <div className="flex items-center gap-3.5 mb-2">
-                                                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500/15 to-violet-600/5 border border-violet-500/15 flex items-center justify-center shrink-0">
-                                                                    <Database size={18} className="text-violet-400" />
-                                                                </div>
-                                                                <div className="min-w-0">
-                                                                    <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-0.5">Space</p>
-                                                                    <p className="text-[15px] font-bold text-violet-400 font-mono tracking-tight truncate">{problem.theory.spaceComplexity.value}</p>
-                                                                </div>
+                                                            <div>
+                                                                <span className="text-[13px] font-bold text-white tracking-tight">Approach & Explanation</span>
                                                             </div>
-                                                            {problem.theory.spaceComplexity.explanation && (
-                                                                <p className="text-[11px] leading-relaxed text-zinc-500 mt-2 pl-[3.375rem]">{problem.theory.spaceComplexity.explanation}</p>
-                                                            )}
                                                         </div>
                                                     </div>
-                                                )}
-                                            </motion.div>
+
+                                                    {/* Content */}
+                                                    <div className="p-5 bg-[#111]/60">
+                                                        <div className="text-[13px] leading-[1.85] text-[#c4c4c4] whitespace-pre-wrap font-sans selection:bg-blue-500/20">
+                                                            {problem.theory.explanation}
+                                                        </div>
+                                                    </div>
+                                                </motion.div>
+                                            )}
+
+                                            {/* Solution Code Section */}
+                                            {problem.theory?.solutionCode && (
+                                                <EditorialCodeViewer solutionCode={problem.theory.solutionCode} defaultLang={language} />
+                                            )}
+
+                                            {/* Complexity Badges */}
+                                            {(problem.theory?.timeComplexity?.value || problem.theory?.spaceComplexity?.value) && (
+                                                <motion.div
+                                                    initial={{ opacity: 0, y: 8 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    transition={{ delay: 0.2 }}
+                                                    className="grid grid-cols-2 gap-3"
+                                                >
+                                                    {problem.theory.timeComplexity?.value && (
+                                                        <div className="relative rounded-2xl border border-[#262626] overflow-hidden group hover:border-emerald-500/20 transition-colors duration-300">
+                                                            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                                                            <div className="relative p-4">
+                                                                <div className="flex items-center gap-3.5 mb-2">
+                                                                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500/15 to-emerald-600/5 border border-emerald-500/15 flex items-center justify-center shrink-0">
+                                                                        <Clock size={18} className="text-emerald-400" />
+                                                                    </div>
+                                                                    <div className="min-w-0">
+                                                                        <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-0.5">Time</p>
+                                                                        <p className="text-[15px] font-bold text-emerald-400 font-mono tracking-tight truncate">{problem.theory.timeComplexity.value}</p>
+                                                                    </div>
+                                                                </div>
+                                                                {problem.theory.timeComplexity.explanation && (
+                                                                    <p className="text-[11px] leading-relaxed text-zinc-500 mt-2 pl-[3.375rem]">{problem.theory.timeComplexity.explanation}</p>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                    {problem.theory.spaceComplexity?.value && (
+                                                        <div className="relative rounded-2xl border border-[#262626] overflow-hidden group hover:border-violet-500/20 transition-colors duration-300">
+                                                            <div className="absolute inset-0 bg-gradient-to-br from-violet-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                                                            <div className="relative p-4">
+                                                                <div className="flex items-center gap-3.5 mb-2">
+                                                                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500/15 to-violet-600/5 border border-violet-500/15 flex items-center justify-center shrink-0">
+                                                                        <Database size={18} className="text-violet-400" />
+                                                                    </div>
+                                                                    <div className="min-w-0">
+                                                                        <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-0.5">Space</p>
+                                                                        <p className="text-[15px] font-bold text-violet-400 font-mono tracking-tight truncate">{problem.theory.spaceComplexity.value}</p>
+                                                                    </div>
+                                                                </div>
+                                                                {problem.theory.spaceComplexity.explanation && (
+                                                                    <p className="text-[11px] leading-relaxed text-zinc-500 mt-2 pl-[3.375rem]">{problem.theory.spaceComplexity.explanation}</p>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </motion.div>
+                                            )}
+                                        </div>
+                                        {!userData?.isPro && (
+                                            <div className="absolute inset-0 z-20 flex flex-col items-center justify-center p-6">
+                                                <motion.div
+                                                    initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                                                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                                                    className="relative bg-black/80 backdrop-blur-3xl border border-white/10 p-8 rounded-[2rem] flex flex-col items-center text-center shadow-2xl shadow-black/90 max-w-sm mx-auto overflow-hidden group"
+                                                >
+                                                    {/* Animated Background Glow */}
+                                                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-40 bg-purple-500/20 rounded-full blur-[80px] pointer-events-none" />
+                                                    <div className="absolute bottom-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-[60px] pointer-events-none" />
+
+                                                    {/* Gradient Border Animation */}
+                                                    <div className="absolute inset-0 rounded-[2rem] p-[1px] bg-gradient-to-b from-white/10 to-transparent pointer-events-none" />
+
+                                                    {/* Icon */}
+                                                    <div className="relative mb-6">
+                                                        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-yellow-400/10 to-orange-500/5 border border-yellow-500/20 flex items-center justify-center shadow-[0_0_30px_-5px_rgba(234,179,8,0.15)] group-hover:scale-105 transition-transform duration-500">
+                                                            <div className="absolute inset-0 bg-gradient-to-tr from-yellow-500/5 to-transparent rounded-2xl opacity-50" />
+                                                            <Lock size={32} className="text-yellow-400 drop-shadow-[0_0_10px_rgba(250,204,21,0.3)]" />
+                                                        </div>
+                                                        <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-yellow-400 animate-ping" />
+                                                    </div>
+
+                                                    <h3 className="text-2xl font-bold text-white mb-3 tracking-tight">
+                                                        Premium <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-400">Analysis</span>
+                                                    </h3>
+
+                                                    <div className="w-full max-w-[320px] mb-8 text-left">
+                                                        <p className="text-zinc-300 text-sm font-medium mb-4 pb-3 border-b border-white/5">
+                                                            Unlock the complete editorial experience:
+                                                        </p>
+                                                        <ul className="space-y-3 mb-5">
+                                                            {[
+                                                                "In-depth intuition & pattern recognition",
+                                                                "Detailed explanation from brute force to optimized",
+                                                                "Complexity analysis (Time & Space)",
+                                                                "Clean, interview-ready code implementations",
+                                                                "Guided video explanation"
+                                                            ].map((item, index) => (
+                                                                <li key={index} className="flex items-start gap-3 text-xs text-zinc-400">
+                                                                    <div className="mt-0.5 p-0.5 rounded-full bg-yellow-500/10 border border-yellow-500/20 shrink-0">
+                                                                        <Check size={10} className="text-yellow-500" />
+                                                                    </div>
+                                                                    <span className="leading-snug">{item}</span>
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                        <div className="text-center pt-2">
+                                                            <span className="text-xs font-semibold text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 to-yellow-500">
+                                                                Turn problem solving into placement-level mastery.
+                                                            </span>
+                                                        </div>
+                                                    </div>
+
+                                                    <button
+                                                        onClick={() => navigate('/pricing')}
+                                                        className="relative w-full py-4 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-black font-bold rounded-xl shadow-[0_0_20px_-5px_rgba(234,179,8,0.3)] transition-all duration-300 transform active:scale-[0.98] flex items-center justify-center gap-2 group/btn cursor-pointer overflow-hidden"
+                                                    >
+                                                        <div className="absolute inset-0 bg-white/20 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300" />
+                                                        <span className="relative z-10">Unlock Pro Access</span>
+                                                        <ArrowRight size={18} className="relative z-10 group-hover/btn:translate-x-1 transition-transform" />
+                                                    </button>
+
+                                                    <div className="mt-4 text-[10px] font-medium text-zinc-600 uppercase tracking-widest">
+                                                        Try Pro Risk-Free
+                                                    </div>
+                                                </motion.div>
+                                            </div>
                                         )}
-                                    </>
+                                    </div>
                                 )}
                             </motion.div>
                         )}
@@ -1934,3 +2005,4 @@ export default function QuestionPage() {
         </div >
     );
 }
+0

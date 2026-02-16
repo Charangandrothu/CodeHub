@@ -13,6 +13,7 @@ import Dashboard from './pages/Dashboard'
 import DSA from './pages/DSA'
 import TopicPage from './pages/TopicPage'
 import QuestionPage from './pages/QuestionPage'
+import RoadmapPage from './pages/RoadmapPage'
 import Pricing from './pages/Pricing'
 import MockTests from './pages/MockTests'
 import Aptitude from './pages/Aptitude'
@@ -96,6 +97,11 @@ function AppRoutes() {
           <QuestionPage />
         </ProtectedRoute>
       } />
+      <Route path="/roadmap/*" element={
+        <ProtectedRoute>
+          <RoadmapPage />
+        </ProtectedRoute>
+      } />
       <Route path="/mock-tests" element={
         <ProtectedRoute>
           <MockTests />
@@ -138,10 +144,11 @@ const ConditionalNavbar = () => {
   const location = useLocation();
   const isDSAPage = location.pathname.startsWith('/dsa');
   const isAdminPage = location.pathname.startsWith('/admin');
+  const isRoadmapDSAPage = location.pathname.startsWith('/roadmap/dsa');
 
   return (
     <AnimatePresence>
-      {!isDSAPage && !isAdminPage && <Navbar key="navbar" />}
+      {!isDSAPage && !isAdminPage && !isRoadmapDSAPage && <Navbar key="navbar" />}
     </AnimatePresence>
   );
 };
