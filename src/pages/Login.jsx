@@ -92,14 +92,14 @@ const Login = () => {
       } else if (!newUserData?.profileCompleted || !newUserData?.username) {
         navigate('/complete-profile');
       } else {
-        navigate('/');
+        navigate('/dashboard');
       }
     } catch (error) {
       console.error("Google Login Error:", error);
 
       // If user is actually authenticated (e.g. post-login script failed), don't show error
       if (auth.currentUser) {
-        navigate('/');
+        navigate('/dashboard');
       } else {
         setError("Failed to sign in with Google");
         setIsGoogleLoginProcessing(false);
@@ -138,7 +138,7 @@ const Login = () => {
 
       console.log('Login success:', user)
       setIsLoading(false)
-      navigate('/')
+      navigate('/dashboard')
     } catch (error) {
       console.error('Login error:', error)
       if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {

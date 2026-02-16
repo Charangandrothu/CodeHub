@@ -90,6 +90,7 @@ const Navbar = () => {
   const navLinks = currentUser ? [
     { name: 'Dashboard', path: '/dashboard' },
     { name: 'DSA', path: '/dsa' },
+    { name: 'Roadmap', path: '/roadmap' },
     { name: 'Mock Tests', path: '/mock-tests' },
     { name: 'Aptitude', path: '/aptitude' },
   ] : [
