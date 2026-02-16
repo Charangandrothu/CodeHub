@@ -165,18 +165,19 @@ const Login = () => {
 
       <div className="relative w-full max-w-[350px] z-10 perspective-1000">
 
-        {/* Floating Icons with Parallax */}
+        {/* Floating Icons with Parallax - Enhanced Anti-Gravity */}
         <motion.div
           style={{ x: iconX, y: iconY }}
           className="absolute -top-12 -right-8 z-0 hidden md:block"
         >
           <motion.div
-            animate={{ y: [0, -15, 0], rotate: [0, 5, 0] }}
-            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-            className="w-20 h-20 relative"
+            animate={{ y: [0, -25, 0], rotate: [0, 8, 0] }}
+            transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+            whileHover={{ y: -35, scale: 1.15, transition: { duration: 0.3 } }}
+            className="w-20 h-20 relative cursor-pointer"
           >
             <div className="absolute inset-0 bg-white/5 rounded-2xl blur-xl" />
-            <img src={javaGlass} alt="Java" className="w-full h-full object-contain relative z-10 drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]" />
+            <img src={javaGlass} alt="Java" className="w-full h-full object-contain relative z-10 drop-shadow-[0_0_20px_rgba(255,100,100,0.4)]" />
           </motion.div>
         </motion.div>
 
@@ -185,12 +186,13 @@ const Login = () => {
           className="absolute -bottom-8 -left-12 z-0 hidden md:block"
         >
           <motion.div
-            animate={{ y: [0, 15, 0], rotate: [0, -5, 0] }}
-            transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-            className="w-24 h-24 relative"
+            animate={{ y: [0, -20, 0], rotate: [0, -8, 0] }}
+            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+            whileHover={{ y: -30, scale: 1.15, transition: { duration: 0.3 } }}
+            className="w-24 h-24 relative cursor-pointer"
           >
             <div className="absolute inset-0 bg-white/5 rounded-2xl blur-xl" />
-            <img src={pythonGlass} alt="Python" className="w-full h-full object-contain relative z-10 drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]" />
+            <img src={pythonGlass} alt="Python" className="w-full h-full object-contain relative z-10 drop-shadow-[0_0_20px_rgba(50,150,255,0.4)]" />
           </motion.div>
         </motion.div>
 

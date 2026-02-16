@@ -7,6 +7,7 @@ import { Button } from './ui/Button';
 import { useAuth } from '../context/AuthContext';
 import pythonGlass from '../assets/pythonglass.png';
 import javaGlass from '../assets/javaglass.png';
+import AntiGravityParticles from './AntiGravityParticles';
 
 const ProgressRow = ({ label, current, total, color = "blue" }) => {
   const percentage = (current / total) * 100;
@@ -55,6 +56,9 @@ const Hero = () => {
 
   return (
     <section id="home" className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[#0a0a0a] px-4 sm:px-6 lg:px-8">
+      {/* Anti-Gravity Particles */}
+      <AntiGravityParticles />
+      
       {/* Ambient Background */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
         <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-purple-900/10 rounded-full blur-[120px]" />
@@ -128,12 +132,13 @@ const Hero = () => {
           transition={{ duration: 0.8, delay: 0.2 }}
           className="relative hidden lg:block h-[600px] w-full"
         >
-          {/* Main Dashboard Card */}
+          {/* Main Dashboard Card - Enhanced Anti-Gravity */}
           <motion.div
             initial={{ y: 20 }}
-            animate={{ y: [0, -10, 0] }}
-            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md glass-card rounded-2xl p-6 shadow-2xl shadow-black/50"
+            animate={{ y: [0, -25, 0] }}
+            transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+            whileHover={{ y: -35, transition: { duration: 0.4 } }}
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md glass-card rounded-2xl p-6 shadow-2xl shadow-black/50 pulse-glow hover:shadow-purple-500/30"
           >
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
@@ -172,12 +177,13 @@ const Hero = () => {
             </div>
           </motion.div>
 
-          {/* Floating Widget 1 - Top Left */}
+          {/* Floating Widget 1 - Top Left - Anti-Gravity */}
           <motion.div
             initial={{ y: 40, opacity: 0 }}
-            animate={{ y: [0, 15, 0], opacity: 1 }}
-            transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-            className="absolute top-20 left-0 glass-card p-4 rounded-xl flex items-center gap-3 w-48 z-0"
+            animate={{ y: [0, -20, 0], opacity: 1 }}
+            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+            whileHover={{ y: -30, scale: 1.05, transition: { duration: 0.3 } }}
+            className="absolute top-20 left-0 glass-card p-4 rounded-xl flex items-center gap-3 w-48 z-0 cursor-pointer hover:shadow-lg hover:shadow-emerald-500/20"
           >
             <div className="w-10 h-10 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
               <Trophy size={18} />
@@ -188,12 +194,13 @@ const Hero = () => {
             </div>
           </motion.div>
 
-          {/* Floating Widget 2 - Bottom Right - Dual Icon Swap */}
+          {/* Floating Widget 2 - Bottom Right - Dual Icon Swap - Enhanced Anti-Gravity */}
           <motion.div
             initial={{ y: -40, opacity: 0 }}
-            animate={{ y: [0, -10, 0], opacity: 1 }}
-            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-            className="absolute bottom-20 right-[-20px] w-60 h-60 rounded-3xl flex items-center justify-center z-20 cursor-pointer group hover:shadow-2xl hover:shadow-blue-500/10 transition-shadow duration-500"
+            animate={{ y: [0, -20, 0], opacity: 1 }}
+            transition={{ duration: 5.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+            whileHover={{ y: -40, transition: { duration: 0.4 } }}
+            className="absolute bottom-20 right-[-20px] w-60 h-60 rounded-3xl flex items-center justify-center z-20 cursor-pointer group hover:shadow-2xl hover:shadow-blue-500/20 transition-shadow duration-500"
             onHoverStart={() => setIsHovered(true)}
             onHoverEnd={() => setIsHovered(false)}
           >
@@ -203,43 +210,45 @@ const Hero = () => {
             {/* Icons Container */}
             <div className="relative w-full h-full overflow-visible">
 
-              {/* Java Icon - Starts Top Right */}
+              {/* Java Icon - Starts Top Right - Enhanced Anti-Gravity */}
               <motion.div
                 className="absolute top-5 right-5 z-10"
                 animate={{
                   x: isHovered ? -90 : 0,
                   y: isHovered ? 90 : 0,
-                  scale: isHovered ? 1.2 : 1,
+                  scale: isHovered ? 1.3 : 1,
                   zIndex: isHovered ? 10 : 20,
-                  filter: isHovered ? "drop-shadow(0 0 20px rgba(255,100,100,0.5))" : "drop-shadow(0 0 0 rgba(0,0,0,0))"
+                  filter: isHovered ? "drop-shadow(0 0 25px rgba(255,100,100,0.6))" : "drop-shadow(0 0 0 rgba(0,0,0,0))"
                 }}
-                transition={{ duration: 0.6, ease: "easeInOut" }}
+                transition={{ duration: 0.5, ease: "easeInOut" }}
+                whileHover={{ scale: 1.4, rotate: 10 }}
               >
-                {/* Independent Floating Motion */}
+                {/* Independent Anti-Gravity Floating Motion */}
                 <motion.div
-                  animate={{ y: [0, -6, 0] }}
-                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                  animate={{ y: [0, -12, 0] }}
+                  transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
                 >
                   <img src={javaGlass} alt="Java" className="w-28 h-28 object-contain drop-shadow-md" />
                 </motion.div>
               </motion.div>
 
-              {/* Python Icon - Starts Bottom Left */}
+              {/* Python Icon - Starts Bottom Left - Enhanced Anti-Gravity */}
               <motion.div
                 className="absolute bottom-5 left-5 z-20"
                 animate={{
                   x: isHovered ? 90 : 0,
                   y: isHovered ? -90 : 0,
-                  scale: isHovered ? 1.2 : 1,
+                  scale: isHovered ? 1.3 : 1,
                   zIndex: isHovered ? 20 : 10,
-                  filter: isHovered ? "drop-shadow(0 0 20px rgba(50,150,255,0.5))" : "drop-shadow(0 0 0 rgba(0,0,0,0))"
+                  filter: isHovered ? "drop-shadow(0 0 25px rgba(50,150,255,0.6))" : "drop-shadow(0 0 0 rgba(0,0,0,0))"
                 }}
-                transition={{ duration: 0.6, ease: "easeInOut" }}
+                transition={{ duration: 0.5, ease: "easeInOut" }}
+                whileHover={{ scale: 1.4, rotate: -10 }}
               >
-                {/* Independent Floating Motion */}
+                {/* Independent Anti-Gravity Floating Motion */}
                 <motion.div
-                  animate={{ y: [0, 6, 0] }}
-                  transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+                  animate={{ y: [0, -10, 0] }}
+                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
                 >
                   <img src={pythonGlass} alt="Python" className="w-28 h-28 object-contain drop-shadow-md" />
                 </motion.div>
