@@ -1,7 +1,19 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 
 const AntiGravityParticles = () => {
+  const [viewportHeight, setViewportHeight] = useState(1000);
+
+  useEffect(() => {
+    // Set initial viewport height
+    setViewportHeight(window.innerHeight);
+
+    // Update on resize
+    const handleResize = () => setViewportHeight(window.innerHeight);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Generate random particles
   const particles = Array.from({ length: 15 }, (_, i) => ({
     id: i,
@@ -24,7 +36,7 @@ const AntiGravityParticles = () => {
             bottom: '-20px',
           }}
           animate={{
-            y: [0, -window.innerHeight - 100],
+            y: [0, -(viewportHeight + 100)],
             x: [0, Math.sin(particle.id) * 50],
             opacity: [0, 0.8, 0.8, 0],
             scale: [1, 1.5, 1],

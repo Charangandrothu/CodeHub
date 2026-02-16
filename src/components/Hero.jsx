@@ -9,6 +9,12 @@ import pythonGlass from '../assets/pythonglass.png';
 import javaGlass from '../assets/javaglass.png';
 import AntiGravityParticles from './AntiGravityParticles';
 
+// Anti-gravity animation constants
+const HOVER_SCALE = 1.3;
+const HOVER_SCALE_ENHANCED = 1.4;
+const JAVA_GLOW_COLOR = 'rgba(255,100,100,0.6)';
+const PYTHON_GLOW_COLOR = 'rgba(50,150,255,0.6)';
+
 const ProgressRow = ({ label, current, total, color = "blue" }) => {
   const percentage = (current / total) * 100;
 
@@ -216,12 +222,12 @@ const Hero = () => {
                 animate={{
                   x: isHovered ? -90 : 0,
                   y: isHovered ? 90 : 0,
-                  scale: isHovered ? 1.3 : 1,
+                  scale: isHovered ? HOVER_SCALE : 1,
                   zIndex: isHovered ? 10 : 20,
-                  filter: isHovered ? "drop-shadow(0 0 25px rgba(255,100,100,0.6))" : "drop-shadow(0 0 0 rgba(0,0,0,0))"
+                  filter: isHovered ? `drop-shadow(0 0 25px ${JAVA_GLOW_COLOR})` : "drop-shadow(0 0 0 rgba(0,0,0,0))"
                 }}
                 transition={{ duration: 0.5, ease: "easeInOut" }}
-                whileHover={{ scale: 1.4, rotate: 10 }}
+                whileHover={{ scale: HOVER_SCALE_ENHANCED, rotate: 10 }}
               >
                 {/* Independent Anti-Gravity Floating Motion */}
                 <motion.div
@@ -238,12 +244,12 @@ const Hero = () => {
                 animate={{
                   x: isHovered ? 90 : 0,
                   y: isHovered ? -90 : 0,
-                  scale: isHovered ? 1.3 : 1,
+                  scale: isHovered ? HOVER_SCALE : 1,
                   zIndex: isHovered ? 20 : 10,
-                  filter: isHovered ? "drop-shadow(0 0 25px rgba(50,150,255,0.6))" : "drop-shadow(0 0 0 rgba(0,0,0,0))"
+                  filter: isHovered ? `drop-shadow(0 0 25px ${PYTHON_GLOW_COLOR})` : "drop-shadow(0 0 0 rgba(0,0,0,0))"
                 }}
                 transition={{ duration: 0.5, ease: "easeInOut" }}
-                whileHover={{ scale: 1.4, rotate: -10 }}
+                whileHover={{ scale: HOVER_SCALE_ENHANCED, rotate: -10 }}
               >
                 {/* Independent Anti-Gravity Floating Motion */}
                 <motion.div
