@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Rocket, Box, GitMerge, Search, Layers, Database, Hash, Code, Puzzle, Filter, Code2, LogOut, User, Settings, Sparkles, Crown, Shield } from 'lucide-react';
+import { Rocket, Box, GitMerge, Search, Layers, Database, Hash, Code, Puzzle, Filter, Code2, LogOut, User, Settings, Sparkles, Crown, Shield, Zap, Network, Share2, ArrowUpDown, Rows, Type, Link, Repeat, BarChart3, GitBranch, Brain } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { motion } from 'framer-motion';
 import logo_img from '../../assets/logo_img.png';
@@ -8,17 +8,20 @@ import { API_URL } from '../../config';
 
 export const TOPICS = [
     { id: 'patterns', label: 'Patterns', icon: Puzzle, color: '#a855f7' },
-    { id: 'sorting', label: 'Sorting', icon: Filter, color: '#f97316' },
     { id: 'beginner', label: 'Beginner', icon: Rocket, color: '#22c55e' },
-    { id: 'arrays', label: 'Arrays', icon: Box, color: '#3b82f6' },
-    { id: 'strings', label: 'Strings', icon: Box, color: '#ec4899' },
-    { id: 'binary-search', label: 'Binary Search', icon: Search, color: '#06b6d4' },
-    { id: 'recursion-backtracking', label: 'Recursion', icon: GitMerge, color: '#ef4444' },
-    { id: 'linked-lists', label: 'Linked Lists', icon: Layers, color: '#14b8a6' },
-    { id: 'stacks-queues', label: 'Stacks & Queues', icon: Database, color: '#6366f1' },
+    { id: 'sorting', label: 'Sorting', icon: ArrowUpDown, color: '#f97316' },
+    { id: 'arrays', label: 'Arrays', icon: Rows, color: '#3b82f6' },
+    { id: 'strings', label: 'Strings', icon: Type, color: '#ec4899' },
     { id: 'hashing', label: 'Hashing', icon: Hash, color: '#eab308' },
-    { id: 'trees', label: 'Trees & Graphs', icon: GitMerge, color: '#10b981' },
-    { id: 'dp', label: 'Dynamic Programming', icon: Code, color: '#f43f5e' },
+    { id: 'binary-search', label: 'Binary Search', icon: Search, color: '#06b6d4' },
+    { id: 'linked-list', label: 'Linked List', icon: Link, color: '#14b8a6' },
+    { id: 'stack-queue', label: 'Stack & Queue', icon: Layers, color: '#6366f1' },
+    { id: 'recursion-backtracking', label: 'Recursion & Backtracking', icon: Repeat, color: '#ef4444' },
+    { id: 'greedy', label: 'Greedy', icon: Zap, color: '#f59e0b' },
+    { id: 'heaps', label: 'Heaps', icon: BarChart3, color: '#8b5cf6' },
+    { id: 'trees', label: 'Trees', icon: GitBranch, color: '#10b981' },
+    { id: 'graphs', label: 'Graphs', icon: Share2, color: '#3b82f6' },
+    { id: 'dynamic-programming', label: 'Dynamic Programming', icon: Brain, color: '#f43f5e' },
 ];
 
 export default function Sidebar() {
@@ -60,7 +63,7 @@ export default function Sidebar() {
             initial={{ x: -280, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="w-72 h-screen fixed top-0 left-0 flex flex-col bg-[#050505] border-r border-white/5 z-50 p-6"
+            className="w-72 h-screen fixed top-0 left-0 flex flex-col bg-[#0a0a0a] border-r border-white/5 z-50 p-6"
         >
             {/* Logo Section */}
             <div
@@ -73,7 +76,7 @@ export default function Sidebar() {
                     className="w-9 h-9 rounded-xl shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform duration-300 object-cover"
                 />
                 <div>
-                    <h1 className="text-xl font-bold font-sans bg-clip-text text-transparent bg-gradient-to-r from-white via-gray-200 to-gray-400 tracking-tight">
+                    <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white via-gray-200 to-gray-400 tracking-tight">
                         CodeHubx
                     </h1>
                     <p className="text-[10px] text-gray-500 font-medium tracking-wider uppercase group-hover:text-blue-400 transition-colors">Pro </p>
@@ -98,7 +101,7 @@ export default function Sidebar() {
                             className="absolute inset-0 w-1/2 h-full bg-gradient-to-r from-transparent via-amber-400/20 to-transparent skew-x-12 blur-sm"
                         />
                         <Sparkles size={14} className="text-amber-400" />
-                        <span className="text-xs font-semibold font-sans bg-gradient-to-r from-amber-200 to-yellow-400 bg-clip-text text-transparent group-hover:text-yellow-300 transition-colors">
+                        <span className="text-xs font-semibold bg-gradient-to-r from-amber-200 to-yellow-400 bg-clip-text text-transparent group-hover:text-yellow-300 transition-colors">
                             Upgrade to Pro
                         </span>
                         <Crown size={14} className="text-amber-400 fill-amber-400/20" />
@@ -118,6 +121,7 @@ export default function Sidebar() {
                     const Icon = topic.icon;
                     // Dynamic Active Style
                     const activeStyle = active ? {
+                        color: topic.color || '#3b82f6',
                         borderColor: `${topic.color || '#3b82f6'}40`,
                     } : {};
 
@@ -126,7 +130,7 @@ export default function Sidebar() {
                             key={topic.id}
                             onClick={() => navigate(`/dsa/${topic.id}`)}
                             className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-all duration-300 group relative overflow-hidden ${active
-                                ? 'text-white border shadow-md'
+                                ? 'text-white border' // Border color handled by style
                                 : 'text-gray-400 hover:text-white hover:bg-white/5 border border-transparent'
                                 }`}
                             style={activeStyle}
@@ -137,7 +141,7 @@ export default function Sidebar() {
                                     className="absolute inset-0 rounded-xl"
                                     initial={false}
                                     transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                                    style={{ backgroundColor: `${topic.color || '#3b82f6'}20` }}
+                                    style={{ backgroundColor: `${topic.color || '#3b82f6'}15` }}
                                 />
                             )}
                             <Icon
@@ -145,7 +149,7 @@ export default function Sidebar() {
                                 className={`relative z-10 transition-colors duration-300`}
                                 style={{ color: active ? (topic.color || '#3b82f6') : undefined }}
                             />
-                            <span className="relative z-10 truncate flex-1 text-left font-sans">{topic.label}</span>
+                            <span className="relative z-10 truncate flex-1 text-left">{topic.label}</span>
 
                             {/* Stats Badge */}
                             {topicStats[topic.id] && (
@@ -202,10 +206,10 @@ export default function Sidebar() {
                             navigate(`/${userData?.username}`);
                         }
                     }}>
-                        <h4 className="text-sm font-semibold font-sans text-white truncate group-hover:text-blue-400 transition-colors">
+                        <h4 className="text-sm font-semibold text-white truncate group-hover:text-blue-400 transition-colors">
                             {userData?.displayName || currentUser?.displayName || 'User'}
                         </h4>
-                        <p className="text-xs text-gray-500 font-sans truncate">@{userData?.username || 'user'}</p>
+                        <p className="text-xs text-gray-500 truncate">@{userData?.username || 'user'}</p>
                     </div>
                     {userData?.role === 'admin' && (
                         <button

@@ -420,33 +420,37 @@ router.get('/next-task/:uid', async (req, res) => {
         const Problem = require('../models/Problem');
 
         const TOPIC_ORDER = [
-            'patterns', 'sorting', 'beginner', 'arrays', 'strings',
-            'binary-search', 'recursion-backtracking', 'linked-lists',
-            'stacks-queues', 'hashing', 'trees', 'dp'
+            'patterns', 'beginner', 'sorting', 'arrays', 'strings', 'hashing',
+            'binary-search', 'linked-list', 'stack-queue', 'recursion-backtracking',
+            'greedy', 'heaps', 'trees', 'graphs', 'dynamic-programming'
         ];
 
         const TOPIC_NAMES = {
-            'patterns': 'Patterns', 'sorting': 'Sorting', 'beginner': 'Beginner',
-            'arrays': 'Arrays', 'strings': 'Strings', 'binary-search': 'Binary Search',
-            'recursion-backtracking': 'Recursion', 'linked-lists': 'Linked Lists',
-            'stacks-queues': 'Stacks & Queues', 'hashing': 'Hashing',
-            'trees': 'Trees', 'dp': 'Dynamic Programming'
+            'patterns': 'Patterns', 'beginner': 'Beginner', 'sorting': 'Sorting',
+            'arrays': 'Arrays', 'strings': 'Strings', 'hashing': 'Hashing',
+            'binary-search': 'Binary Search', 'linked-list': 'Linked List',
+            'stack-queue': 'Stack & Queue', 'recursion-backtracking': 'Recursion & Backtracking',
+            'greedy': 'Greedy', 'heaps': 'Heaps', 'trees': 'Trees', 'graphs': 'Graphs',
+            'dynamic-programming': 'Dynamic Programming'
         };
 
         const getMatcher = (id) => {
             switch (id) {
-                case 'arrays': return /array/i;
-                case 'hashing': return /hash/i;
-                case 'recursion-backtracking': return /recursion|backtracking/i;
-                case 'stacks-queues': return /stack|queue/i;
-                case 'trees': return /tree|graph/i;
-                case 'dp': return /dynamic\s*programming|dp/i;
-                case 'beginner': return /beginner/i;
-                case 'linked-lists': return /linked\s*list/i;
-                case 'binary-search': return /binary\s*search/i;
                 case 'patterns': return /pattern/i;
-                case 'strings': return /string/i;
+                case 'beginner': return /beginner/i;
                 case 'sorting': return /sort/i;
+                case 'arrays': return /array/i;
+                case 'strings': return /string/i;
+                case 'hashing': return /hash/i;
+                case 'binary-search': return /binary\s*search/i;
+                case 'linked-list': return /linked\s*list/i;
+                case 'stack-queue': return /stack|queue/i;
+                case 'recursion-backtracking': return /recursion|backtracking/i;
+                case 'greedy': return /greedy/i;
+                case 'heaps': return /heap|priority\s*queue/i;
+                case 'trees': return /tree/i;
+                case 'graphs': return /graph/i;
+                case 'dynamic-programming': return /dynamic\s*programming|dp/i;
                 default: return new RegExp(id.replace('-', '.*'), 'i');
             }
         };
@@ -524,9 +528,9 @@ router.get('/topic-progress/:uid', async (req, res) => {
         const problems = await Problem.find({}, 'topic _id');
 
         const SIDEBAR_TOPICS = [
-            'patterns', 'sorting', 'beginner', 'arrays', 'strings',
-            'binary-search', 'recursion-backtracking', 'linked-lists',
-            'stacks-queues', 'hashing', 'trees', 'dp'
+            'patterns', 'beginner', 'sorting', 'arrays', 'strings', 'hashing',
+            'binary-search', 'linked-list', 'stack-queue', 'recursion-backtracking',
+            'greedy', 'heaps', 'trees', 'graphs', 'dynamic-programming'
         ];
 
         // Initialize stats
@@ -537,17 +541,20 @@ router.get('/topic-progress/:uid', async (req, res) => {
         const getMatcher = (id) => {
             switch (id) {
                 case 'patterns': return /pattern/i;
-                case 'sorting': return /sort/i;
                 case 'beginner': return /beginner/i;
+                case 'sorting': return /sort/i;
                 case 'arrays': return /array/i;
                 case 'strings': return /string/i;
-                case 'binary-search': return /binary\s*search/i;
-                case 'recursion-backtracking': return /recursion|backtracking/i;
-                case 'linked-lists': return /linked.*list/i;
-                case 'stacks-queues': return /stack|queue/i;
                 case 'hashing': return /hash/i;
-                case 'trees': return /tree|graph/i;
-                case 'dp': return /dynamic|dp/i;
+                case 'binary-search': return /binary\s*search/i;
+                case 'linked-list': return /linked\s*list/i;
+                case 'stack-queue': return /stack|queue/i;
+                case 'recursion-backtracking': return /recursion|backtracking/i;
+                case 'greedy': return /greedy/i;
+                case 'heaps': return /heap|priority\s*queue/i;
+                case 'trees': return /tree/i;
+                case 'graphs': return /graph/i;
+                case 'dynamic-programming': return /dynamic\s*programming|dp/i;
                 default: return new RegExp(id.replace('-', '.*'), 'i');
             }
         };
@@ -572,6 +579,9 @@ router.get('/topic-progress/:uid', async (req, res) => {
         SIDEBAR_TOPICS.forEach(id => {
             const matcher = getMatcher(id);
             problems.forEach(p => {
+                // Check if problem.topic matches the regex
+                // Note: user might be asking why "Linked List" problems (stored as 'linked-lists' in DB?) are not matching
+                // The regex /linked\s*list/i should match "Linked List" or "linked-lists".
                 if (p.topic && matcher.test(p.topic)) {
                     stats[id].total++;
                     if (solvedIds.has(p._id.toString())) {

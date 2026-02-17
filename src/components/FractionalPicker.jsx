@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from "react";
 
-const FractionalPicker = ({ min = 30, max = 365, value, onChange, disabled }) => {
+const FractionalPicker = ({ min = 30, max = 365, value, onChange, disabled, className }) => {
     const containerRef = useRef(null);
     const [isDragging, setIsDragging] = useState(false);
     const startX = useRef(0);
@@ -28,9 +28,10 @@ const FractionalPicker = ({ min = 30, max = 365, value, onChange, disabled }) =>
         if (!isDragging && containerRef.current) {
             const index = (value - min) / step;
             const centerOffset = containerRef.current.clientWidth / 2;
-            // Check if significantly off to avoid jitter
             const targetScroll = index * itemWidth - centerOffset + itemWidth / 2;
-            if (Math.abs(containerRef.current.scrollLeft - targetScroll) > itemWidth) {
+
+            // Only scroll if the difference is meaningful (prevents micro-jitters)
+            if (Math.abs(containerRef.current.scrollLeft - targetScroll) > 1) {
                 containerRef.current.scrollLeft = targetScroll;
             }
         }
@@ -41,7 +42,8 @@ const FractionalPicker = ({ min = 30, max = 365, value, onChange, disabled }) =>
         if (containerRef.current) {
             const scrollLeft = containerRef.current.scrollLeft;
             const centerOffset = containerRef.current.clientWidth / 2;
-            const rawIndex = (scrollLeft + centerOffset) / itemWidth;
+            // Correct logic to find center: subtract half item width before dividing
+            const rawIndex = (scrollLeft + centerOffset - itemWidth / 2) / itemWidth;
             const index = Math.max(0, Math.min(ticks.length - 1, Math.round(rawIndex)));
             const newValue = ticks[index];
 
@@ -85,7 +87,7 @@ const FractionalPicker = ({ min = 30, max = 365, value, onChange, disabled }) =>
     };
 
     return (
-        <div className={`relative w-full h-16 bg-[#050505] overflow-hidden select-none border border-white/5 rounded-xl ${disabled ? 'opacity-50 pointer-events-none' : ''}`}>
+        <div className={`relative w-full h-16 overflow-hidden select-none border border-white/10 rounded-xl ${disabled ? 'opacity-50 pointer-events-none' : ''} ${className || 'bg-[#0A0A0A]'}`}>
             {/* Center Indicator */}
             <div className="absolute left-1/2 top-0 bottom-0 w-[2px] bg-blue-500 z-10 -translate-x-1/2 pointer-events-none shadow-[0_0_10px_rgba(59,130,246,0.8)]"></div>
 
@@ -136,8 +138,8 @@ const FractionalPicker = ({ min = 30, max = 365, value, onChange, disabled }) =>
             </div>
 
             {/* Overlay Gradients for smooth fade out */}
-            <div className="absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-[#050505] to-transparent pointer-events-none" />
-            <div className="absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-[#050505] to-transparent pointer-events-none" />
+            <div className="absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-[#0A0A0A] to-transparent pointer-events-none" />
+            <div className="absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-[#0A0A0A] to-transparent pointer-events-none" />
         </div>
     );
 };

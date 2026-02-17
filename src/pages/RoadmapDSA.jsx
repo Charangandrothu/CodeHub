@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { generateRoadmap } from '../utils/roadmapGenerator';
-import { ChevronDown, Check, ArrowRight, Play, RefreshCw, Layers, Zap, Trophy, Flame, Target, Calendar, Lock, Unlock, Clock, AlertTriangle, ArrowLeft, Code, Settings, Shield, LogOut, Crown, Sparkles } from 'lucide-react';
+import { ChevronDown, Check, ArrowRight, Play, RefreshCw, Layers, Zap, Trophy, Flame, Target, Calendar, Lock, Unlock, Clock, AlertTriangle, ArrowLeft, Code, Settings, Shield, LogOut, Crown, Sparkles, MinusCircle, PlusCircle, Puzzle, Rocket, Filter, Box, Hash, Search, Database, GitMerge, Share2, ArrowUpDown, Rows, Type, Link, Repeat, BarChart3, GitBranch, Brain } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getAuth, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
 import logo_img from '../assets/logo_img.png';
@@ -68,8 +68,10 @@ const ResetRoadmapModal = ({ isOpen, onClose, onConfirm }) => {
             />
 
             <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
                 className="relative z-10 bg-[#0A0A0A] border border-white/10 rounded-2xl p-6 max-w-sm w-full shadow-2xl space-y-4"
             >
                 <div className="flex items-center gap-3 text-red-400 mb-2">
@@ -128,22 +130,25 @@ const containerVariants = {
     visible: {
         opacity: 1,
         transition: {
-            staggerChildren: 0.1,
-            delayChildren: 0.2
+            staggerChildren: 0.08,
+            delayChildren: 0.1,
+            when: "beforeChildren"
         }
     }
 };
 
 const itemVariants = {
-    hidden: { opacity: 0, y: 20, filter: 'blur(10px)' },
+    hidden: { opacity: 0, y: 30, filter: 'blur(8px)', scale: 0.98 },
     visible: {
         opacity: 1,
         y: 0,
         filter: 'blur(0px)',
+        scale: 1,
         transition: {
             type: "spring",
-            stiffness: 100,
-            damping: 15
+            stiffness: 80,
+            damping: 15,
+            mass: 0.8
         }
     }
 };
@@ -154,15 +159,56 @@ const sidebarItemVariants = {
         opacity: 1,
         x: 0,
         filter: 'blur(0px)',
-        transition: { type: "spring", stiffness: 120, damping: 20 }
+        transition: { type: "spring", stiffness: 100, damping: 18 }
     }
 };
 
 // --- Updated RoadmapSection ---
 
+// Define topic colors for consistency
+const TOPIC_COLORS = {
+    'patterns': '#a855f7',
+    'beginner': '#22c55e',
+    'sorting': '#f97316',
+    'arrays': '#3b82f6',
+    'strings': '#ec4899',
+    'hashing': '#eab308',
+    'binary-search': '#06b6d4',
+    'linked-list': '#14b8a6',
+    'stack-queue': '#6366f1',
+    'recursion-backtracking': '#ef4444',
+    'greedy': '#f59e0b',
+    'heaps': '#8b5cf6',
+    'trees': '#10b981',
+    'graphs': '#3b82f6',
+    'dynamic-programming': '#f43f5e',
+    // Fallbacks
+    'default': '#a855f7'
+};
+
+const TOPIC_ICONS = {
+    'patterns': Puzzle,
+    'beginner': Rocket,
+    'sorting': ArrowUpDown,
+    'arrays': Rows,
+    'strings': Type,
+    'hashing': Hash,
+    'binary-search': Search,
+    'linked-list': Link,
+    'stack-queue': Layers,
+    'recursion-backtracking': Repeat,
+    'greedy': Zap,
+    'heaps': BarChart3,
+    'trees': GitBranch,
+    'graphs': Share2,
+    'dynamic-programming': Brain,
+};
+
 const RoadmapSection = ({ section, isOpen, onToggle, delay, onToggleTask }) => {
     const progress = Math.round((section.completed / section.totalProblems) * 100) || 0;
     const isCompleted = section.completed === section.totalProblems;
+    const topicColor = TOPIC_COLORS[section.slug] || TOPIC_COLORS.default;
+    const Icon = TOPIC_ICONS[section.slug] || Layers;
 
     return (
         <motion.div
@@ -170,46 +216,96 @@ const RoadmapSection = ({ section, isOpen, onToggle, delay, onToggleTask }) => {
             variants={itemVariants}
             initial="hidden"
             whileInView="visible"
+            whileHover={!isOpen ? { y: -5, scale: 1.005, transition: { duration: 0.2 } } : {}}
             viewport={{ once: true, margin: "-50px" }}
-            className={`relative bg-[#0F0F0F] border ${isOpen ? 'border-purple-500/40 shadow-[0_0_30px_-5px_rgba(168,85,247,0.15)]' : 'border-white/5 shadow-sm'} rounded-2xl overflow-hidden transition-all duration-500 group`}
+            className={`relative backdrop-blur-xl border transition-all duration-500 group -ml-16 w-[calc(100%+12px)] overflow-hidden rounded-2xl ${isOpen
+                ? `bg-gradient-to-b from-[#151515] to-[#050505] shadow-2xl`
+                : 'bg-white/[0.02] border-white/5 hover:bg-white/[0.04] hover:border-white/10'
+                }`}
+            style={{
+                borderColor: isOpen ? `${topicColor}40` : '',
+                boxShadow: isOpen ? `0 20px 50px -10px ${topicColor}15` : ''
+            }}
         >
-            <div className="absolute bottom-0 left-0 h-[2px] bg-zinc-800 w-full z-0">
+            {/* Active Border Beam */}
+            {isOpen && (
+                <motion.div
+                    layoutId="active-glow"
+                    className="absolute inset-0 z-0 pointer-events-none"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                >
+                    <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" style={{ borderColor: topicColor }} />
+                    <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+                    <div className="absolute inset-y-0 left-0 w-px bg-gradient-to-b from-transparent via-white/10 to-transparent" />
+                    <div className="absolute inset-y-0 right-0 w-px bg-gradient-to-b from-transparent via-white/10 to-transparent" />
+                </motion.div>
+            )}
+
+            {/* Glass Shine Effect */}
+            <div className={`absolute inset-0 pointer-events-none transition-opacity duration-700 ${isOpen ? 'opacity-0' : 'opacity-0 group-hover:opacity-100'}`}>
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent skew-x-12 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 ease-in-out" />
+            </div>
+
+            {/* Bottom Progress Bar */}
+            <div className="absolute bottom-0 left-0 h-[2px] bg-zinc-800/50 w-full z-0">
                 <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${progress}%` }}
                     transition={{ duration: 1.5, ease: "circOut", delay: 0.5 }}
-                    className={`h-full ${isCompleted ? 'bg-green-500 shadow-[0_0_15px_rgba(34,197,94,0.6)]' : 'bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500'}`}
-                />
+                    className={`h-full relative overflow-hidden ${isCompleted ? 'bg-emerald-500' : ''}`}
+                    style={{ backgroundColor: isCompleted ? '' : topicColor }}
+                >
+                    <div className="absolute right-0 top-0 bottom-0 w-[4px] bg-white/50 blur-[2px]" />
+                    <motion.div
+                        animate={{ x: ["-100%", "100%"] }}
+                        transition={{ duration: 1.5, repeat: Infinity, ease: "linear", repeatDelay: 1 }}
+                        className={`absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent`}
+                    />
+                </motion.div>
             </div>
 
             <button
                 onClick={onToggle}
-                className="relative z-10 w-full p-6 flex items-center justify-between outline-none group-hover:bg-white/[0.02] transition-colors duration-300"
+                className="relative z-10 w-full p-4 flex items-center justify-between outline-none transition-colors duration-300"
             >
-                <div className="flex items-center gap-6">
+                <div className="flex items-center gap-4">
                     <div className="relative">
                         <motion.div
                             whileHover={{ rotate: 180, scale: 1.1 }}
                             transition={{ type: "spring", stiffness: 200, damping: 10 }}
-                            className={`w-14 h-14 rounded-2xl flex items-center justify-center bg-gradient-to-br ${getSectionGradient(section.level)} shadow-lg border border-white/5 ring-1 ring-white/5`}
+                            className={`w-12 h-12 rounded-xl flex items-center justify-center backdrop-blur-2xl border shadow-lg ${isCompleted
+                                ? 'bg-emerald-500/10 border-emerald-500/20 shadow-emerald-500/10 text-emerald-400'
+                                : 'bg-gradient-to-br from-white/5 to-white/0 border-white/10 text-white/90 shadow-black/20'
+                                }`}
+                            style={!isCompleted ? {
+                                borderColor: `${topicColor}30`,
+                                color: topicColor,
+                                backgroundColor: `${topicColor}10`
+                            } : {}}
                         >
-                            {isCompleted ? <Code size={24} className="text-emerald-200" /> : <Layers size={24} className="text-white" />}
+                            {isCompleted ? <Check size={20} strokeWidth={3} /> : <Icon size={20} />}
                         </motion.div>
-                        {isOpen && <motion.div layoutId="glow" className="absolute -inset-4 bg-purple-500/20 blur-2xl rounded-full -z-10" />}
                     </div>
 
-                    <div className="text-left space-y-1.5">
-                        <h3 className={`text-xl font-bold font-sans text-white group-hover:text-purple-300 transition-colors ${isCompleted ? 'line-through decoration-zinc-600 text-zinc-500' : ''}`}>
+                    <div className="text-left space-y-1">
+                        <h3 className={`text-xl font-bold font-sans tracking-tight transition-colors ${isCompleted ? 'text-zinc-500 line-through decoration-zinc-700' : 'text-white'}`}
+                            style={!isCompleted && isOpen ? { color: topicColor } : {}}
+                        >
                             {section.title}
                         </h3>
-                        <div className="flex items-center gap-4 text-xs font-medium text-zinc-500">
-                            <span className={`px-2.5 py-1 rounded-md bg-white/5 border border-white/5 flex items-center gap-2 ${isCompleted ? 'text-green-400 bg-green-500/10 border-green-500/20' : 'group-hover:border-white/10 transition-colors'}`}>
-                                <Trophy size={11} className={isCompleted ? "text-green-500" : "text-zinc-400"} />
+                        <div className="flex items-center gap-3 text-[10px] font-medium text-zinc-500">
+                            <span className={`px-2 py-0.5 rounded-full border flex items-center gap-1.5 transition-all ${isCompleted
+                                ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                                : 'bg-white/5 border-white/5 text-zinc-400'
+                                }`}>
+                                <Trophy size={10} className={isCompleted ? "text-emerald-400" : "text-zinc-500"} />
                                 {section.completed}/{section.totalProblems}
                             </span>
-                            <span className="w-1 h-1 rounded-full bg-zinc-700" />
-                            <span className="flex items-center gap-2 text-zinc-400">
-                                <Calendar size={11} />
+                            <span className="w-1 h-1 rounded-full bg-zinc-800" />
+                            <span className="flex items-center gap-1.5 text-zinc-400">
+                                <Calendar size={10} />
                                 Days {section.startDay}–{section.endDay}
                             </span>
                         </div>
@@ -218,15 +314,20 @@ const RoadmapSection = ({ section, isOpen, onToggle, delay, onToggleTask }) => {
 
                 <div className="flex items-center gap-6">
                     <div className="hidden sm:flex flex-col items-end gap-0.5">
-                        <span className={`text-sm font-bold font-mono ${isCompleted ? 'text-green-400' : 'text-zinc-300'}`}>{progress}%</span>
-                        <span className="text-[10px] text-zinc-600 uppercase tracking-wider font-semibold">Completed</span>
+                        <span className={`text-lg font-bold font-mono tracking-tighter ${isCompleted ? 'text-emerald-400' : 'text-zinc-300'}`}>
+                            {progress}<span className="text-[10px] text-zinc-600 ml-0.5">%</span>
+                        </span>
                     </div>
                     <motion.div
                         animate={{ rotate: isOpen ? 180 : 0 }}
                         transition={{ type: "spring", stiffness: 200, damping: 20 }}
-                        className={`w-10 h-10 rounded-full flex items-center justify-center border transition-all duration-300 ${isOpen ? 'bg-purple-500 text-white border-purple-500 shadow-lg shadow-purple-500/20' : 'bg-white/5 text-zinc-400 border-white/10 group-hover:border-white/20 group-hover:text-white group-hover:bg-white/10'}`}
+                        className={`w-8 h-8 rounded-full flex items-center justify-center border transition-all duration-300 ${isOpen
+                            ? 'text-white border-transparent'
+                            : 'bg-white/5 text-zinc-400 border-white/10 group-hover:border-white/20 group-hover:text-white'
+                            }`}
+                        style={isOpen ? { backgroundColor: topicColor, boxShadow: `0 0 15px ${topicColor}40` } : {}}
                     >
-                        <ChevronDown size={18} />
+                        <ChevronDown size={14} />
                     </motion.div>
                 </div>
             </button>
@@ -237,75 +338,91 @@ const RoadmapSection = ({ section, isOpen, onToggle, delay, onToggleTask }) => {
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: "auto", opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.4, ease: [0.04, 0.62, 0.23, 0.98] }} // Premium ease
-                        className="border-t border-white/5 bg-[#0A0A0A]/50 backdrop-blur-sm"
+                        transition={{ duration: 0.5, ease: [0.04, 0.62, 0.23, 0.98] }}
+                        className="border-t border-white/5 bg-[#050505]/40 backdrop-blur-xl"
                     >
-                        <div className="p-8 grid gap-8 sm:grid-cols-[auto_1fr]">
+                        <div className="p-6 md:p-8 grid gap-8 sm:grid-cols-[auto_1fr]">
                             <motion.div
                                 initial={{ height: 0 }}
                                 animate={{ height: "100%" }}
                                 transition={{ duration: 0.8, delay: 0.2 }}
-                                className="hidden sm:block w-px bg-gradient-to-b from-purple-500 via-zinc-800 to-transparent relative mx-auto left-2 min-h-[50px]"
+                                className="hidden sm:block w-[1px] bg-gradient-to-b from-transparent via-zinc-800 to-transparent relative mx-auto left-2 h-full opacity-50"
+                                style={{
+                                    backgroundImage: `linear-gradient(to bottom, ${topicColor}, #27272a, transparent)`
+                                }}
                             />
 
-                            <div className="space-y-10">
+                            <div className="space-y-8">
                                 {section.tasks.map((dayTask, dayIdx) => (
                                     <motion.div
                                         key={dayIdx}
-                                        initial={{ opacity: 0, x: -20, filter: 'blur(5px)' }}
-                                        animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
-                                        transition={{ delay: 0.1 + (dayIdx * 0.1), type: "spring", stiffness: 100 }}
+                                        initial={{ opacity: 0, x: -20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{
+                                            delay: 0.2 + (dayIdx * 0.1),
+                                            type: "spring",
+                                            stiffness: 50,
+                                            damping: 15
+                                        }}
                                         className="relative"
                                     >
-                                        <div className={`absolute -left-[3.25rem] top-1.5 w-3 h-3 rounded-full border-2 border-[#0A0A0A] ring-1 hidden sm:block transition-all duration-500 ${dayTask.items.every(i => i.completed) ? 'bg-green-500 ring-green-500/50 shadow-[0_0_10px_rgba(34,197,94,0.5)]' : 'bg-purple-500 ring-purple-500/50 animate-pulse shadow-[0_0_10px_rgba(168,85,247,0.5)]'}`} />
+                                        <div className={`absolute -left-[3.15rem] top-2.5 w-3 h-3 rounded-full border-2 hidden sm:block transition-all duration-500 z-10 ${dayTask.items.every(i => i.completed)
+                                            ? 'bg-emerald-500 border-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]'
+                                            : 'bg-[#0a0a0a] border-zinc-700'
+                                            }`}
+                                        />
 
-                                        <h4 className="flex items-center gap-3 text-sm font-bold text-white mb-5 uppercase tracking-wider">
-                                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">Day {dayTask.day}</span>
-                                            <span className="h-px flex-1 bg-gradient-to-r from-white/10 to-transparent" />
+                                        <h4 className="flex items-center gap-3 text-xs font-bold text-white mb-4 uppercase tracking-wider">
+                                            <span className="px-2.5 py-1 rounded bg-white/5 border border-white/10" style={{ color: topicColor }}>
+                                                Day {dayTask.day}
+                                            </span>
+                                            <span className="h-[1px] flex-1 bg-gradient-to-r from-white/10 to-transparent" />
                                         </h4>
 
-                                        <div className="grid gap-4 md:grid-cols-2">
+                                        <div className="grid gap-3 md:grid-cols-2">
                                             {dayTask.items.map((item, itemIdx) => (
                                                 <motion.div
                                                     key={itemIdx}
-                                                    whileHover={{ scale: 1.02, y: -2, backgroundColor: "rgba(255, 255, 255, 0.03)" }}
-                                                    whileTap={{ scale: 0.98 }}
-                                                    className={`group/card relative flex items-start gap-4 p-4 rounded-xl border transition-all duration-300 ${item.completed
-                                                        ? 'bg-gradient-to-br from-green-500/5 to-emerald-500/5 border-green-500/20'
-                                                        : 'bg-zinc-900/40 border-white/5 hover:border-purple-500/30 hover:shadow-lg hover:shadow-purple-500/5'
+                                                    whileHover={{ scale: 1.01, y: -2 }}
+                                                    whileTap={{ scale: 0.99 }}
+                                                    className={`group/card relative flex items-start gap-3 p-4 rounded-xl border transition-all duration-300 ${item.completed
+                                                        ? 'bg-emerald-950/20 border-emerald-500/20'
+                                                        : 'bg-white/[0.03] border-white/5 hover:bg-white/[0.05]'
                                                         }`}
+                                                    style={!item.completed ? {
+                                                        borderColor: 'rgba(255,255,255,0.05)',
+                                                    } : {}}
                                                 >
                                                     <button
                                                         onClick={() => onToggleTask(dayIdx, itemIdx)}
-                                                        className={`mt-1 flex-shrink-0 w-5 h-5 rounded-md border flex items-center justify-center transition-all duration-300 ${item.completed
-                                                            ? 'bg-green-500 border-green-500 text-black scale-100 shadow-[0_0_10px_rgba(34,197,94,0.4)]'
-                                                            : 'bg-transparent border-zinc-600 hover:border-purple-400 text-transparent scale-95 hover:scale-105 hover:bg-white/5'
+                                                        className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all duration-300 ${item.completed
+                                                            ? 'bg-emerald-500 border-emerald-500 text-black shadow-[0_0_15px_rgba(16,185,129,0.3)]'
+                                                            : 'bg-transparent border-zinc-600 group-hover/card:border-white/40'
                                                             }`}
                                                     >
-                                                        <motion.div
-                                                            initial={false}
-                                                            animate={{ scale: item.completed ? 1 : 0 }}
-                                                        >
-                                                            <Check size={14} strokeWidth={3} />
-                                                        </motion.div>
+                                                        {item.completed && <Check size={12} strokeWidth={4} />}
                                                     </button>
 
                                                     <div className="flex-1 min-w-0">
-                                                        <a href={item.link} className="block cursor-pointer">
+                                                        <a href={item.link} target="_blank" rel="noopener noreferrer" className="block cursor-pointer">
                                                             <div className="flex justify-between items-start gap-2">
-                                                                <p className={`font-semibold font-sans text-sm transition-all duration-300 ${item.completed ? 'text-zinc-500 line-through decoration-zinc-700 decoration-2' : 'text-zinc-200 group-hover/card:text-white'}`}>
+                                                                <p className={`font-semibold font-sans text-sm leading-snug transition-all duration-300 ${item.completed
+                                                                    ? 'text-zinc-500 line-through decoration-zinc-700'
+                                                                    : 'text-zinc-300 group-hover/card:text-white'
+                                                                    }`}>
                                                                     {item.text}
                                                                 </p>
                                                             </div>
-                                                            <div className="flex items-center gap-2 mt-3">
-                                                                <span className={`text-[10px] px-2 py-0.5 rounded-full border font-medium tracking-wide ${item.type === 'Easy' ? 'bg-green-500/10 border-green-500/20 text-green-400' :
-                                                                    item.type === 'Hard' ? 'bg-red-500/10 border-red-500/20 text-red-400' :
+                                                            <div className="flex items-center gap-3 mt-3">
+                                                                <span className={`text-[10px] px-2 py-0.5 rounded font-bold tracking-wide border ${item.type === 'Easy' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' :
+                                                                    item.type === 'Hard' ? 'bg-rose-500/10 border-rose-500/20 text-rose-400' :
                                                                         'bg-blue-500/10 border-blue-500/20 text-blue-400'
                                                                     }`}>
-                                                                    {item.difficulty || "Mixed"}
+                                                                    {item.difficulty || "MIXED"}
                                                                 </span>
+                                                                <div className="h-px bg-white/10 flex-1" />
                                                                 <motion.span
-                                                                    className="text-[10px] text-zinc-500 flex items-center gap-1 group-hover/card:text-purple-400 transition-colors ml-auto font-medium"
+                                                                    className="text-[10px] text-zinc-500 flex items-center gap-1 group-hover/card:text-white transition-colors font-medium"
                                                                     whileHover={{ x: 2 }}
                                                                 >
                                                                     Solve <ArrowRight size={10} />
@@ -345,12 +462,44 @@ const RoadmapSidebar = ({
     const navigate = useNavigate();
     const { currentUser, userData, logout } = useAuth(); // Added hooks
 
+    const levelStyles = {
+        rose: {
+            bgGradient: "from-rose-500/10",
+            border: "border-rose-500/20",
+            iconBg: "bg-rose-500/20",
+            iconText: "text-rose-400",
+            ring: "ring-rose-500/30",
+            shadow: "shadow-rose-500/10",
+            blur: "bg-rose-500/20"
+        },
+        amber: {
+            bgGradient: "from-amber-500/10",
+            border: "border-amber-500/20",
+            iconBg: "bg-amber-500/20",
+            iconText: "text-amber-400",
+            ring: "ring-amber-500/30",
+            shadow: "shadow-amber-500/10",
+            blur: "bg-amber-500/20"
+        },
+        purple: {
+            bgGradient: "from-purple-500/10",
+            border: "border-purple-500/20",
+            iconBg: "bg-purple-500/20",
+            iconText: "text-purple-400",
+            ring: "ring-purple-500/30",
+            shadow: "shadow-purple-500/10",
+            blur: "bg-purple-500/20"
+        }
+    };
+
+    const currentStyle = levelStyles[levelInfo.color] || levelStyles.purple;
+
     return (
         <motion.div
-            initial={{ x: -50, opacity: 0 }}
+            initial={{ x: -60, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
-            transition={{ type: "spring", stiffness: 100, damping: 20 }}
-            className="w-80 h-full flex flex-col bg-[#050505] border-r border-white/5 shrink-0 z-30"
+            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+            className="w-80 h-full flex flex-col bg-[#050505]/80 backdrop-blur-xl border-r border-white/10 shrink-0 z-30"
         >
             {/* Logo Section - Replaces Header */}
             <motion.div
@@ -358,11 +507,11 @@ const RoadmapSidebar = ({
                 onClick={() => navigate('/dashboard')}
                 whileHover="hover"
             >
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 <motion.img
                     src={logo_img}
                     alt="CodeHubx Logo"
-                    className="w-10 h-10 rounded-xl shadow-lg shadow-blue-500/10 z-10 object-cover"
+                    className="w-10 h-10 rounded-xl shadow-lg shadow-purple-500/10 z-10 object-cover border border-white/5"
                     variants={{ hover: { rotate: [0, -5, 5, 0], scale: 1.05 } }}
                     transition={{ duration: 0.4 }}
                 />
@@ -370,7 +519,7 @@ const RoadmapSidebar = ({
                     <h1 className="text-xl font-bold font-sans bg-clip-text text-transparent bg-gradient-to-r from-white via-zinc-200 to-zinc-400 tracking-tight">
                         CodeHubx
                     </h1>
-                    <p className="text-[10px] text-zinc-500 font-medium tracking-widest uppercase group-hover:text-blue-400 transition-colors">Pro Dashboard</p>
+                    <p className="text-[10px] text-zinc-500 font-medium tracking-widest uppercase group-hover:text-purple-400 transition-colors">Pro Dashboard</p>
                 </div>
             </motion.div>
 
@@ -391,34 +540,44 @@ const RoadmapSidebar = ({
                         </span>
                     </div>
 
-                    <FractionalPicker
-                        min={30}
-                        max={365}
-                        value={days}
-                        onChange={(val) => !isLocked && setDays(val)}
-                        disabled={isLocked}
-                    />
+
+
+                    <div className={isLocked ? "opacity-80 grayscale cursor-not-allowed" : ""}>
+                        <FractionalPicker
+                            min={30}
+                            max={365}
+                            value={days}
+                            onChange={(val) => !isLocked && setDays(val)}
+                            disabled={isLocked}
+                            className="backdrop-blur-md bg-white/5 border border-white/10 shadow-inner rounded-xl"
+                        />
+                    </div>
 
                     <motion.div
                         whileHover={{ scale: 1.02 }}
-                        className={`p-4 rounded-xl border flex items-center gap-4 transition-all duration-300 ${isLocked ? 'bg-zinc-900/50 border-white/5 opacity-50 grayscale' : `bg-gradient-to-br from-${levelInfo.color}-500/10 to-transparent border-${levelInfo.color}-500/20`}`}
+                        className={`p-5 rounded-2xl border flex items-center gap-4 transition-all duration-300 relative overflow-hidden ${isLocked
+                            ? 'bg-zinc-900/50 border-white/5 opacity-50 grayscale'
+                            : `bg-gradient-to-br ${currentStyle.bgGradient} to-transparent ${currentStyle.border}`
+                            }`}
                     >
-                        <div className={`p-2.5 rounded-lg bg-${levelInfo.color}-500/20 text-${levelInfo.color}-400 ring-1 ring-${levelInfo.color}-500/30`}>
+                        {!isLocked && <div className={`absolute -right-4 -top-4 w-20 h-20 ${currentStyle.blur} blur-2xl rounded-full`} />}
+
+                        <div className={`p-3 rounded-xl ${currentStyle.iconBg} ${currentStyle.iconText} ring-1 ${currentStyle.ring} shadow-lg ${currentStyle.shadow} relative z-10`}>
                             {levelInfo.icon}
                         </div>
-                        <div>
+                        <div className="relative z-10">
                             <p className="text-sm font-bold font-sans text-white tracking-tight">{levelInfo.label}</p>
-                            <p className="text-[10px] font-sans text-zinc-400 uppercase tracking-wide mt-0.5">Recommended Pace</p>
+                            <p className="text-[10px] font-sans text-zinc-400 uppercase tracking-wide mt-1">Recommended Pace</p>
                         </div>
                     </motion.div>
 
                     <div className="grid grid-cols-1 gap-3">
                         {!isLocked ? (
                             <motion.button
-                                whileHover={{ scale: 1.02, backgroundColor: "#e4e4e7" }}
+                                whileHover={{ scale: 1.02 }}
                                 whileTap={{ scale: 0.98 }}
                                 onClick={() => onToggleLock(true)}
-                                className="w-full px-4 py-2.5 bg-white text-black rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-[0_0_20px_-5px_rgba(255,255,255,0.3)] z-50 relative"
+                                className="w-full px-4 py-3 bg-white text-black rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-[0_0_20px_-5px_rgba(255,255,255,0.4)] hover:shadow-white/20 z-50 relative border border-transparent"
                             >
                                 <Play size={14} fill="currentColor" />
                                 Generate & Lock Plan
@@ -428,7 +587,7 @@ const RoadmapSidebar = ({
                                 whileHover={{ scale: 1.02, backgroundColor: "rgba(220, 38, 38, 0.15)", borderColor: "rgba(220, 38, 38, 0.4)" }}
                                 whileTap={{ scale: 0.98 }}
                                 onClick={() => onToggleLock(false)}
-                                className="w-full px-4 py-2.5 bg-red-500/10 border border-red-500/30 text-red-400 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-all backdrop-blur-sm"
+                                className="w-full px-4 py-3 bg-red-500/10 border border-red-500/30 text-red-400 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all backdrop-blur-sm"
                             >
                                 <Unlock size={14} />
                                 Unlock to Edit
@@ -456,14 +615,14 @@ const RoadmapSidebar = ({
                                     hidden: { opacity: 0, x: -10 },
                                     visible: { opacity: 1, x: 0 }
                                 }}
-                                whileHover={{ x: 4, backgroundColor: "rgba(255, 255, 255, 0.03)" }}
-                                className={`w-full flex items-center gap-3 p-2.5 rounded-lg text-left transition-all group ${activeSection === section.slug
-                                    ? 'bg-purple-500/10 border border-purple-500/20 text-white shadow-sm'
-                                    : 'border border-transparent text-zinc-400 hover:text-zinc-200'
+                                whileHover={{ x: 4 }}
+                                className={`w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all group border ${activeSection === section.slug
+                                    ? 'bg-purple-500/10 border-purple-500/20 text-white shadow-[0_0_20px_-5px_rgba(168,85,247,0.15)]'
+                                    : 'border-transparent text-zinc-400 hover:text-zinc-200 hover:bg-white/5'
                                     }`}
                             >
-                                <div className={`w-2 h-2 rounded-full ring-2 ring-offset-1 ring-offset-[#050505] transition-all duration-300 ${section.completed === section.totalProblems ? 'bg-green-500 ring-green-500/20' : activeSection === section.slug ? 'bg-purple-500 ring-purple-500/20' : 'bg-zinc-700 ring-transparent'}`} />
-                                <span className={`text-xs font-medium font-sans truncate flex-1 ${activeSection === section.slug ? 'text-purple-200' : ''}`}>{section.title}</span>
+                                <div className={`w-2 h-2 rounded-full ring-2 ring-offset-2 ring-offset-[#050505] transition-all duration-300 ${section.completed === section.totalProblems ? 'bg-emerald-500 ring-emerald-500/20' : activeSection === section.slug ? 'bg-purple-500 ring-purple-500/20' : 'bg-zinc-700 ring-transparent'}`} />
+                                <span className={`text-xs font-medium font-sans truncate flex-1 transition-colors ${activeSection === section.slug ? 'text-purple-200' : ''}`}>{section.title}</span>
                                 {section.completed > 0 && (
                                     <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${activeSection === section.slug ? 'bg-purple-500/20 text-purple-300' : 'bg-zinc-800 text-zinc-500'}`}>
                                         {Math.round((section.completed / section.totalProblems) * 100)}%
@@ -480,13 +639,13 @@ const RoadmapSidebar = ({
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.5 }}
-                className="mt-auto pt-4 pb-6 px-4 border-t border-white/5 shrink-0 bg-[#050505]"
+                className="mt-auto pt-4 pb-6 px-4 border-t border-white/5 shrink-0 bg-[#050505]/50 backdrop-blur-xl"
             >
                 <div className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-colors cursor-pointer group border border-transparent hover:border-white/5">
                     <img
                         src={userData?.photoURL || currentUser?.photoURL || `https://api.dicebear.com/9.x/adventurer/svg?seed=${userData?.username || currentUser?.email?.split('@')[0] || 'User'}`}
                         alt="Profile"
-                        className="w-9 h-9 rounded-lg border border-white/10 group-hover:border-blue-500/50 transition-colors object-cover ring-2 ring-transparent group-hover:ring-blue-500/20"
+                        className="w-10 h-10 rounded-lg border border-white/10 group-hover:border-purple-500/50 transition-colors object-cover ring-2 ring-transparent group-hover:ring-purple-500/20"
                         onClick={() => {
                             if (!userData?.profileCompleted) {
                                 navigate('/complete-profile');
@@ -502,7 +661,7 @@ const RoadmapSidebar = ({
                             navigate(`/${userData?.username}`);
                         }
                     }}>
-                        <h4 className="text-sm font-semibold font-sans text-white truncate group-hover:text-blue-400 transition-colors">
+                        <h4 className="text-sm font-semibold font-sans text-white truncate group-hover:text-purple-400 transition-colors">
                             {userData?.displayName || currentUser?.displayName || 'User'}
                         </h4>
                         <p className="text-[10px] text-zinc-500 truncate font-medium">@{userData?.username || 'user'}</p>
@@ -514,7 +673,7 @@ const RoadmapSidebar = ({
                         className="p-2 text-zinc-500 hover:text-white hover:bg-white/10 rounded-lg transition-all cursor-pointer"
                         title="Settings"
                     >
-                        <Settings size={16} />
+                        <Settings size={18} />
                     </motion.button>
                 </div>
             </motion.div >
@@ -524,8 +683,15 @@ const RoadmapSidebar = ({
 
 // --- Main Component ---
 
+const GOALS = {
+    beginner: 180,
+    medium: 120,
+    expert: 60,
+};
+
 const DSARoadmap = ({ onBack }) => {
-    const [days, setDays] = useState(90);
+    const [selectedGoal, setSelectedGoal] = useState(null);
+    const [days, setDays] = useState(GOALS["medium"]);
     const [roadmap, setRoadmap] = useState(null);
     const [expandedSection, setExpandedSection] = useState(null);
     const [showResetModal, setShowResetModal] = useState(false);
@@ -541,6 +707,13 @@ const DSARoadmap = ({ onBack }) => {
             handleGenerate(90, false);
         }
     }, []);
+
+    const handleGoalSelect = (goal) => {
+        setSelectedGoal(goal);
+        const newDays = GOALS[goal];
+        setDays(newDays);
+        handleGenerate(newDays, true);
+    };
 
     const handleGenerate = (selectedDays, mergeProgress = false) => {
         setIsGenerating(true);
@@ -623,9 +796,9 @@ const DSARoadmap = ({ onBack }) => {
     };
 
     const getLevelInfo = (d) => {
-        if (d <= 60) return { label: 'Quick Revision', color: 'rose', icon: <Flame size={16} /> };
-        if (d <= 159) return { label: 'Intermediate', color: 'amber', icon: <Zap size={16} /> };
-        return { label: 'Expert Mastery', color: 'purple', icon: <Trophy size={16} /> };
+        if (d <= 90) return { label: 'Expert Fast-Track', color: 'rose', icon: <Flame size={16} /> };
+        if (d <= 150) return { label: 'Intermediate', color: 'amber', icon: <Zap size={16} /> };
+        return { label: 'Beginner Foundation', color: 'purple', icon: <Trophy size={16} /> };
     };
 
     const levelInfo = getLevelInfo(days);
@@ -636,7 +809,12 @@ const DSARoadmap = ({ onBack }) => {
             <RoadmapSidebar
                 onBack={onBack}
                 days={days}
-                setDays={(d) => { setDays(d); handleGenerate(d, true); }}
+                setDays={(d) => {
+                    setDays(d);
+                    const matchedGoal = Object.keys(GOALS).find(key => GOALS[key] === d) || null;
+                    setSelectedGoal(matchedGoal);
+                    handleGenerate(d, true);
+                }}
                 isLocked={roadmap?.isLocked}
                 onToggleLock={toggleLock}
                 onGenerate={() => handleGenerate(days, true)}
@@ -651,27 +829,137 @@ const DSARoadmap = ({ onBack }) => {
             <div className="flex-1 h-full overflow-y-auto custom-scrollbar relative bg-[#030303]">
 
                 {/* Enhanced Background Ambient Effects */}
-                <div className="fixed top-0 right-0 w-[800px] h-[800px] bg-purple-900/5 rounded-full blur-[150px] pointer-events-none" />
-                <div className="fixed bottom-0 left-20 w-[600px] h-[600px] bg-blue-900/5 rounded-full blur-[150px] pointer-events-none" />
+                <div className="fixed inset-0 pointer-events-none overflow-hidden">
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 2 }}
+                        className="absolute top-[-10%] right-[-10%] w-[800px] h-[800px] bg-purple-900/10 rounded-full blur-[120px]"
+                        style={{
+                            animate: {
+                                x: [0, 50, 0],
+                                y: [0, 30, 0],
+                                scale: [1, 1.1, 1],
+                            },
+                        }}
+                    />
+                    <motion.div
+                        animate={{
+                            x: [0, -30, 0],
+                            y: [0, 50, 0],
+                            opacity: [0.5, 0.8, 0.5]
+                        }}
+                        transition={{
+                            duration: 10,
+                            repeat: Infinity,
+                            ease: "easeInOut"
+                        }}
+                        className="absolute top-0 right-0 w-[600px] h-[600px] bg-purple-600/5 rounded-full blur-[100px]"
+                    />
+                    <motion.div
+                        animate={{
+                            x: [0, 30, 0],
+                            y: [0, -50, 0],
+                            opacity: [0.3, 0.6, 0.3]
+                        }}
+                        transition={{
+                            duration: 15,
+                            repeat: Infinity,
+                            ease: "easeInOut"
+                        }}
+                        className="absolute bottom-0 left-20 w-[600px] h-[600px] bg-blue-600/5 rounded-full blur-[120px]"
+                    />
+                </div>
 
                 <div className="p-10 max-w-5xl mx-auto space-y-8 pb-40">
                     {/* Header for Content Area */}
                     <motion.div
-                        initial={{ opacity: 0, y: -20, filter: 'blur(10px)' }}
-                        animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                        transition={{ duration: 0.8, ease: "easeOut" }}
-                        className="flex items-end justify-between mb-10 border-b border-white/5 pb-8"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6, delay: 0.2 }}
+                        className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-12 border-b border-white/5 pb-8"
                     >
-                        <div>
-                            <h1 className="text-4xl font-bold font-sans tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-zinc-200 to-zinc-400 mb-2">
-                                Your Curriculum
-                            </h1>
-                            <p className="text-zinc-500 font-sans text-base">Master Data Structures & Algorithms, one planned day at a time.</p>
+                        <div className="relative z-10 w-full sm:w-auto text-left -ml-14">
+                            <div className="absolute -inset-x-4 -inset-y-4 bg-purple-500/5 blur-2xl rounded-full opacity-50 pointer-events-none" />
+                            <div className="overflow-hidden relative">
+                                <motion.h1
+                                    initial={{ y: "100%" }}
+                                    animate={{
+                                        y: 0,
+                                        backgroundPosition: ["0% 50%", "100% 50%"]
+                                    }}
+                                    transition={{
+                                        y: { duration: 0.8, ease: [0.16, 1, 0.3, 1] },
+                                        backgroundPosition: { duration: 5, repeat: Infinity, ease: "linear" }
+                                    }}
+                                    className="text-3xl font-bold font-sans tracking-tight bg-clip-text text-transparent bg-[linear-gradient(to_right,#ffffff,#e2e8f0,#a855f7,#e2e8f0,#ffffff)] bg-[length:200%_auto] mb-2 block pb-1 selection:bg-purple-500/30"
+                                    style={{
+                                        textShadow: "0 0 30px rgba(168,85,247,0.1)"
+                                    }}
+                                >
+                                    Your Curriculum
+                                </motion.h1>
+                            </div>
+                            <motion.p
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ delay: 0.5, duration: 0.8 }}
+                                className="text-zinc-500 font-sans text-sm max-w-md leading-relaxed"
+                            >
+                                Master Data Structures & Algorithms, one planned day at a time.
+                            </motion.p>
                         </div>
+
+                        {!roadmap?.isLocked && (
+                            <motion.div
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: 0.4 }}
+                                className="flex flex-col items-end gap-2"
+                            >
+                                <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold mr-1">Select based on your goal</span>
+                                <div className="flex items-center gap-3 sm:gap-4">
+                                    {[
+                                        { label: 'Beginner', goal: 'beginner', questions: '365Q', color: 'text-purple-400', border: 'border-purple-500/20', bg: 'hover:bg-purple-500/10' },
+                                        { label: 'Medium', goal: 'medium', questions: '250Q', color: 'text-amber-400', border: 'border-amber-500/20', bg: 'hover:bg-amber-500/10' },
+                                        { label: 'Expert', goal: 'expert', questions: '100Q', color: 'text-rose-400', border: 'border-rose-500/20', bg: 'hover:bg-rose-500/10' }
+                                    ].map((preset) => {
+                                        const isSelected = selectedGoal === preset.goal;
+                                        // Show color if this is selected OR if nothing is selected yet
+                                        const showColor = isSelected || selectedGoal === null;
+
+                                        return (
+                                            <button
+                                                key={preset.label}
+                                                onClick={() => handleGoalSelect(preset.goal)}
+                                                className={`px-4 py-2.5 rounded-xl border transition-all duration-300 flex flex-col items-center justify-center gap-0.5 group min-w-[90px] relative overflow-hidden backdrop-blur-sm cursor-pointer
+                                                    ${isSelected
+                                                        ? `bg-white/10 ring-1 ring-white/20 shadow-lg scale-105 ${preset.border}`
+                                                        : showColor
+                                                            ? `bg-white/5 border-white/10 hover:bg-white/10 hover:scale-105 hover:border-white/20`
+                                                            : 'bg-[#000000] border-zinc-900 opacity-30 hover:opacity-100 hover:border-zinc-800 scale-95 saturate-0'
+                                                    }`}
+                                            >
+                                                {isSelected && (
+                                                    <div className={`absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none`} />
+                                                )}
+                                                <span className={`text-[10px] font-bold uppercase tracking-wider relative z-10 transition-colors ${showColor ? preset.color : 'text-zinc-600 group-hover:text-zinc-400'}`}>{preset.label}</span>
+                                                <div className="flex items-center gap-1 relative z-10">
+                                                    <span className={`text-xs font-mono font-bold transition-colors ${isSelected ? 'text-zinc-200' : showColor ? 'text-zinc-400 group-hover:text-zinc-200' : 'text-zinc-600 group-hover:text-zinc-400'}`}>{GOALS[preset.goal]}d</span>
+                                                    <span className={`text-[9px] font-medium transition-colors ${isSelected ? 'text-zinc-500' : showColor ? 'text-zinc-600 group-hover:text-zinc-500' : 'text-zinc-800 group-hover:text-zinc-600'}`}>({preset.questions})</span>
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </motion.div>
+                        )}
+
                         {roadmap?.isLocked && (
                             <motion.div
-                                initial={{ scale: 0.9, opacity: 0 }}
+                                initial={{ scale: 0.8, opacity: 0 }}
                                 animate={{ scale: 1, opacity: 1 }}
+                                transition={{ delay: 0.6, type: "spring" }}
                                 className="px-4 py-1.5 bg-emerald-500/5 border border-emerald-500/20 rounded-full text-emerald-400 text-xs font-bold uppercase tracking-wider flex items-center gap-2 shadow-[0_0_20px_-5px_rgba(16,185,129,0.2)]"
                             >
                                 <Lock size={12} /> Plan Active
@@ -683,26 +971,36 @@ const DSARoadmap = ({ onBack }) => {
                         {isGenerating ? (
                             <motion.div
                                 key="loader"
-                                initial={{ opacity: 0, scale: 0.95 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                exit={{ opacity: 0, scale: 1.05 }}
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0, scale: 0.95, filter: "blur(10px)" }}
                                 transition={{ duration: 0.3 }}
                                 className="h-64 flex flex-col items-center justify-center text-zinc-500 gap-6"
                             >
-                                <div className="relative w-16 h-16">
+                                <div className="relative w-20 h-20">
                                     <motion.span
-                                        className="absolute top-0 left-0 w-full h-full border-2 border-purple-500/20 rounded-full"
-                                        initial={{ scale: 0.8, opacity: 0 }}
-                                        animate={{ scale: [1, 1.5, 1], opacity: [0.5, 0, 0.5] }}
+                                        className="absolute inset-0 border-2 border-purple-500/30 rounded-full"
+                                        animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0, 0.5] }}
                                         transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
                                     />
                                     <motion.span
-                                        className="absolute top-0 left-0 w-full h-full border-t-2 border-purple-500 rounded-full"
+                                        className="absolute inset-2 border-2 border-purple-500/60 rounded-full"
                                         animate={{ rotate: 360 }}
-                                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                                        transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                                    />
+                                    <motion.span
+                                        className="absolute inset-0 border-t-2 border-purple-500 rounded-full"
+                                        animate={{ rotate: 360 }}
+                                        transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
                                     />
                                 </div>
-                                <span className="text-sm font-medium animate-pulse text-zinc-400 font-mono tracking-wide">Optimizing your path...</span>
+                                <motion.span
+                                    animate={{ opacity: [0.5, 1, 0.5] }}
+                                    transition={{ duration: 1.5, repeat: Infinity }}
+                                    className="text-sm font-medium text-zinc-400 font-mono tracking-wide"
+                                >
+                                    Optimizing your path...
+                                </motion.span>
                             </motion.div>
                         ) : (
                             <motion.div
@@ -712,7 +1010,7 @@ const DSARoadmap = ({ onBack }) => {
                                 className="space-y-6"
                             >
                                 {roadmap?.sections.map((section, idx) => (
-                                    <div id={`section-${section.slug}`} key={section.slug} className="scroll-mt-8">
+                                    <div id={`section - ${section.slug} `} key={section.slug} className="scroll-mt-8">
                                         <RoadmapSection
                                             section={section}
                                             isOpen={expandedSection === section.slug}
