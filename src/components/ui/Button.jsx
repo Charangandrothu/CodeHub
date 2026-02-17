@@ -1,27 +1,25 @@
-import { cn } from '../../lib/utils'; // adjusted path based on file location
+import { motion } from 'framer-motion';
+import { cn } from '../../lib/utils';
 
 export const Button = ({
-    children,
-    variant = 'primary',
-    className,
-    icon: Icon,
-    ...props
+  children,
+  variant = 'primary',
+  className,
+  icon: Icon,
+  ...props
 }) => {
-    const baseStyles = "inline-flex items-center justify-center rounded-lg px-6 py-3 text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#0a0a0a] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer hover:cursor-pointer";
+  const baseStyles = 'inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-2.5 text-sm font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-app-primary/60 focus:ring-offset-2 focus:ring-offset-app-bg disabled:opacity-50 disabled:pointer-events-none cursor-pointer';
 
-    const variants = {
-        primary: "bg-white text-black hover:bg-gray-100 border border-transparent shadow-[0_0_15px_rgba(255,255,255,0.1)]",
-        secondary: "bg-transparent text-white border border-white/20 hover:bg-white/5 hover:border-white/40",
-        ghost: "bg-transparent text-gray-400 hover:text-white hover:bg-white/5"
-    };
+  const variants = {
+    primary: 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-[0_14px_30px_-18px_rgba(59,130,246,0.9)] hover:shadow-[0_20px_32px_-16px_rgba(59,130,246,0.85)] hover:-translate-y-0.5',
+    secondary: 'border border-app-border bg-app-panel text-app-text hover:border-blue-400/50 hover:bg-app-primary-soft',
+    ghost: 'text-app-muted hover:bg-app-primary-soft hover:text-app-text',
+  };
 
-    return (
-        <button
-            className={cn(baseStyles, variants[variant], className)}
-            {...props}
-        >
-            {children}
-            {Icon && <Icon className="ml-2 h-4 w-4" />}
-        </button>
-    );
+  return (
+    <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }} className={cn(baseStyles, variants[variant], className)} {...props}>
+      {children}
+      {Icon && <Icon className="h-4 w-4" />}
+    </motion.button>
+  );
 };
