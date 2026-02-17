@@ -2,82 +2,93 @@
 @import "tailwindcss";
 
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  --bg: #f4f7ff;
+  --panel: rgba(255, 255, 255, 0.8);
+  --panel-strong: rgba(255, 255, 255, 0.95);
+  --border: rgba(15, 23, 42, 0.08);
+  --text: #0f172a;
+  --muted: #64748b;
+  --primary: #3b82f6;
+  --primary-soft: rgba(59, 130, 246, 0.14);
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-
-  color-scheme: dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #0a0a0a;
-
+  color-scheme: light;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
+.dark {
+  --bg: #080d17;
+  --panel: rgba(15, 23, 42, 0.72);
+  --panel-strong: rgba(15, 23, 42, 0.9);
+  --border: rgba(148, 163, 184, 0.22);
+  --text: #e2e8f0;
+  --muted: #94a3b8;
+  --primary: #60a5fa;
+  --primary-soft: rgba(96, 165, 250, 0.2);
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   margin: 0;
-  display: flex;
-  place-items: flex-start;
-  /* Changed from center to allow full page layout */
-  min-width: 320px;
-  min-height: 100vh;
-  width: 100%;
+  background:
+    radial-gradient(circle at 20% 0%, rgba(56, 189, 248, 0.14), transparent 35%),
+    radial-gradient(circle at 80% 0%, rgba(139, 92, 246, 0.12), transparent 40%),
+    var(--bg);
+  color: var(--text);
+  transition: background 300ms ease, color 300ms ease;
 }
 
-
-
-@layer utilities {
-  .glass-card {
-    background: rgba(255, 255, 255, 0.03);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-  }
-
-  .text-gradient-gold {
-    background: linear-gradient(to right, #ffffff, #d4af37);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
+@theme inline {
+  --color-app-bg: var(--bg);
+  --color-app-panel: var(--panel);
+  --color-app-panel-strong: var(--panel-strong);
+  --color-app-border: var(--border);
+  --color-app-text: var(--text);
+  --color-app-muted: var(--muted);
+  --color-app-primary: var(--primary);
+  --color-app-primary-soft: var(--primary-soft);
 }
 
-#root {
-  width: 100%;
+.glass-card {
+  @apply rounded-2xl border border-app-border bg-app-panel shadow-[0_18px_45px_-24px_rgba(15,23,42,0.6)] backdrop-blur-xl;
 }
 
-/* Premium Scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+.soft-card {
+  @apply rounded-2xl border border-app-border bg-app-panel-strong shadow-[0_14px_30px_-20px_rgba(15,23,42,0.45)];
 }
 
-::-webkit-scrollbar-track {
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
   background: transparent;
 }
-
-::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(148, 163, 184, 0.35);
   border-radius: 9999px;
-  transition: background-color 0.2s;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
+.skeleton-shimmer {
+  background: linear-gradient(90deg, transparent, rgba(148, 163, 184, 0.22), transparent);
+  background-size: 220px 100%;
+  animation: shimmer 1.5s infinite linear;
 }
 
-/* AdSense Responsive Fix */
-@media (max-width: 768px) {
-  .adsbygoogle {
-    width: 320px !important;
-    height: 50px !important;
-  }
-}
-
-@media (min-width: 769px) {
-  .adsbygoogle {
-    width: 728px !important;
-    height: 90px !important;
-  }
+@keyframes shimmer {
+  from { background-position: -220px 0; }
+  to { background-position: calc(220px + 100%) 0; }
 }

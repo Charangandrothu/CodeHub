@@ -12,9 +12,9 @@ import FractionalPicker from '../components/FractionalPicker';
 // --- Utility Components ---
 
 const getSectionGradient = (level) => {
-    if (level === 'Beginner') return 'from-emerald-500/20 to-teal-600/20 border border-emerald-500/30';
-    if (level === 'Intermediate') return 'from-blue-500/20 to-indigo-600/20 border border-blue-500/30';
-    return 'from-rose-500/20 to-orange-600/20 border border-rose-500/30';
+    if (level === 'Beginner') return 'from-emerald-500/15 to-teal-600/10 border border-emerald-500/25';
+    if (level === 'Intermediate') return 'from-amber-500/20 to-yellow-600/15 border border-amber-500/30';
+    return 'from-rose-500/15 to-orange-600/10 border border-rose-500/25';
 };
 
 const ResetRoadmapModal = ({ isOpen, onClose, onConfirm }) => {
@@ -171,20 +171,20 @@ const RoadmapSection = ({ section, isOpen, onToggle, delay, onToggleTask }) => {
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-50px" }}
-            className={`relative bg-[#0F0F0F] border ${isOpen ? 'border-purple-500/40 shadow-[0_0_30px_-5px_rgba(168,85,247,0.15)]' : 'border-white/5 shadow-sm'} rounded-2xl overflow-hidden transition-all duration-500 group`}
+            className={`relative bg-[#11161C] border ${isOpen ? 'border-white/12 shadow-[0_10px_24px_-18px_rgba(0,0,0,0.9)]' : 'border-white/5 shadow-[0_10px_20px_-18px_rgba(0,0,0,0.8)]'} rounded-[18px] overflow-hidden transition-all duration-300 group`}
         >
             <div className="absolute bottom-0 left-0 h-[2px] bg-zinc-800 w-full z-0">
                 <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${progress}%` }}
-                    transition={{ duration: 1.5, ease: "circOut", delay: 0.5 }}
-                    className={`h-full ${isCompleted ? 'bg-green-500 shadow-[0_0_15px_rgba(34,197,94,0.6)]' : 'bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500'}`}
+                    transition={{ duration: 0.45, ease: 'easeOut', delay: 0.05 }}
+                    className={`h-full ${isCompleted ? 'bg-emerald-500/90' : 'bg-amber-400/90'}`}
                 />
             </div>
 
             <button
                 onClick={onToggle}
-                className="relative z-10 w-full p-6 flex items-center justify-between outline-none group-hover:bg-white/[0.02] transition-colors duration-300"
+                className="relative z-10 w-full p-6 flex items-center justify-between outline-none group-hover:bg-white/[0.015] transition-colors duration-300"
             >
                 <div className="flex items-center gap-6">
                     <div className="relative">
@@ -195,11 +195,11 @@ const RoadmapSection = ({ section, isOpen, onToggle, delay, onToggleTask }) => {
                         >
                             {isCompleted ? <Code size={24} className="text-emerald-200" /> : <Layers size={24} className="text-white" />}
                         </motion.div>
-                        {isOpen && <motion.div layoutId="glow" className="absolute -inset-4 bg-purple-500/20 blur-2xl rounded-full -z-10" />}
+                        {isOpen && <motion.div layoutId="glow" className="absolute -inset-3 bg-white/5 blur-xl rounded-full -z-10" />}
                     </div>
 
                     <div className="text-left space-y-1.5">
-                        <h3 className={`text-xl font-bold font-sans text-white group-hover:text-purple-300 transition-colors ${isCompleted ? 'line-through decoration-zinc-600 text-zinc-500' : ''}`}>
+                        <h3 className={`text-xl font-bold font-sans text-white transition-colors ${isCompleted ? 'line-through decoration-zinc-600 text-zinc-500' : ''}`}>
                             {section.title}
                         </h3>
                         <div className="flex items-center gap-4 text-xs font-medium text-zinc-500">
@@ -224,7 +224,7 @@ const RoadmapSection = ({ section, isOpen, onToggle, delay, onToggleTask }) => {
                     <motion.div
                         animate={{ rotate: isOpen ? 180 : 0 }}
                         transition={{ type: "spring", stiffness: 200, damping: 20 }}
-                        className={`w-10 h-10 rounded-full flex items-center justify-center border transition-all duration-300 ${isOpen ? 'bg-purple-500 text-white border-purple-500 shadow-lg shadow-purple-500/20' : 'bg-white/5 text-zinc-400 border-white/10 group-hover:border-white/20 group-hover:text-white group-hover:bg-white/10'}`}
+                        className={`w-10 h-10 rounded-xl flex items-center justify-center border transition-all duration-300 ${isOpen ? 'bg-white/10 text-white border-white/20' : 'bg-white/5 text-zinc-400 border-white/10 group-hover:border-white/20 group-hover:text-white'}`}
                     >
                         <ChevronDown size={18} />
                     </motion.div>
@@ -238,14 +238,14 @@ const RoadmapSection = ({ section, isOpen, onToggle, delay, onToggleTask }) => {
                         animate={{ height: "auto", opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
                         transition={{ duration: 0.4, ease: [0.04, 0.62, 0.23, 0.98] }} // Premium ease
-                        className="border-t border-white/5 bg-[#0A0A0A]/50 backdrop-blur-sm"
+                        className="border-t border-white/5 bg-[#11161C]"
                     >
                         <div className="p-8 grid gap-8 sm:grid-cols-[auto_1fr]">
                             <motion.div
                                 initial={{ height: 0 }}
                                 animate={{ height: "100%" }}
                                 transition={{ duration: 0.8, delay: 0.2 }}
-                                className="hidden sm:block w-px bg-gradient-to-b from-purple-500 via-zinc-800 to-transparent relative mx-auto left-2 min-h-[50px]"
+                                className="hidden sm:block w-px bg-gradient-to-b from-white/20 via-white/10 to-transparent relative mx-auto left-2 min-h-[50px]"
                             />
 
                             <div className="space-y-10">
@@ -257,10 +257,10 @@ const RoadmapSection = ({ section, isOpen, onToggle, delay, onToggleTask }) => {
                                         transition={{ delay: 0.1 + (dayIdx * 0.1), type: "spring", stiffness: 100 }}
                                         className="relative"
                                     >
-                                        <div className={`absolute -left-[3.25rem] top-1.5 w-3 h-3 rounded-full border-2 border-[#0A0A0A] ring-1 hidden sm:block transition-all duration-500 ${dayTask.items.every(i => i.completed) ? 'bg-green-500 ring-green-500/50 shadow-[0_0_10px_rgba(34,197,94,0.5)]' : 'bg-purple-500 ring-purple-500/50 animate-pulse shadow-[0_0_10px_rgba(168,85,247,0.5)]'}`} />
+                                        <div className={`absolute -left-[3.25rem] top-1.5 w-3 h-3 rounded-full border-2 border-[#0A0A0A] ring-1 hidden sm:block transition-all duration-500 ${dayTask.items.every(i => i.completed) ? 'bg-green-500 ring-green-500/50 shadow-[0_0_10px_rgba(34,197,94,0.5)]' : 'bg-amber-400 ring-amber-500/30'}`} />
 
                                         <h4 className="flex items-center gap-3 text-sm font-bold text-white mb-5 uppercase tracking-wider">
-                                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">Day {dayTask.day}</span>
+                                            <span className="text-amber-200">Day {dayTask.day}</span>
                                             <span className="h-px flex-1 bg-gradient-to-r from-white/10 to-transparent" />
                                         </h4>
 
@@ -268,18 +268,15 @@ const RoadmapSection = ({ section, isOpen, onToggle, delay, onToggleTask }) => {
                                             {dayTask.items.map((item, itemIdx) => (
                                                 <motion.div
                                                     key={itemIdx}
-                                                    whileHover={{ scale: 1.02, y: -2, backgroundColor: "rgba(255, 255, 255, 0.03)" }}
+                                                    whileHover={{ scale: 1.02, y: -1, backgroundColor: 'rgba(255, 255, 255, 0.035)' }}
                                                     whileTap={{ scale: 0.98 }}
-                                                    className={`group/card relative flex items-start gap-4 p-4 rounded-xl border transition-all duration-300 ${item.completed
-                                                        ? 'bg-gradient-to-br from-green-500/5 to-emerald-500/5 border-green-500/20'
-                                                        : 'bg-zinc-900/40 border-white/5 hover:border-purple-500/30 hover:shadow-lg hover:shadow-purple-500/5'
-                                                        }`}
+                                                    className={`group/card relative flex items-start gap-4 p-4 rounded-2xl border transition-all duration-300 ${item.completed ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-[#0F141A] border-white/5 hover:border-white/10'} `}
                                                 >
                                                     <button
                                                         onClick={() => onToggleTask(dayIdx, itemIdx)}
                                                         className={`mt-1 flex-shrink-0 w-5 h-5 rounded-md border flex items-center justify-center transition-all duration-300 ${item.completed
                                                             ? 'bg-green-500 border-green-500 text-black scale-100 shadow-[0_0_10px_rgba(34,197,94,0.4)]'
-                                                            : 'bg-transparent border-zinc-600 hover:border-purple-400 text-transparent scale-95 hover:scale-105 hover:bg-white/5'
+                                                            : 'bg-transparent border-zinc-600 hover:border-white/30 text-transparent scale-95 hover:scale-105 hover:bg-white/5'
                                                             }`}
                                                     >
                                                         <motion.div
@@ -305,7 +302,7 @@ const RoadmapSection = ({ section, isOpen, onToggle, delay, onToggleTask }) => {
                                                                     {item.difficulty || "Mixed"}
                                                                 </span>
                                                                 <motion.span
-                                                                    className="text-[10px] text-zinc-500 flex items-center gap-1 group-hover/card:text-purple-400 transition-colors ml-auto font-medium"
+                                                                    className="text-[10px] text-zinc-500 flex items-center gap-1 group-hover/card:text-amber-300 transition-colors ml-auto font-medium"
                                                                     whileHover={{ x: 2 }}
                                                                 >
                                                                     Solve <ArrowRight size={10} />
@@ -350,19 +347,19 @@ const RoadmapSidebar = ({
             initial={{ x: -50, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             transition={{ type: "spring", stiffness: 100, damping: 20 }}
-            className="w-80 h-full flex flex-col bg-[#050505] border-r border-white/5 shrink-0 z-30"
+            className="w-80 h-full flex flex-col bg-[#0B0F14] border-r border-white/5 shrink-0 z-30"
         >
             {/* Logo Section - Replaces Header */}
             <motion.div
-                className="flex items-center gap-4 p-6 mb-2 cursor-pointer group border-b border-white/5 relative overflow-hidden"
+                className="flex items-center gap-4 p-6 mb-2 cursor-pointer group border-b border-white/5 relative overflow-hidden bg-[#0B0F14]"
                 onClick={() => navigate('/dashboard')}
                 whileHover="hover"
             >
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <div className="absolute inset-0 bg-white/[0.02] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 <motion.img
                     src={logo_img}
                     alt="CodeHubx Logo"
-                    className="w-10 h-10 rounded-xl shadow-lg shadow-blue-500/10 z-10 object-cover"
+                    className="w-10 h-10 rounded-xl z-10 object-cover"
                     variants={{ hover: { rotate: [0, -5, 5, 0], scale: 1.05 } }}
                     transition={{ duration: 0.4 }}
                 />
@@ -370,12 +367,12 @@ const RoadmapSidebar = ({
                     <h1 className="text-xl font-bold font-sans bg-clip-text text-transparent bg-gradient-to-r from-white via-zinc-200 to-zinc-400 tracking-tight">
                         CodeHubx
                     </h1>
-                    <p className="text-[10px] text-zinc-500 font-medium tracking-widest uppercase group-hover:text-blue-400 transition-colors">Pro Dashboard</p>
+                    <p className="text-[10px] text-zinc-500 font-medium tracking-widest uppercase transition-colors">Pro Dashboard</p>
                 </div>
             </motion.div>
 
             {/* Controls - Scrollable part of sidebar */}
-            <div className="flex-1 overflow-y-auto px-6 py-6 space-y-10 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto px-6 py-6 space-y-8 custom-scrollbar">
 
                 {/* Timeline Control */}
                 <motion.div
@@ -401,24 +398,24 @@ const RoadmapSidebar = ({
 
                     <motion.div
                         whileHover={{ scale: 1.02 }}
-                        className={`p-4 rounded-xl border flex items-center gap-4 transition-all duration-300 ${isLocked ? 'bg-zinc-900/50 border-white/5 opacity-50 grayscale' : `bg-gradient-to-br from-${levelInfo.color}-500/10 to-transparent border-${levelInfo.color}-500/20`}`}
+                        className={`p-4 rounded-2xl border flex items-center gap-4 transition-all duration-300 ${isLocked ? 'bg-[#11161C] border-white/5 opacity-60 grayscale' : 'bg-[linear-gradient(135deg,rgba(245,158,11,0.10),rgba(245,158,11,0.03))] border-amber-500/25'}`}
                     >
-                        <div className={`p-2.5 rounded-lg bg-${levelInfo.color}-500/20 text-${levelInfo.color}-400 ring-1 ring-${levelInfo.color}-500/30`}>
+                        <div className="p-2.5 rounded-xl bg-amber-500/15 text-amber-300 ring-1 ring-amber-500/30">
                             {levelInfo.icon}
                         </div>
                         <div>
                             <p className="text-sm font-bold font-sans text-white tracking-tight">{levelInfo.label}</p>
-                            <p className="text-[10px] font-sans text-zinc-400 uppercase tracking-wide mt-0.5">Recommended Pace</p>
+                            <p className="text-[10px] font-sans text-amber-200/80 uppercase tracking-wide mt-0.5">Recommended Pace</p>
                         </div>
                     </motion.div>
 
                     <div className="grid grid-cols-1 gap-3">
                         {!isLocked ? (
                             <motion.button
-                                whileHover={{ scale: 1.02, backgroundColor: "#e4e4e7" }}
+                                whileHover={{ scale: 1.02, y: -1, backgroundColor: '#f3f4f6' }}
                                 whileTap={{ scale: 0.98 }}
                                 onClick={() => onToggleLock(true)}
-                                className="w-full px-4 py-2.5 bg-white text-black rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-[0_0_20px_-5px_rgba(255,255,255,0.3)] z-50 relative"
+                                className="w-full px-4 py-3 bg-[#F3F4F6] text-[#111827] rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all z-50 relative border border-white/40"
                             >
                                 <Play size={14} fill="currentColor" />
                                 Generate & Lock Plan
@@ -428,7 +425,7 @@ const RoadmapSidebar = ({
                                 whileHover={{ scale: 1.02, backgroundColor: "rgba(220, 38, 38, 0.15)", borderColor: "rgba(220, 38, 38, 0.4)" }}
                                 whileTap={{ scale: 0.98 }}
                                 onClick={() => onToggleLock(false)}
-                                className="w-full px-4 py-2.5 bg-red-500/10 border border-red-500/30 text-red-400 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-all backdrop-blur-sm"
+                                className="w-full px-4 py-3 bg-red-500/10 border border-red-500/30 text-red-300 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all"
                             >
                                 <Unlock size={14} />
                                 Unlock to Edit
@@ -456,16 +453,16 @@ const RoadmapSidebar = ({
                                     hidden: { opacity: 0, x: -10 },
                                     visible: { opacity: 1, x: 0 }
                                 }}
-                                whileHover={{ x: 4, backgroundColor: "rgba(255, 255, 255, 0.03)" }}
+                                whileHover={{ x: 2, backgroundColor: 'rgba(255, 255, 255, 0.02)' }}
                                 className={`w-full flex items-center gap-3 p-2.5 rounded-lg text-left transition-all group ${activeSection === section.slug
-                                    ? 'bg-purple-500/10 border border-purple-500/20 text-white shadow-sm'
+                                    ? 'bg-white/10 border border-white/10 text-white shadow-none'
                                     : 'border border-transparent text-zinc-400 hover:text-zinc-200'
                                     }`}
                             >
-                                <div className={`w-2 h-2 rounded-full ring-2 ring-offset-1 ring-offset-[#050505] transition-all duration-300 ${section.completed === section.totalProblems ? 'bg-green-500 ring-green-500/20' : activeSection === section.slug ? 'bg-purple-500 ring-purple-500/20' : 'bg-zinc-700 ring-transparent'}`} />
-                                <span className={`text-xs font-medium font-sans truncate flex-1 ${activeSection === section.slug ? 'text-purple-200' : ''}`}>{section.title}</span>
+                                <div className={`w-2 h-2 rounded-full ring-2 ring-offset-1 ring-offset-[#0B0F14] transition-all duration-300 ${section.completed === section.totalProblems ? 'bg-green-500 ring-green-500/20' : activeSection === section.slug ? 'bg-amber-400 ring-amber-500/30' : 'bg-zinc-700 ring-transparent'}`} />
+                                <span className={`text-xs font-medium font-sans truncate flex-1 ${activeSection === section.slug ? 'text-zinc-100' : ''}`}>{section.title}</span>
                                 {section.completed > 0 && (
-                                    <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${activeSection === section.slug ? 'bg-purple-500/20 text-purple-300' : 'bg-zinc-800 text-zinc-500'}`}>
+                                    <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${activeSection === section.slug ? 'bg-white/10 text-zinc-200' : 'bg-zinc-800 text-zinc-500'}`}>
                                         {Math.round((section.completed / section.totalProblems) * 100)}%
                                     </span>
                                 )}
@@ -480,13 +477,13 @@ const RoadmapSidebar = ({
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.5 }}
-                className="mt-auto pt-4 pb-6 px-4 border-t border-white/5 shrink-0 bg-[#050505]"
+                className="mt-auto pt-4 pb-6 px-4 border-t border-white/5 shrink-0 bg-[#0B0F14]"
             >
                 <div className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-colors cursor-pointer group border border-transparent hover:border-white/5">
                     <img
                         src={userData?.photoURL || currentUser?.photoURL || `https://api.dicebear.com/9.x/adventurer/svg?seed=${userData?.username || currentUser?.email?.split('@')[0] || 'User'}`}
                         alt="Profile"
-                        className="w-9 h-9 rounded-lg border border-white/10 group-hover:border-blue-500/50 transition-colors object-cover ring-2 ring-transparent group-hover:ring-blue-500/20"
+                        className="w-9 h-9 rounded-lg border border-white/10 transition-colors object-cover"
                         onClick={() => {
                             if (!userData?.profileCompleted) {
                                 navigate('/complete-profile');
@@ -502,7 +499,7 @@ const RoadmapSidebar = ({
                             navigate(`/${userData?.username}`);
                         }
                     }}>
-                        <h4 className="text-sm font-semibold font-sans text-white truncate group-hover:text-blue-400 transition-colors">
+                        <h4 className="text-sm font-semibold font-sans text-white truncate transition-colors">
                             {userData?.displayName || currentUser?.displayName || 'User'}
                         </h4>
                         <p className="text-[10px] text-zinc-500 truncate font-medium">@{userData?.username || 'user'}</p>
@@ -631,7 +628,7 @@ const DSARoadmap = ({ onBack }) => {
     const levelInfo = getLevelInfo(days);
 
     return (
-        <div className="fixed inset-0 top-0 z-10 flex bg-[#030303] text-white overflow-hidden font-sans">
+        <div className="fixed inset-0 top-0 z-10 flex bg-[#0B0F14] text-white overflow-hidden font-sans">
             {/* Left Sidebar */}
             <RoadmapSidebar
                 onBack={onBack}
@@ -648,12 +645,10 @@ const DSARoadmap = ({ onBack }) => {
             />
 
             {/* Main Content Area */}
-            <div className="flex-1 h-full overflow-y-auto custom-scrollbar relative bg-[#030303]">
+            <div className="flex-1 h-full overflow-y-auto custom-scrollbar relative bg-[#0B0F14]">
 
                 {/* Enhanced Background Ambient Effects */}
-                <div className="fixed top-0 right-0 w-[800px] h-[800px] bg-purple-900/5 rounded-full blur-[150px] pointer-events-none" />
-                <div className="fixed bottom-0 left-20 w-[600px] h-[600px] bg-blue-900/5 rounded-full blur-[150px] pointer-events-none" />
-
+                
                 <div className="p-10 max-w-5xl mx-auto space-y-8 pb-40">
                     {/* Header for Content Area */}
                     <motion.div
@@ -663,16 +658,16 @@ const DSARoadmap = ({ onBack }) => {
                         className="flex items-end justify-between mb-10 border-b border-white/5 pb-8"
                     >
                         <div>
-                            <h1 className="text-4xl font-bold font-sans tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-zinc-200 to-zinc-400 mb-2">
+                            <h1 className="text-4xl md:text-5xl font-bold font-sans tracking-tight text-white mb-2">
                                 Your Curriculum
                             </h1>
-                            <p className="text-zinc-500 font-sans text-base">Master Data Structures & Algorithms, one planned day at a time.</p>
+                            <p className="text-[#9CA3AF] font-sans text-base">Master Data Structures & Algorithms, one planned day at a time.</p>
                         </div>
                         {roadmap?.isLocked && (
                             <motion.div
                                 initial={{ scale: 0.9, opacity: 0 }}
                                 animate={{ scale: 1, opacity: 1 }}
-                                className="px-4 py-1.5 bg-emerald-500/5 border border-emerald-500/20 rounded-full text-emerald-400 text-xs font-bold uppercase tracking-wider flex items-center gap-2 shadow-[0_0_20px_-5px_rgba(16,185,129,0.2)]"
+                                className="px-4 py-1.5 bg-emerald-500/10 border border-emerald-500/30 rounded-full text-emerald-300 text-xs font-bold uppercase tracking-wider flex items-center gap-2"
                             >
                                 <Lock size={12} /> Plan Active
                             </motion.div>
@@ -691,13 +686,13 @@ const DSARoadmap = ({ onBack }) => {
                             >
                                 <div className="relative w-16 h-16">
                                     <motion.span
-                                        className="absolute top-0 left-0 w-full h-full border-2 border-purple-500/20 rounded-full"
+                                        className="absolute top-0 left-0 w-full h-full border-2 border-white/15 rounded-full"
                                         initial={{ scale: 0.8, opacity: 0 }}
                                         animate={{ scale: [1, 1.5, 1], opacity: [0.5, 0, 0.5] }}
                                         transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
                                     />
                                     <motion.span
-                                        className="absolute top-0 left-0 w-full h-full border-t-2 border-purple-500 rounded-full"
+                                        className="absolute top-0 left-0 w-full h-full border-t-2 border-amber-400/70 rounded-full"
                                         animate={{ rotate: 360 }}
                                         transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                                     />
