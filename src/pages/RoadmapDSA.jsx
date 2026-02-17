@@ -449,7 +449,6 @@ const RoadmapSection = ({ section, isOpen, onToggle, delay, onToggleTask }) => {
 const RoadmapSidebar = ({
     onBack,
     days,
-    setDays,
     isLocked,
     onToggleLock,
     onGenerate,
@@ -542,13 +541,13 @@ const RoadmapSidebar = ({
 
 
 
-                    <div className={isLocked ? "opacity-80 grayscale cursor-not-allowed" : ""}>
+                    <div className="opacity-80 grayscale cursor-not-allowed">
                         <FractionalPicker
-                            min={30}
-                            max={365}
+                            min={60}
+                            max={180}
                             value={days}
-                            onChange={(val) => !isLocked && setDays(val)}
-                            disabled={isLocked}
+                            onChange={() => { }}
+                            disabled
                             className="backdrop-blur-md bg-white/5 border border-white/10 shadow-inner rounded-xl"
                         />
                     </div>
@@ -689,8 +688,10 @@ const GOALS = {
     expert: 60,
 };
 
+const getGoalFromDays = (daysValue) => Object.keys(GOALS).find((key) => GOALS[key] === daysValue) || 'medium';
+
 const DSARoadmap = ({ onBack }) => {
-    const [selectedGoal, setSelectedGoal] = useState(null);
+    const [selectedGoal, setSelectedGoal] = useState('medium');
     const [days, setDays] = useState(GOALS["medium"]);
     const [roadmap, setRoadmap] = useState(null);
     const [expandedSection, setExpandedSection] = useState(null);
@@ -702,9 +703,12 @@ const DSARoadmap = ({ onBack }) => {
         if (saved) {
             const parsed = JSON.parse(saved);
             setRoadmap(parsed);
-            if (parsed.daysSelected) setDays(parsed.daysSelected);
+            if (parsed.daysSelected) {
+                setDays(parsed.daysSelected);
+                setSelectedGoal(getGoalFromDays(parsed.daysSelected));
+            }
         } else {
-            handleGenerate(90, false);
+            handleGenerate(GOALS.medium, false);
         }
     }, []);
 
@@ -809,12 +813,6 @@ const DSARoadmap = ({ onBack }) => {
             <RoadmapSidebar
                 onBack={onBack}
                 days={days}
-                setDays={(d) => {
-                    setDays(d);
-                    const matchedGoal = Object.keys(GOALS).find(key => GOALS[key] === d) || null;
-                    setSelectedGoal(matchedGoal);
-                    handleGenerate(d, true);
-                }}
                 isLocked={roadmap?.isLocked}
                 onToggleLock={toggleLock}
                 onGenerate={() => handleGenerate(days, true)}
@@ -919,35 +917,21 @@ const DSARoadmap = ({ onBack }) => {
                             >
                                 <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold mr-1">Select based on your goal</span>
                                 <div className="flex items-center gap-3 sm:gap-4">
-                                    {[
-                                        { label: 'Beginner', goal: 'beginner', questions: '365Q', color: 'text-purple-400', border: 'border-purple-500/20', bg: 'hover:bg-purple-500/10' },
-                                        { label: 'Medium', goal: 'medium', questions: '250Q', color: 'text-amber-400', border: 'border-amber-500/20', bg: 'hover:bg-amber-500/10' },
-                                        { label: 'Expert', goal: 'expert', questions: '100Q', color: 'text-rose-400', border: 'border-rose-500/20', bg: 'hover:bg-rose-500/10' }
-                                    ].map((preset) => {
-                                        const isSelected = selectedGoal === preset.goal;
-                                        // Show color if this is selected OR if nothing is selected yet
-                                        const showColor = isSelected || selectedGoal === null;
+                                    {Object.entries(GOALS).map(([goal, value]) => {
+                                        const isSelected = selectedGoal === goal;
 
                                         return (
                                             <button
-                                                key={preset.label}
-                                                onClick={() => handleGoalSelect(preset.goal)}
-                                                className={`px-4 py-2.5 rounded-xl border transition-all duration-300 flex flex-col items-center justify-center gap-0.5 group min-w-[90px] relative overflow-hidden backdrop-blur-sm cursor-pointer
-                                                    ${isSelected
-                                                        ? `bg-white/10 ring-1 ring-white/20 shadow-lg scale-105 ${preset.border}`
-                                                        : showColor
-                                                            ? `bg-white/5 border-white/10 hover:bg-white/10 hover:scale-105 hover:border-white/20`
-                                                            : 'bg-[#000000] border-zinc-900 opacity-30 hover:opacity-100 hover:border-zinc-800 scale-95 saturate-0'
-                                                    }`}
+                                                key={goal}
+                                                onClick={() => handleGoalSelect(goal)}
+                                                className={`px-6 py-3 rounded-xl border transition-all duration-200 cursor-pointer ${
+                                                    isSelected
+                                                        ? 'bg-white text-black border-white'
+                                                        : 'bg-transparent text-zinc-400 border-white/10 hover:border-white/30'
+                                                }`}
                                             >
-                                                {isSelected && (
-                                                    <div className={`absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none`} />
-                                                )}
-                                                <span className={`text-[10px] font-bold uppercase tracking-wider relative z-10 transition-colors ${showColor ? preset.color : 'text-zinc-600 group-hover:text-zinc-400'}`}>{preset.label}</span>
-                                                <div className="flex items-center gap-1 relative z-10">
-                                                    <span className={`text-xs font-mono font-bold transition-colors ${isSelected ? 'text-zinc-200' : showColor ? 'text-zinc-400 group-hover:text-zinc-200' : 'text-zinc-600 group-hover:text-zinc-400'}`}>{GOALS[preset.goal]}d</span>
-                                                    <span className={`text-[9px] font-medium transition-colors ${isSelected ? 'text-zinc-500' : showColor ? 'text-zinc-600 group-hover:text-zinc-500' : 'text-zinc-800 group-hover:text-zinc-600'}`}>({preset.questions})</span>
-                                                </div>
+                                                <div className="font-semibold uppercase">{goal}</div>
+                                                <div className="text-xs opacity-60">{value}d</div>
                                             </button>
                                         );
                                     })}
