@@ -36,6 +36,7 @@ const userSchema = new mongoose.Schema({
     leetcode: { type: String, default: "" }, // Added
     codeforces: { type: String, default: "" }, // Added
     skills: { type: [String], default: [] },
+    dsaRoadmap: { type: Object, default: null }, // Store roadmap state (isLocked, days, sections, etc.)
 
     // User Preferences
     preferences: {

@@ -398,6 +398,32 @@ router.put('/preferences/:uid', async (req, res) => {
     }
 });
 
+// Update User Roadmap State
+router.put('/roadmap/:uid', async (req, res) => {
+    try {
+        const { roadmap } = req.body;
+        if (!roadmap) {
+            return res.status(400).json({ error: "Missing roadmap data" });
+        }
+
+        console.log(`Saving roadmap for UID: ${req.params.uid}`);
+
+        const user = await User.findOne({ uid: req.params.uid });
+        if (!user) return res.status(404).json({ error: "User not found" });
+
+        user.dsaRoadmap = roadmap;
+        user.markModified('dsaRoadmap'); // Ensure mixed type changes are detected
+        await user.save();
+
+        await redis.del(`cache:/api/users/${req.params.uid}`);
+
+        res.json({ success: true, roadmap: user.dsaRoadmap });
+    } catch (err) {
+        console.error("Roadmap save error:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // Delete User
 router.delete('/:uid', async (req, res) => {
     try {

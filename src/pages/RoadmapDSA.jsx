@@ -544,7 +544,7 @@ const RoadmapSidebar = ({
 
                     <div className={isLocked ? "opacity-80 grayscale cursor-not-allowed" : ""}>
                         <FractionalPicker
-                            min={30}
+                            min={60}
                             max={365}
                             value={days}
                             onChange={(val) => !isLocked && setDays(val)}
@@ -690,6 +690,7 @@ const GOALS = {
 };
 
 const DSARoadmap = ({ onBack }) => {
+    const { currentUser, userData } = useAuth();
     const [selectedGoal, setSelectedGoal] = useState(null);
     const [days, setDays] = useState(GOALS["medium"]);
     const [roadmap, setRoadmap] = useState(null);
@@ -697,16 +698,63 @@ const DSARoadmap = ({ onBack }) => {
     const [showResetModal, setShowResetModal] = useState(false);
     const [isGenerating, setIsGenerating] = useState(false);
 
-    useEffect(() => {
-        const saved = localStorage.getItem('dsa-roadmap');
-        if (saved) {
-            const parsed = JSON.parse(saved);
-            setRoadmap(parsed);
-            if (parsed.daysSelected) setDays(parsed.daysSelected);
-        } else {
-            handleGenerate(90, false);
+    // Persist to LocalStorage & Backend
+    const saveRoadmap = async (newRoadmap) => {
+        setRoadmap(newRoadmap);
+        localStorage.setItem('dsa-roadmap', JSON.stringify(newRoadmap));
+
+        // If user is logged in and the roadmap is locked (active plan), sync to DB
+        if (currentUser && newRoadmap?.isLocked) {
+            try {
+                await fetch(`${API_URL}/api/users/roadmap/${currentUser.uid}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ roadmap: newRoadmap })
+                });
+            } catch (err) {
+                console.error("Failed to sync roadmap:", err);
+            }
         }
-    }, []);
+    };
+
+    // Load Roadmap on Mount
+    useEffect(() => {
+        // Priority 1: Backend Data (if locked/active)
+        if (userData?.dsaRoadmap && userData.dsaRoadmap.isLocked) {
+            setRoadmap(userData.dsaRoadmap);
+            if (userData.dsaRoadmap.daysSelected) {
+                setDays(userData.dsaRoadmap.daysSelected);
+                // Sync the selected goal badge
+                const matchedGoal = Object.keys(GOALS).find(key => GOALS[key] === userData.dsaRoadmap.daysSelected);
+                setSelectedGoal(matchedGoal || null);
+            }
+        }
+        // Priority 2: Local Storage
+        else {
+            const saved = localStorage.getItem('dsa-roadmap');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                setRoadmap(parsed);
+                if (parsed.daysSelected) {
+                    setDays(parsed.daysSelected);
+                    const matchedGoal = Object.keys(GOALS).find(key => GOALS[key] === parsed.daysSelected);
+                    setSelectedGoal(matchedGoal || null);
+                }
+            } else {
+                // Priority 3: Default Generation
+                handleGenerate(120, false); // Default to Medium (120d)
+                setSelectedGoal("medium");
+            }
+        }
+    }, [userData]); // Re-run if userData loads later
+
+    const handleDaysChange = (d) => {
+        setDays(d);
+        // Only auto-highlight if it matches exact preset
+        const matchedGoal = Object.keys(GOALS).find(key => GOALS[key] === d);
+        setSelectedGoal(matchedGoal || null);
+        handleGenerate(d, true);
+    };
 
     const handleGoalSelect = (goal) => {
         setSelectedGoal(goal);
@@ -718,8 +766,11 @@ const DSARoadmap = ({ onBack }) => {
     const handleGenerate = (selectedDays, mergeProgress = false) => {
         setIsGenerating(true);
         setTimeout(() => {
-            const newRoadmap = generateRoadmap(selectedDays);
+            const baseRoadmap = generateRoadmap(selectedDays);
+            const newRoadmap = { ...baseRoadmap, daysSelected: selectedDays, isLocked: roadmap?.isLocked || false };
+
             if (mergeProgress && roadmap) {
+                // Preserve completions
                 newRoadmap.sections = newRoadmap.sections.map(newSec => {
                     const oldSec = roadmap.sections.find(s => s.slug === newSec.slug);
                     if (oldSec && oldSec.completed > 0) {
@@ -739,10 +790,10 @@ const DSARoadmap = ({ onBack }) => {
                     return newSec;
                 });
             }
-            setRoadmap(newRoadmap);
-            localStorage.setItem('dsa-roadmap', JSON.stringify(newRoadmap));
+
+            saveRoadmap(newRoadmap);
             setIsGenerating(false);
-        }, 800); // Increased slightly for effect
+        }, 800);
     };
 
     const toggleTask = (sectionSlug, dayIdx, itemIdx) => {
@@ -764,15 +815,13 @@ const DSARoadmap = ({ onBack }) => {
             return section;
         });
         const newRoadmap = { ...roadmap, sections: updatedSections };
-        setRoadmap(newRoadmap);
-        localStorage.setItem('dsa-roadmap', JSON.stringify(newRoadmap));
+        saveRoadmap(newRoadmap);
     };
 
     const toggleLock = (isLocked) => {
         if (isLocked) {
             const updatedRoadmap = { ...roadmap, isLocked: true };
-            setRoadmap(updatedRoadmap);
-            localStorage.setItem('dsa-roadmap', JSON.stringify(updatedRoadmap));
+            saveRoadmap(updatedRoadmap);
         } else {
             setShowResetModal(true);
         }
@@ -780,8 +829,7 @@ const DSARoadmap = ({ onBack }) => {
 
     const confirmUnlock = () => {
         const updatedRoadmap = { ...roadmap, isLocked: false };
-        setRoadmap(updatedRoadmap);
-        localStorage.setItem('dsa-roadmap', JSON.stringify(updatedRoadmap));
+        saveRoadmap(updatedRoadmap);
         setShowResetModal(false);
     };
 
@@ -809,12 +857,7 @@ const DSARoadmap = ({ onBack }) => {
             <RoadmapSidebar
                 onBack={onBack}
                 days={days}
-                setDays={(d) => {
-                    setDays(d);
-                    const matchedGoal = Object.keys(GOALS).find(key => GOALS[key] === d) || null;
-                    setSelectedGoal(matchedGoal);
-                    handleGenerate(d, true);
-                }}
+                setDays={handleDaysChange}
                 isLocked={roadmap?.isLocked}
                 onToggleLock={toggleLock}
                 onGenerate={() => handleGenerate(days, true)}
@@ -1010,7 +1053,7 @@ const DSARoadmap = ({ onBack }) => {
                                 className="space-y-6"
                             >
                                 {roadmap?.sections.map((section, idx) => (
-                                    <div id={`section - ${section.slug} `} key={section.slug} className="scroll-mt-8">
+                                    <div id={`section-${section.slug}`} key={section.slug} className="scroll-mt-8">
                                         <RoadmapSection
                                             section={section}
                                             isOpen={expandedSection === section.slug}

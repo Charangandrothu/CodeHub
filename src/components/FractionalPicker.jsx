@@ -28,10 +28,9 @@ const FractionalPicker = ({ min = 30, max = 365, value, onChange, disabled, clas
         if (!isDragging && containerRef.current) {
             const index = (value - min) / step;
             const centerOffset = containerRef.current.clientWidth / 2;
+            // Check if significantly off to avoid jitter
             const targetScroll = index * itemWidth - centerOffset + itemWidth / 2;
-
-            // Only scroll if the difference is meaningful (prevents micro-jitters)
-            if (Math.abs(containerRef.current.scrollLeft - targetScroll) > 1) {
+            if (Math.abs(containerRef.current.scrollLeft - targetScroll) > itemWidth) {
                 containerRef.current.scrollLeft = targetScroll;
             }
         }
@@ -42,8 +41,7 @@ const FractionalPicker = ({ min = 30, max = 365, value, onChange, disabled, clas
         if (containerRef.current) {
             const scrollLeft = containerRef.current.scrollLeft;
             const centerOffset = containerRef.current.clientWidth / 2;
-            // Correct logic to find center: subtract half item width before dividing
-            const rawIndex = (scrollLeft + centerOffset - itemWidth / 2) / itemWidth;
+            const rawIndex = (scrollLeft + centerOffset) / itemWidth;
             const index = Math.max(0, Math.min(ticks.length - 1, Math.round(rawIndex)));
             const newValue = ticks[index];
 
@@ -52,6 +50,7 @@ const FractionalPicker = ({ min = 30, max = 365, value, onChange, disabled, clas
             }
         }
     };
+
 
     const handleMouseDown = (e) => {
         if (disabled) return;
