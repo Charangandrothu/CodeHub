@@ -1,93 +1,49 @@
 const express = require("express");
 const axios = require("axios");
 const redis = require("../config/redis");
+const { addJob } = require("./queue");
+const { generateDriverCode, executeWithPolling, languageIds } = require("../utils/judgeHelpers");
 
 const router = express.Router();
-
-// Judge0 language IDs
-const languageIds = {
-    javascript: 63,
-    python: 71,
-    cpp: 54,
-    java: 62
-};
 
 const Problem = require("../models/Problem");
 const User = require("../models/User");
 const Submission = require("../models/Submission");
 
-// Helper to normalize output for comparison
-const normalizeOutput = (str) => {
-    if (!str) return "";
-    // Trim leading/trailing whitespace and normalize newlines
-    return str.trim().replace(/\r\n/g, "\n");
-};
-
-// Helper to extract function signature
-const getFunctionSignature = (code, language) => {
+// Helper to extract function signature locally for /run
+const getLocalFunctionSignature = (code, language) => {
     if (language === 'python') {
         const match = code.match(/def\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(([^)]*)\):/);
-        if (match) {
-            return {
-                name: match[1],
-                args: match[2].split(',').map(arg => arg.trim()).filter(a => a)
-            };
-        }
+        if (match) return { name: match[1], args: match[2].split(',').map(arg => arg.trim()).filter(a => a) };
     } else if (language === 'javascript') {
-        // Matches "function twoSum(a, b)" or "const twoSum = (a, b) =>" or "var twoSum = function(a, b)"
         const matchFunc = code.match(/function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(([^)]*)\)/);
-        if (matchFunc) {
-            return {
-                name: matchFunc[1],
-                args: matchFunc[2].split(',').map(arg => arg.trim()).filter(a => a)
-            };
-        }
+        if (matchFunc) return { name: matchFunc[1], args: matchFunc[2].split(',').map(arg => arg.trim()).filter(a => a) };
         const matchArrow = code.match(/(?:const|let|var)\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*\(?([^)=]*)\)?\s*=>/);
-        if (matchArrow) {
-            return {
-                name: matchArrow[1],
-                args: matchArrow[2].split(',').map(arg => arg.trim()).filter(a => a)
-            };
-        }
+        if (matchArrow) return { name: matchArrow[1], args: matchArrow[2].split(',').map(arg => arg.trim()).filter(a => a) };
     }
     return null;
 };
 
-// Helper to generate full executable code (Driver Code)
-const generateDriverCode = (userCode, language, testCaseInput) => {
-    const signature = getFunctionSignature(userCode, language);
-
-    // If no function found, run raw code (fallback)
+// Helper to generate driver code locally for /run
+const generateLocalDriverCode = (userCode, language, testCaseInput) => {
+    const signature = getLocalFunctionSignature(userCode, language);
     if (!signature) return userCode;
 
     const { name, args } = signature;
-
-    // 1. Normalize Input: separate "var=val, var2=val2" into distinct lines
-    // Regex matches ", varname =" and replaces with "\nvarname ="
     const normalizedInput = testCaseInput.replace(/,\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*=/g, '\n$1 =');
-
-    // 2. Extract Values: strip "var =" if present, keep just the value
     const inputLines = normalizedInput.split('\n').filter(line => line.trim());
     const inputValues = inputLines.map(line => {
-        // Match "var = value", capture value. If not match, return line as is.
-        // Be careful not to match inside strings/arrays if possible, but this simple regex looks provided assignments.
         const match = line.match(/^\s*[a-zA-Z_][a-zA-Z0-9_]*\s*=\s*(.*)/);
         return match ? match[1] : line.trim();
     });
 
-    // 3. Map Values to Function Arguments
-    // We strictly assume input order matches argument order
-    // slice to safe bounds
     const argDefinitions = args.map((arg, i) => {
-        const val = inputValues[i] || 'undefined'; // fallback
+        const val = inputValues[i] || 'undefined';
         return { name: arg, value: val };
     });
 
-
     if (language === 'python') {
-        // Construct Python Definitions
         const pythonDefs = argDefinitions.map(def => `${def.name} = ${def.value}`).join('\n');
-
         return `
 import sys
 import json
@@ -103,15 +59,13 @@ ${pythonDefs.split('\n').map(l => '    ' + l).join('\n')}
     # Call solution
     result = ${name}(${args.join(', ')})
     
-    # Print result ensuring no 'null' is printed if function returns None (e.g. implies void/print-based function)
+    # Print result
     if result is not None:
         if isinstance(result, bool):
-             # JSON uses 'true'/'false', Python uses 'True'/'False'
             print("true" if result else "false")
         elif isinstance(result, str):
             print(result)
         else:
-            # json.dumps handles lists, dicts, strings, and nums perfectly
             print(json.dumps(result))                                                                   
         
 except Exception as e:
@@ -120,7 +74,6 @@ except Exception as e:
 `;
     } else if (language === 'javascript') {
         const jsDefs = argDefinitions.map(def => `let ${def.name} = ${def.value};`).join('\n');
-
         return `
 ${userCode}
 
@@ -146,58 +99,9 @@ try {
     return userCode;
 };
 
-// Helper: Execute with Optimized Polling (wait=true)
-const executeWithPolling = async (source_code, language_id, stdin) => {
-    try {
-        // 1. Create Submission with wait=true (tries to get result immediately)
-        const createRes = await axios.post(
-            "https://ce.judge0.com/submissions?base64_encoded=false&wait=true",
-            {
-                source_code,
-                language_id,
-                stdin
-            },
-            { headers: { "Content-Type": "application/json" } }
-        );
-
-        // If we got the result immediately, return it
-        if (createRes.data.status && createRes.data.status.id > 2) {
-            return createRes.data;
-        }
-
-        const token = createRes.data.token;
-        if (!token) throw new Error("Failed to get submission token from Judge0");
-
-        // 2. Poll for results (Fallback if wait=true timed out but returned token)
-        let attempts = 0;
-        const maxAttempts = 60; // 60 seconds max
-
-        while (attempts < maxAttempts) {
-            attempts++;
-            await new Promise(r => setTimeout(r, 200)); // Wait 200ms (faster polling)
-
-            const getRes = await axios.get(
-                `https://ce.judge0.com/submissions/${token}?base64_encoded=false&fields=stdout,stderr,status,compile_output`,
-                { headers: { "Content-Type": "application/json" } }
-            );
-
-            const statusId = getRes.data.status?.id;
-
-            // statusId 1 (In Queue) or 2 (Processing) -> continue polling
-            if (statusId && statusId > 2) {
-                return getRes.data; // Finished
-            }
-        }
-        throw new Error("Execution timed out (polling limit exceeded)");
-
-    } catch (err) {
-        throw new Error(`Judge0 Error: ${err.message}`);
-    }
-};
-
 // RUN Route - Executes code with given stdin
 router.post("/run", async (req, res) => {
-    const { code, language, stdin, userId } = req.body; // Added userId
+    const { code, language, stdin, userId } = req.body;
 
     try {
         let user = null;
@@ -208,7 +112,6 @@ router.post("/run", async (req, res) => {
                 const now = new Date();
                 const lastReset = user.stats.lastRunResetDate ? new Date(user.stats.lastRunResetDate) : new Date(0);
 
-                // Compare dates (ignoring time)
                 const isSameDay = now.getDate() === lastReset.getDate() &&
                     now.getMonth() === lastReset.getMonth() &&
                     now.getFullYear() === lastReset.getFullYear();
@@ -219,7 +122,6 @@ router.post("/run", async (req, res) => {
                     await user.save();
                 }
 
-                // Check Credits
                 if (!user.isPro && user.stats.runCredits <= 0) {
                     return res.status(403).json({
                         error: "Daily Run Limit Exceeded",
@@ -231,10 +133,8 @@ router.post("/run", async (req, res) => {
             }
         }
 
-        // Apply Driver Code logic if applicable
-        const finalSourceCode = generateDriverCode(code, language, stdin || "");
-
-        // Determine if we need to pass stdin (fallback mode)
+        // Use local logic or helper if available
+        const finalSourceCode = generateLocalDriverCode(code, language, stdin || "");
         const effectiveStdin = (finalSourceCode !== code) ? "" : (stdin || "");
 
         // Execute with polling
@@ -244,18 +144,12 @@ router.post("/run", async (req, res) => {
             effectiveStdin
         );
 
-        // Deduct Run Credit ONLY on success
         if (user && !user.isPro) {
-            // Re-fetch to ensure we don't overwrite concurrent updates (though simplistic here)
-            // Ideally use $inc, but we need to check bounds. 
-            // Since we checked before, we can just decrement.
             await User.findOneAndUpdate(
                 { uid: userId, "stats.runCredits": { $gt: 0 } },
                 { $inc: { "stats.runCredits": -1 } }
             );
         }
-
-
 
         res.json({
             stdout: result.stdout,
@@ -272,10 +166,10 @@ router.post("/run", async (req, res) => {
     }
 });
 
-// SUBMIT Route - Judges correctness
+
+// SUBMIT Route - Queues execution
 router.post("/submit", async (req, res) => {
     const { code, language, problemId, userId } = req.body;
-
 
     if (!code || !language || !problemId || !userId) {
         return res.status(400).json({ error: "Missing required fields (including userId)" });
@@ -311,245 +205,19 @@ router.post("/submit", async (req, res) => {
             }
         }
 
-        const problem = await Problem.findById(problemId);
-        if (!problem) {
-            return res.status(404).json({ error: "Problem not found" });
-        }
-
-        const hiddenCases = problem.testCases?.hidden;
-
-        if (!hiddenCases || hiddenCases.length === 0) {
-            return res.status(400).json({ error: "No hidden test cases defined for this problem" });
-        }
-
-        // Parallel Execution
-        // Parallel Execution
-
-        const promises = hiddenCases.map(async (testCase, index) => {
-            // Generate Driver Code wrapping the user's function
-            const finalSourceCode = generateDriverCode(code, language, testCase.input);
-            // Check if we modified the code (embedded input)
-            const shouldUseStdin = (finalSourceCode === code);
-
-            try {
-                const result = await executeWithPolling(
-                    finalSourceCode,
-                    languageIds[language],
-                    shouldUseStdin ? testCase.input : ""
-                );
-                return { index, result, testCase, success: true };
-            } catch (err) {
-                return { index, error: err.message, testCase, success: false };
-            }
+        await addJob({
+            code,
+            language,
+            userId,
+            problemId
         });
 
-        const results = await Promise.all(promises);
-
-        // Process Results
-        // Find first failure
-        for (const res of results) {
-            if (!res.success) {
-                return res.json({
-                    verdict: "Runtime Error",
-                    stdout: "",
-                    stderr: "Execution failed: " + res.error,
-                    failedTestCase: null,
-                    totalTestCases: hiddenCases.length,
-                    passedTestCases: 0
-                });
-            }
-
-            const { result, testCase, index } = res;
-            const expectedOutput = normalizeOutput(testCase.output);
-            const statusId = result.status?.id;
-
-            if (statusId === 6 || result.compile_output) {
-                return res.json({
-                    verdict: "Compilation Error",
-                    stdout: "",
-                    stderr: result.compile_output || result.stderr,
-                    failedTestCase: null,
-                    totalTestCases: hiddenCases.length,
-                    passedTestCases: index // This is approximate in parallel
-                });
-            }
-
-            if (statusId === 5) {
-                return res.json({
-                    verdict: "Time Limit Exceeded",
-                    stdout: result.stdout || "",
-                    stderr: result.stderr || "Time limit exceeded",
-                    failedTestCase: {
-                        input: "Hidden Case",
-                        expected: "Hidden",
-                        actual: "Time Limit Exceeded"
-                    },
-                    totalTestCases: hiddenCases.length,
-                    passedTestCases: index
-                });
-            }
-
-            if (result.stderr || (statusId >= 7 && statusId <= 12)) {
-                return res.json({
-                    verdict: "Runtime Error",
-                    stdout: result.stdout || "",
-                    stderr: result.stderr || result.status?.description,
-                    failedTestCase: {
-                        input: "Hidden Case",
-                        expected: "Hidden",
-                        actual: "Runtime Error"
-                    },
-                    totalTestCases: hiddenCases.length,
-                    passedTestCases: index
-                });
-            }
-
-            const actualOutput = normalizeOutput(result.stdout);
-
-            if (actualOutput !== expectedOutput) {
-                return res.json({
-                    verdict: "Wrong Answer",
-                    stdout: result.stdout || "",
-                    stderr: "",
-                    failedTestCase: {
-                        input: "Hidden Case",
-                        expected: "Hidden",
-                        actual: "Hidden"
-                    },
-                    totalTestCases: hiddenCases.length,
-                    passedTestCases: index
-                });
-            }
-        }
-
-
-        // Update User Solved Problems
-        try {
-            const userUpdate = await User.findOne({ uid: userId });
-            if (userUpdate) {
-                // Ensure stats object structure exists (just in case)
-                if (!userUpdate.stats) userUpdate.stats = {};
-                if (!userUpdate.stats.solvedProblemIds) userUpdate.stats.solvedProblemIds = [];
-
-                // Add to submission history (Unique per problem)
-                const existingHistoryIndex = userUpdate.submissionHistory.findIndex(
-                    s => s.problemId === problemId
-                );
-
-                const historyEntry = {
-                    problemId: problemId,
-                    problemTitle: problem.title || "Unknown Problem",
-                    verdict: "Accepted",
-                    submittedAt: new Date()
-                };
-
-                if (existingHistoryIndex !== -1) {
-                    // Update existing
-                    userUpdate.submissionHistory[existingHistoryIndex] = historyEntry;
-                } else {
-                    // Add new
-                    userUpdate.submissionHistory.push(historyEntry);
-                }
-
-                if (!userUpdate.stats.solvedProblemIds.includes(problemId)) {
-                    userUpdate.stats.solvedProblemIds.push(problemId);
-                    userUpdate.stats.solvedProblems = userUpdate.stats.solvedProblemIds.length;
-
-                    // Advanced Streak Logic
-                    const now = new Date();
-                    const lastDate = userUpdate.stats.lastSolvedDate ? new Date(userUpdate.stats.lastSolvedDate) : null;
-
-                    // Reset time to midnight for accurate day comparison
-                    const todayMid = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-                    const lastMid = lastDate ? new Date(lastDate.getFullYear(), lastDate.getMonth(), lastDate.getDate()) : null;
-
-                    if (!lastMid) {
-                        // First problem ever solved
-                        userUpdate.stats.streak = 1;
-                    } else {
-                        const diffTime = Math.abs(todayMid - lastMid);
-                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-                        if (diffDays === 1) {
-                            // Solved yesterday -> Increment streak
-                            userUpdate.stats.streak = (userUpdate.stats.streak || 0) + 1;
-                        } else if (diffDays > 1) {
-                            // Missed one or more days -> Reset streak to 1 (for today)
-                            userUpdate.stats.streak = 1;
-                        }
-                        // If diffDays === 0 (solved previously today), do NOT increment
-                    }
-
-                    // Update last solved date to now
-                    userUpdate.stats.lastSolvedDate = now;
-                }
-
-                await userUpdate.save();
-
-                // Invalidate user cache
-                await redis.del(`cache:/api/users/${userId}`);
-                if (userUpdate.username) {
-                    await redis.del(`cache:/api/users/handle/${userUpdate.username}`);
-                }
-            }
-        } catch (updateErr) {
-            console.error("Failed to update user stats:", updateErr);
-        }
-
-        // Calculate Stats
-        let maxTime = 0;
-        let maxMemory = 0;
-
-        for (const res of results) {
-            if (res.result) {
-                const t = parseFloat(res.result.time) || 0;
-                const m = parseFloat(res.result.memory) || 0;
-                if (t > maxTime) maxTime = t;
-                if (m > maxMemory) maxMemory = m;
-            }
-        }
-
-        // Store Unique Submission
-        await Submission.findOneAndUpdate(
-            { userId: userId, problemId: problemId },
-            {
-                code: code,
-                language: language,
-                verdict: "Accepted",
-                runtime: maxTime,
-                memory: maxMemory,
-                submittedAt: new Date()
-            },
-            { upsert: true, new: true }
-        );
-
-        // Deduct Submission Credit ONLY on success (and if not Pro)
-        if (!user.isPro) {
-            await User.findOneAndUpdate(
-                { uid: userId, "stats.submissionCredits": { $gt: 0 } },
-                { $inc: { "stats.submissionCredits": -1 } }
-            );
-        }
-
-        res.json({
-            verdict: "Accepted",
-            stdout: "All test cases passed",
-            stderr: "",
-            failedTestCase: null,
-            totalTestCases: hiddenCases.length,
-            passedTestCases: hiddenCases.length,
-            time: maxTime,
-            memory: maxMemory
-        });
+        res.json({ message: "Submission queued" });
 
     } catch (error) {
         res.status(500).json({
-            verdict: "Runtime Error",
-            stdout: "",
-            stderr: "Execution timed out or server error: " + error.message,
-            failedTestCase: null,
-            totalTestCases: 0,
-            passedTestCases: 0
+            error: "Failed to queue submission",
+            details: error.message
         });
     }
 });
