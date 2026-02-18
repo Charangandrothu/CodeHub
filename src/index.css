@@ -27,7 +27,6 @@ body {
 }
 
 
-
 @layer utilities {
   .glass-card {
     background: rgba(255, 255, 255, 0.03);
@@ -41,6 +40,30 @@ body {
     background-clip: text;
     -webkit-text-fill-color: transparent;
   }
+
+  /* SVG Background Patterns */
+  .bg-grid-white\/\[0\.02\] {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' width='32' height='32' fill='none' stroke='rgb(255 255 255 / 0.02)'%3e%3cpath d='M0 .5H31.5V32'/%3e%3c/svg%3e");
+  }
+
+  /* Linear Mask for Border */
+  .mask-linear-gradient {
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+  }
+}
+
+/* Animations */
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-\[shimmer\_1\.5s\_infinite\] {
+  animation: shimmer 1.5s infinite;
 }
 
 #root {

@@ -8,6 +8,7 @@ import { getAuth, EmailAuthProvider, reauthenticateWithCredential } from 'fireba
 import logo_img from '../assets/logo_img.png';
 
 import FractionalPicker from '../components/FractionalPicker';
+import { API_URL } from '../config';
 
 // --- Utility Components ---
 
@@ -690,7 +691,7 @@ const GOALS = {
 };
 
 const DSARoadmap = ({ onBack }) => {
-    const { currentUser, userData } = useAuth();
+    const { currentUser, userData, refreshUserData } = useAuth(); // Destructure refreshUserData
     const [selectedGoal, setSelectedGoal] = useState(null);
     const [days, setDays] = useState(GOALS["medium"]);
     const [roadmap, setRoadmap] = useState(null);
@@ -699,18 +700,24 @@ const DSARoadmap = ({ onBack }) => {
     const [isGenerating, setIsGenerating] = useState(false);
 
     // Persist to LocalStorage & Backend
+    // Persist to LocalStorage & Backend
     const saveRoadmap = async (newRoadmap) => {
         setRoadmap(newRoadmap);
         localStorage.setItem('dsa-roadmap', JSON.stringify(newRoadmap));
 
-        // If user is logged in and the roadmap is locked (active plan), sync to DB
-        if (currentUser && newRoadmap?.isLocked) {
+        // Sync to DB if user is logged in (regardless of lock status so they don't lose progress)
+        if (currentUser) {
             try {
-                await fetch(`${API_URL}/api/users/roadmap/${currentUser.uid}`, {
+                const res = await fetch(`${API_URL}/api/users/roadmap/${currentUser.uid}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ roadmap: newRoadmap })
                 });
+
+                if (res.ok) {
+                    // Update global context so RightPanel gets the new data immediately
+                    await refreshUserData();
+                }
             } catch (err) {
                 console.error("Failed to sync roadmap:", err);
             }
@@ -719,8 +726,8 @@ const DSARoadmap = ({ onBack }) => {
 
     // Load Roadmap on Mount
     useEffect(() => {
-        // Priority 1: Backend Data (if locked/active)
-        if (userData?.dsaRoadmap && userData.dsaRoadmap.isLocked) {
+        // Priority 1: Backend Data (if exists)
+        if (userData?.dsaRoadmap) {
             setRoadmap(userData.dsaRoadmap);
             if (userData.dsaRoadmap.daysSelected) {
                 setDays(userData.dsaRoadmap.daysSelected);
@@ -798,22 +805,35 @@ const DSARoadmap = ({ onBack }) => {
 
     const toggleTask = (sectionSlug, dayIdx, itemIdx) => {
         if (!roadmap) return;
+
         const updatedSections = roadmap.sections.map(section => {
             if (section.slug === sectionSlug) {
-                const updatedTasks = [...section.tasks];
-                const day = { ...updatedTasks[dayIdx] };
-                const items = [...day.items];
-                const item = { ...items[itemIdx] };
-                const wasCompleted = item.completed;
-                item.completed = !wasCompleted;
-                items[itemIdx] = item;
-                day.items = items;
-                updatedTasks[dayIdx] = day;
-                const completedCount = section.completed + (wasCompleted ? -1 : 1);
-                return { ...section, tasks: updatedTasks, completed: completedCount };
+                // Update specific task item
+                const updatedTasks = section.tasks.map((day, dIndex) => {
+                    if (dIndex === dayIdx) {
+                        return {
+                            ...day,
+                            items: day.items.map((item, iIndex) => {
+                                if (iIndex === itemIdx) {
+                                    return { ...item, completed: !item.completed };
+                                }
+                                return item;
+                            })
+                        };
+                    }
+                    return day;
+                });
+
+                // Recalculate total completed count dynamically to ensure accuracy
+                const newCompletedCount = updatedTasks.reduce((acc, day) => {
+                    return acc + day.items.filter(i => i.completed).length;
+                }, 0);
+
+                return { ...section, tasks: updatedTasks, completed: newCompletedCount };
             }
             return section;
         });
+
         const newRoadmap = { ...roadmap, sections: updatedSections };
         saveRoadmap(newRoadmap);
     };
