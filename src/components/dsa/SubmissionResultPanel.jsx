@@ -5,6 +5,23 @@ import { CheckCircle2, AlertCircle, Terminal, XCircle, Clock, Database } from 'l
 const SubmissionResultPanel = ({ submissionResult, output }) => {
     if (!submissionResult) return null;
 
+    // Handle Queued State
+    if (submissionResult.verdict === "Queued") {
+        return (
+            <div className="h-full flex flex-col items-center justify-center gap-4 text-center p-8">
+                <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    className="w-12 h-12 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full"
+                />
+                <div>
+                    <h3 className="text-lg font-bold text-white mb-1">Processing Submission...</h3>
+                    <p className="text-sm text-zinc-500">Your code is being evaluated in the background.</p>
+                </div>
+            </div>
+        );
+    }
+
     const isSuccess = ['Accepted', 'Passed'].includes(submissionResult.verdict);
     const isError = ['Runtime Error', 'Compilation Error', 'Time Limit Exceeded'].includes(submissionResult.verdict);
     const isWrong = submissionResult.verdict === 'Wrong Answer';
@@ -76,8 +93,32 @@ const SubmissionResultPanel = ({ submissionResult, output }) => {
             </motion.div>
 
             {/* Details Section */}
-            {(submissionResult.details || output) && (
+            {(submissionResult.details || output || submissionResult.time) && (
                 <motion.div variants={item} className="space-y-4 flex-1 overflow-visible">
+
+                    {/* Stats Row */}
+                    {(submissionResult.time || submissionResult.memory) && (
+                        <div className="flex gap-4">
+                            <div className="flex-1 bg-[#111] border border-zinc-800 rounded-xl p-3 flex items-center gap-3">
+                                <div className="p-2 bg-purple-500/10 rounded-lg text-purple-400">
+                                    <Clock size={16} />
+                                </div>
+                                <div>
+                                    <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-wider">Runtime</p>
+                                    <p className="text-sm font-mono text-zinc-300">{submissionResult.time} ms</p>
+                                </div>
+                            </div>
+                            <div className="flex-1 bg-[#111] border border-zinc-800 rounded-xl p-3 flex items-center gap-3">
+                                <div className="p-2 bg-blue-500/10 rounded-lg text-blue-400">
+                                    <Database size={16} />
+                                </div>
+                                <div>
+                                    <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-wider">Memory</p>
+                                    <p className="text-sm font-mono text-zinc-300">{submissionResult.memory} MB</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Only show details if they exist and aren't just redundant success messages */}
                     {submissionResult.details && (
