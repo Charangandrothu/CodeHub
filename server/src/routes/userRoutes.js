@@ -424,6 +424,19 @@ router.put('/roadmap/:uid', async (req, res) => {
     }
 });
 
+// Get User Roadmap
+router.get('/roadmap/:uid', cacheMiddleware(300), async (req, res) => {
+    try {
+        const user = await User.findOne({ uid: req.params.uid }).select('dsaRoadmap');
+        if (!user) return res.status(404).json({ error: "User not found" });
+
+        res.json({ roadmap: user.dsaRoadmap || null });
+    } catch (err) {
+        console.error("Roadmap fetch error:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // Delete User
 router.delete('/:uid', async (req, res) => {
     try {
@@ -431,6 +444,9 @@ router.delete('/:uid', async (req, res) => {
         if (result.deletedCount === 0) {
             return res.status(404).json({ error: "User not found" });
         }
+        // Invalidate cache
+        await redis.del(`cache:/api/users/${req.params.uid}`);
+
         res.json({ message: "User deleted successfully" });
     } catch (error) {
         res.status(500).json({ error: error.message });
