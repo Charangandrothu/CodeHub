@@ -466,7 +466,12 @@ export default function QuestionPage() {
     const submitCode = async () => {
         setRunStatus("submitting");
         setActiveTab("submissions");
-        setSubmissionResult(null);
+        setSubmissionResult({
+            verdict: "Queued",
+            details: "Submission queued for processing...",
+            type: 'submit',
+            submittedAt: new Date().toISOString()
+        });
 
         try {
             // Optimistic Check
@@ -477,9 +482,11 @@ export default function QuestionPage() {
                     message: "You have used all your free submissions."
                 });
                 setRunStatus("idle");
+                setSubmissionResult(null);
                 return;
             }
 
+            // 1. Trigger Submission (Queued)
             const res = await fetch(`${API_URL}/api/execute/submit`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -487,7 +494,7 @@ export default function QuestionPage() {
                     code,
                     language,
                     problemId: problem._id,
-                    userId: currentUser?.uid // Pass Firebase UID
+                    userId: currentUser?.uid
                 })
             });
 
@@ -502,6 +509,7 @@ export default function QuestionPage() {
                             type: 'submit',
                             message: data.details
                         });
+                        setSubmissionResult(null);
                         setRunStatus("idle");
                         return;
                     }
@@ -518,26 +526,62 @@ export default function QuestionPage() {
                 return;
             }
 
-            // If Accepted/Passed, refresh user data to update 'Solved' status in DSA page
-            if (['Accepted', 'Passed'].includes(data.verdict)) {
-                if (refreshUserData) refreshUserData();
-            } else {
-                if (refreshUserData) refreshUserData(); // Also refresh to update credits on failure? Logic says yes.
-            }
+            // 2. Poll for Result
+            const pollInterval = setInterval(async () => {
+                try {
+                    const pollRes = await fetch(`${API_URL}/api/execute/submission/${problem._id}?userId=${currentUser.uid}`);
+                    if (pollRes.ok) {
+                        const submissionData = await pollRes.json();
 
-            setSubmissionResult({
-                verdict: data.verdict,
-                details: data.stderr || "",
-                failedTestCase: data.failedTestCase,
-                time: data.time ? (parseFloat(data.time) * 1000).toFixed(2) : "N/A",
-                memory: data.memory ? (parseFloat(data.memory) / 1024).toFixed(2) : "N/A",
-                passedTestCases: data.passedTestCases,
-                totalTestCases: data.totalTestCases,
-                type: 'submit',
-                submittedAt: new Date().toISOString()
-            });
+                        // Check if we have a valid result (not null/pending if that was a state)
+                        // Our backend currently creates the submission record ONLY when done or failed.
+                        // So if we get a record, it's likely done. 
+                        // However, if we eventually add "Processing" state to DB, this needs a check.
+                        // For now, existence implies done.
 
-            setRunStatus("idle");
+                        if (submissionData) {
+                            clearInterval(pollInterval);
+
+                            // If Accepted/Passed, refresh user data
+                            if (['Accepted', 'Passed'].includes(submissionData.verdict)) {
+                                if (refreshUserData) refreshUserData();
+                            } else {
+                                if (refreshUserData) refreshUserData(); // Refresh for credits deduction
+                            }
+
+                            setSubmissionResult({
+                                verdict: submissionData.verdict,
+                                details: submissionData.stderr || "", // Assuming stderr is helpful
+                                failedTestCase: null, // Queued logic might not return detailed failed case inGET yet, or we need to ensure GET returns it. 
+                                // UPDATE: The GET endpoint returns the whole submission document. 
+                                // The Submission model generally has: verdict, runtime, memory.
+                                // It MIGHT NOT have failedTestCase details if the model doesn't store them.
+                                // If we need failedTestCase, we might need to store it in Submission model or return it differently.
+                                // For now, we map what we have.
+                                time: submissionData.runtime ? (parseFloat(submissionData.runtime) * 1000).toFixed(2) : "N/A",
+                                memory: submissionData.memory ? (parseFloat(submissionData.memory) / 1024).toFixed(2) : "N/A",
+                                passedTestCases: submissionData.passedTestCases || 0, // Ensure these are saved in DB if needed
+                                totalTestCases: submissionData.totalTestCases || 0,
+                                type: 'submit',
+                                submittedAt: submissionData.submittedAt
+                            });
+                            setRunStatus("idle");
+                        }
+                    }
+                } catch (pollErr) {
+                    console.error("Polling error:", pollErr);
+                    // Don't clear immediately, retry
+                }
+            }, 2000); // Check every 2 seconds
+
+            // Timeout after 30 seconds
+            setTimeout(() => {
+                clearInterval(pollInterval);
+                if (runStatus === "submitting") { // If still running
+                    setRunStatus("idle");
+                    // Optional: set timed out status
+                }
+            }, 30000);
 
         } catch (err) {
             setSubmissionResult({ verdict: "Error", details: err.message, type: 'submit' });

@@ -1,9 +1,11 @@
 import React from 'react';
-import { CheckCircle2, Flame, Rocket, Star, Zap, Brain } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { CheckCircle2, Flame, Rocket, Star, Zap, Brain, Map, ArrowRight } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 export default function RightPanel() {
     const { userData } = useAuth();
+    const navigate = useNavigate();
 
     // Calculate daily progress
     const dailyGoal = 3;
@@ -15,8 +17,139 @@ export default function RightPanel() {
 
     const progressPercentage = Math.min((dailySolved / dailyGoal) * 100, 100);
 
+    const hasRoadmap = userData?.dsaRoadmap?.isLocked;
+
     return (
-        <div className="hidden xl:flex w-80 flex-shrink-0 flex-col gap-6 sticky top-24 h-[calc(100vh-100px)] overflow-y-auto custom-scrollbar pb-10">
+        <div className="hidden xl:flex w-80 flex-shrink-0 flex-col gap-6 sticky top-6 h-[calc(100vh-24px)] overflow-y-auto custom-scrollbar pb-10">
+
+            {/* Dynamic Roadmap Progress / Setup CTA */}
+            {hasRoadmap ? (
+                <div
+                    className="relative p-6 rounded-3xl overflow-hidden border border-white/10 group flex-shrink-0 cursor-pointer transition-all duration-500 hover:border-emerald-500/40 hover:shadow-[0_0_40px_-10px_rgba(16,185,129,0.3)] hover:-translate-y-1"
+                    onClick={() => navigate('/roadmap/dsa')}
+                >
+                    {/* Background Gradients */}
+                    <div className="absolute inset-0 bg-[#0a0a0a] z-0" />
+                    <div className="absolute inset-0 bg-grid-white/[0.02] bg-[length:16px_16px] z-0" />
+                    <div className="absolute -top-10 -right-10 w-40 h-40 bg-emerald-500/10 blur-[80px] rounded-full group-hover:bg-emerald-500/20 transition-colors duration-500" />
+                    <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-cyan-500/10 blur-[80px] rounded-full group-hover:bg-cyan-500/20 transition-colors duration-500" />
+
+                    {/* Animated Border Gradient */}
+                    <div className="absolute inset-0 rounded-3xl p-[1px] bg-gradient-to-br from-white/10 to-white/0 mask-linear-gradient z-[1]" />
+
+                    <div className="relative z-10 flex flex-col h-full justify-between gap-4">
+                        <div>
+                            {(() => {
+                                const sections = userData?.dsaRoadmap?.sections || [];
+                                const totalProblems = sections.reduce((acc, sec) => acc + (sec.totalProblems || 0), 0);
+                                const completedProblems = sections.reduce((acc, sec) => acc + (sec.completed || 0), 0);
+                                const percent = totalProblems > 0 ? Math.round((completedProblems / totalProblems) * 100) : 0;
+
+                                // Calculate Current Day dynamically
+                                let currentDay = 1;
+                                let isCompleted = false;
+
+                                // Flatten all days from all sections
+                                const allDays = sections.flatMap(section => section.tasks || []);
+
+                                if (allDays.length > 0) {
+                                    // Sort by day number to be safe
+                                    allDays.sort((a, b) => a.day - b.day);
+
+                                    // Find first day where not all items are completed
+                                    const activeDayObj = allDays.find(day => day.items.some(item => !item.completed));
+
+                                    if (activeDayObj) {
+                                        currentDay = activeDayObj.day;
+                                    } else {
+                                        isCompleted = true;
+                                        currentDay = allDays[allDays.length - 1].day;
+                                    }
+                                }
+
+                                return (
+                                    <>
+                                        <div className="flex justify-between items-start mb-2 relative">
+                                            <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 mb-2">
+                                                <Rocket size={18} />
+                                            </div>
+                                            <span className={`px-2 py-1 rounded-full text-[10px] font-bold border transition-colors ${isCompleted
+                                                ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                                                : 'bg-white/5 border-white/5 text-slate-400 group-hover:text-white'}`}>
+                                                {isCompleted ? 'Completed' : `Day ${currentDay}`}
+                                            </span>
+                                        </div>
+
+                                        <h3 className="text-base font-bold text-white mb-1 group-hover:text-emerald-200 transition-colors">
+                                            {userData?.dsaRoadmap?.daysSelected || 120} Day Plan
+                                        </h3>
+
+                                        <div className="space-y-2 mt-2">
+                                            <div className="flex justify-between text-xs font-medium text-slate-400">
+                                                <span>Progress</span>
+                                                <span className="text-white">{percent}%</span>
+                                            </div>
+                                            <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+                                                <div
+                                                    className="h-full bg-gradient-to-r from-emerald-500 to-cyan-500 transition-all duration-1000"
+                                                    style={{ width: `${percent}%` }}
+                                                />
+                                            </div>
+                                            <p className="text-[10px] text-slate-500 mt-1">
+                                                {completedProblems} of {totalProblems} problems solved
+                                            </p>
+                                        </div>
+                                    </>
+                                );
+                            })()}
+                        </div>
+
+                        <button className="relative w-full py-3 rounded-xl overflow-hidden group/btn bg-white text-black font-bold text-xs uppercase tracking-wider hover:bg-zinc-200 transition-colors flex items-center justify-center gap-2">
+                            Visit Roadmap
+                            <ArrowRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />
+                        </button>
+                    </div>
+                </div>
+            ) : (
+                <div
+                    className="relative p-6 rounded-3xl overflow-hidden border border-white/10 group flex-shrink-0 cursor-pointer transition-all duration-500 hover:border-white/20 hover:shadow-[0_0_40px_-10px_rgba(255,255,255,0.1)] hover:-translate-y-1"
+                    onClick={() => navigate('/roadmap/dsa')}
+                >
+                    {/* Background Gradients */}
+                    <div className="absolute inset-0 bg-[#0a0a0a] z-0" />
+                    <div className="absolute inset-0 bg-grid-white/[0.02] bg-[length:16px_16px] z-0" />
+                    <div className="absolute -top-10 -right-10 w-40 h-40 bg-purple-500/10 blur-[80px] rounded-full group-hover:bg-purple-500/20 transition-colors duration-500" />
+                    <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-blue-500/10 blur-[80px] rounded-full group-hover:bg-blue-500/20 transition-colors duration-500" />
+
+                    {/* Animated Border Gradient */}
+                    <div className="absolute inset-0 rounded-3xl p-[1px] bg-gradient-to-br from-white/10 to-white/0 mask-linear-gradient z-[1]" />
+
+                    <div className="relative z-10 flex flex-col h-full justify-between gap-4">
+                        <div>
+                            <div className="flex justify-between items-start mb-2">
+                                <div className="p-2 rounded-xl bg-white/5 border border-white/10 text-white mb-2">
+                                    <Map size={18} />
+                                </div>
+                                <span className="px-2 py-1 rounded-full text-[10px] font-bold bg-white/5 border border-white/5 text-slate-400 group-hover:text-white transition-colors">
+                                    Recommended
+                                </span>
+                            </div>
+
+                            <h3 className="text-base font-bold text-white mb-1 group-hover:text-white transition-colors">
+                                Setup Study Plan
+                            </h3>
+                            <p className="text-xs text-slate-400 leading-relaxed group-hover:text-slate-300 transition-colors">
+                                Get a personalized day-by-day roadmap to master DSA efficiently.
+                            </p>
+                        </div>
+
+                        <button className="relative w-full py-3 rounded-xl overflow-hidden group/btn bg-white text-black font-bold text-xs uppercase tracking-wider hover:bg-zinc-200 transition-colors flex items-center justify-center gap-2">
+                            Start Now
+                            <ArrowRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* Premium Daily Goal Card */}
             <div className="relative p-6 rounded-3xl overflow-hidden border border-white/10 group flex-shrink-0">
