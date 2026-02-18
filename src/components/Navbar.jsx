@@ -79,9 +79,9 @@ const Navbar = () => {
 
   const handleLogout = async () => {
     try {
-      await logout();
       setShowProfileMenu(false);
-      navigate('/login');
+      navigate('/');
+      await logout();
     } catch (error) {
       console.error("Failed to log out", error);
     }

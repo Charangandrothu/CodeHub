@@ -46,8 +46,8 @@ const AdminLayout = () => {
 
     const handleLogout = async () => {
         try {
+            navigate('/');
             await logout();
-            navigate('/login');
         } catch (error) {
             console.error("Logout failed", error);
         }

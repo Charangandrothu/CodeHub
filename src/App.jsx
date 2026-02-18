@@ -145,10 +145,11 @@ const ConditionalNavbar = () => {
   const isDSAPage = location.pathname.startsWith('/dsa');
   const isAdminPage = location.pathname.startsWith('/admin');
   const isRoadmapDSAPage = location.pathname.startsWith('/roadmap/dsa');
+  const isLoginPage = location.pathname === '/login';
 
   return (
     <AnimatePresence>
-      {!isDSAPage && !isAdminPage && !isRoadmapDSAPage && <Navbar key="navbar" />}
+      {!isDSAPage && !isAdminPage && !isRoadmapDSAPage && !isLoginPage && <Navbar key="navbar" />}
     </AnimatePresence>
   );
 };
@@ -156,7 +157,7 @@ const ConditionalNavbar = () => {
 function App() {
   return (
     <Router>
-      <div className="bg-[#0a0a0a] min-h-screen text-white">
+      <div className="bg-[#0a0a0a] min-h-screen text-white relative">
         <ScrollToTop />
         <ErrorBoundary>
           <ConditionalNavbar />
