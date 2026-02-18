@@ -1,85 +1,140 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Code2, Server, Loader2 } from 'lucide-react';
+import React from 'react';
+import { motion } from 'framer-motion';
 
 const LoadingScreen = () => {
-    const [showLongWaitMessage, setShowLongWaitMessage] = useState(false);
-
-    useEffect(() => {
-        // If loading takes more than 2.5 seconds, we assume the server is waking up
-        const timer = setTimeout(() => {
-            setShowLongWaitMessage(true);
-        }, 2500);
-
-        return () => clearTimeout(timer);
+    // Memoize random values or just plain static array for symbols since we don't need re-renders
+    const floatingSymbols = React.useMemo(() => {
+        return [...Array(10)].map((_, i) => ({
+            id: i,
+            icon: ['{', '}', '</>', '01', '//', ';;', '()', '[]'][i % 8],
+            initialX: Math.random() * (typeof window !== 'undefined' ? window.innerWidth : 1000),
+            initialY: Math.random() * (typeof window !== 'undefined' ? window.innerHeight : 800),
+            duration: Math.random() * 8 + 8, // Slower duration for minimal feel
+            delay: Math.random() * 2
+        }));
     }, []);
 
-    return (
-        <div className="fixed inset-0 bg-[#0a0a0a] flex flex-col items-center justify-center z-[100] text-white p-4">
-            <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="flex flex-col items-center max-w-md text-center"
-            >
-                <div className="relative mb-8">
-                    {/* Glow effect */}
-                    <div className="absolute inset-0 bg-blue-500/20 blur-2xl rounded-full" />
+    const text = "CodeHub";
 
-                    <div className="relative bg-[#111] p-5 rounded-2xl border border-white/10 shadow-2xl z-10">
-                        <Code2 className="w-10 h-10 text-blue-500" />
+    return (
+        <motion.div
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5, ease: "easeInOut" }}
+            className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#050505] overflow-hidden"
+        >
+            {/* Background Texture */}
+            <div className="absolute inset-0 opacity-20 pointer-events-none"
+                style={{
+                    backgroundImage: 'radial-gradient(circle at 50% 50%, #1a1a1a 1px, transparent 1px)',
+                    backgroundSize: '24px 24px'
+                }}
+            />
+
+            {/* Subtle Floating Symbols */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                {floatingSymbols.map((symbol) => (
+                    <motion.div
+                        key={symbol.id}
+                        className="absolute text-white/5 font-mono text-xl font-bold"
+                        initial={{
+                            x: symbol.initialX,
+                            y: symbol.initialY,
+                            opacity: 0
+                        }}
+                        animate={{
+                            y: [symbol.initialY, symbol.initialY - 50],
+                            opacity: [0, 0.1, 0] // Lower opacity for subtleness
+                        }}
+                        transition={{
+                            duration: symbol.duration,
+                            repeat: Infinity,
+                            ease: "easeInOut",
+                            delay: symbol.delay
+                        }}
+                    >
+                        {symbol.icon}
+                    </motion.div>
+                ))}
+            </div>
+
+            {/* Main Content */}
+            <div className="relative z-10 flex flex-col items-center">
+                {/* Logo & Brand */}
+                <motion.div
+                    initial={{ scale: 0.9, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ duration: 0.8 }}
+                    className="flex flex-col items-center mb-10"
+                >
+                    <div className="flex items-center gap-1 mb-4">
+                        {/* Logo Icon */}
+                        <motion.div
+                            animate={{
+                                scale: [1, 1.05, 1],
+                                opacity: [0.8, 1, 0.8]
+                            }}
+                            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                            className="relative"
+                        >
+                            <img src="/logopng111.png" alt="CodeHub Logo" className="w-16 h-16 md:w-20 md:h-20 object-contain drop-shadow-[0_0_15px_rgba(59,130,246,0.5)]" />
+                        </motion.div>
                     </div>
 
-                    {/* Animated rings */}
-                    <motion.div
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                        className="absolute -inset-2 border border-blue-500/20 rounded-full border-t-blue-500/60 z-0"
-                    />
-                    <motion.div
-                        animate={{ rotate: -360 }}
-                        transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
-                        className="absolute -inset-4 border border-purple-500/10 rounded-full border-b-purple-500/40 z-0"
-                    />
-                </div>
-
-                <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent mb-6">
-                    CodeHubx
-                </h2>
-
-                <div className="min-h-[60px] flex flex-col items-center justify-center w-full">
-                    <AnimatePresence mode="wait">
-                        {showLongWaitMessage ? (
-                            <motion.div
-                                key="long-wait"
+                    <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-white flex items-center">
+                        {text.split('').map((char, i) => (
+                            <motion.span
+                                key={i}
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -10 }}
-                                className="flex flex-col items-center gap-3"
+                                transition={{ delay: i * 0.05 + 0.2, duration: 0.5 }}
                             >
-                                <div className="flex items-center gap-2 text-amber-400 bg-amber-400/10 px-4 py-2 rounded-full border border-amber-400/20">
-                                    <Server className="w-4 h-4 animate-pulse" />
-                                    <span className="text-sm font-medium">Waking up server...</span>
-                                </div>
-                                <p className="text-xs text-gray-500 max-w-[250px] leading-relaxed">
-                                    This may take up to 60 seconds as our backend services spin up from cold start.
-                                </p>
-                            </motion.div>
-                        ) : (
+                                {char}
+                            </motion.span>
+                        ))}
+                        <motion.span
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ delay: 0.6, duration: 0.5 }}
+                            className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 ml-0.5 drop-shadow-[0_0_10px_rgba(168,85,247,0.5)]"
+                        >
+                            X
+                        </motion.span>
+                    </h1>
+                </motion.div>
+
+                {/* Minimal Loading Indicator */}
+                <div className="flex flex-col items-center gap-4">
+                    <div className="flex gap-1.5">
+                        {[0, 1, 2].map((i) => (
                             <motion.div
-                                key="loading"
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -10 }}
-                                className="flex items-center gap-2 text-gray-400"
-                            >
-                                <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
-                                <span className="text-sm">Initializing application...</span>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
+                                key={i}
+                                className="w-1.5 h-1.5 bg-blue-500 rounded-full"
+                                animate={{
+                                    scale: [1, 1.5, 1],
+                                    opacity: [0.4, 1, 0.4]
+                                }}
+                                transition={{
+                                    duration: 1,
+                                    repeat: Infinity,
+                                    delay: i * 0.2,
+                                    ease: "easeInOut"
+                                }}
+                            />
+                        ))}
+                    </div>
+
+                    <motion.p
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 0.6 }}
+                        transition={{ delay: 0.5 }}
+                        className="text-[10px] uppercase tracking-[0.3em] text-white font-medium"
+                    >
+                        Loading
+                    </motion.p>
                 </div>
-            </motion.div>
-        </div>
+            </div>
+        </motion.div>
     );
 };
 
