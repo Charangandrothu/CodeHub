@@ -3,6 +3,7 @@ import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from '../firebase';
 import { getUserDocument } from '../services/userService';
 import LoadingScreen from '../components/LoadingScreen';
+import { AnimatePresence, motion } from 'framer-motion';
 
 import { API_URL } from '../config';
 
@@ -145,7 +146,15 @@ export const AuthProvider = ({ children }) => {
 
     return (
         <AuthContext.Provider value={value}>
-            {loading ? <LoadingScreen /> : children}
+            <AnimatePresence mode="wait">
+                {loading ? (
+                    <LoadingScreen key="auth-loader" />
+                ) : (
+                    <motion.div key="auth-content" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                        {children}
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </AuthContext.Provider>
     );
 };

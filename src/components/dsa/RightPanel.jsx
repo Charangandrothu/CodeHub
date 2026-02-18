@@ -45,25 +45,31 @@ export default function RightPanel() {
                                 const completedProblems = sections.reduce((acc, sec) => acc + (sec.completed || 0), 0);
                                 const percent = totalProblems > 0 ? Math.round((completedProblems / totalProblems) * 100) : 0;
 
-                                // Calculate Current Day dynamically
+                                // Calculate Current Day dynamically based on TIME, not progress
+                                const startDate = userData?.dsaRoadmap?.startDate;
                                 let currentDay = 1;
                                 let isCompleted = false;
 
-                                // Flatten all days from all sections
-                                const allDays = sections.flatMap(section => section.tasks || []);
-
-                                if (allDays.length > 0) {
-                                    // Sort by day number to be safe
-                                    allDays.sort((a, b) => a.day - b.day);
-
-                                    // Find first day where not all items are completed
-                                    const activeDayObj = allDays.find(day => day.items.some(item => !item.completed));
-
-                                    if (activeDayObj) {
-                                        currentDay = activeDayObj.day;
-                                    } else {
-                                        isCompleted = true;
-                                        currentDay = allDays[allDays.length - 1].day;
+                                if (startDate) {
+                                    const start = new Date(startDate);
+                                    start.setHours(0, 0, 0, 0);
+                                    const today = new Date();
+                                    today.setHours(0, 0, 0, 0);
+                                    const diffTime = today - start;
+                                    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                                    currentDay = Math.max(1, diffDays + 1);
+                                } else {
+                                    // Fallback to progress-based if no start date (old roadmaps)
+                                    const allDays = sections.flatMap(section => section.tasks || []);
+                                    if (allDays.length > 0) {
+                                        allDays.sort((a, b) => a.day - b.day);
+                                        const activeDayObj = allDays.find(day => day.items.some(item => !item.completed));
+                                        if (activeDayObj) {
+                                            currentDay = activeDayObj.day;
+                                        } else {
+                                            isCompleted = true;
+                                            currentDay = allDays[allDays.length - 1].day;
+                                        }
                                     }
                                 }
 
