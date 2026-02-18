@@ -206,6 +206,7 @@ const TOPIC_ICONS = {
 };
 
 const RoadmapSection = ({ section, isOpen, onToggle, delay, onToggleTask, roadmapStartDate }) => {
+    const activeDayRef = useRef(null);
     const progress = Math.round((section.completed / section.totalProblems) * 100) || 0;
     const isCompleted = section.completed === section.totalProblems;
     const topicColor = TOPIC_COLORS[section.slug] || TOPIC_COLORS.default;
@@ -256,6 +257,14 @@ const RoadmapSection = ({ section, isOpen, onToggle, delay, onToggleTask, roadma
     };
 
     const currentDay = getCurrentDay();
+
+    useEffect(() => {
+        if (isOpen && activeDayRef.current) {
+            setTimeout(() => {
+                activeDayRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 500);
+        }
+    }, [isOpen]);
 
     return (
         <motion.div
@@ -401,11 +410,11 @@ const RoadmapSection = ({ section, isOpen, onToggle, delay, onToggleTask, roadma
 
                             <div className="space-y-8">
                                 {section.tasks.map((dayTask, dayIdx) => {
-                                    const isLocked = dayTask.day > currentDay;
+                                    const isLocked = false; // Disabled future locking as per user request
                                     return (
                                         <motion.div
                                             key={dayIdx}
-                                            ref={isToday(dayTask.day) ? todayRef : null}
+                                            ref={isToday(dayTask.day) ? activeDayRef : null}
                                             initial={{ opacity: 0, x: -20 }}
                                             animate={{ opacity: 1, x: 0 }}
                                             transition={{
@@ -425,10 +434,10 @@ const RoadmapSection = ({ section, isOpen, onToggle, delay, onToggleTask, roadma
                                             <h4 className="flex items-center gap-3 text-xs font-bold text-white mb-4 uppercase tracking-wider">
                                                 <span
                                                     className={`px-2.5 py-1 rounded border transition-colors ${isToday(dayTask.day)
-                                                            ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-400 ring-1 ring-emerald-500/30"
-                                                            : isLocked
-                                                                ? "bg-zinc-800/50 border-zinc-700/50 text-zinc-500"
-                                                                : "bg-white/5 border-white/10"
+                                                        ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-400 ring-1 ring-emerald-500/30"
+                                                        : isLocked
+                                                            ? "bg-zinc-800/50 border-zinc-700/50 text-zinc-500"
+                                                            : "bg-white/5 border-white/10"
                                                         }`}
                                                     style={{ color: !isToday(dayTask.day) && !isLocked ? topicColor : undefined }}
                                                 >
