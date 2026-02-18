@@ -121,10 +121,13 @@ export const AuthProvider = ({ children }) => {
     const refreshUserData = async () => {
         if (currentUser) {
             try {
-                // Use getUserDocument for refresh (lighter than sync)
-                const data = await getUserDocument(currentUser.uid);
-                if (isMounted.current) {
-                    setUserData(data);
+                // Fetch directly from API to ensure we get fresh (or cached) data including roadmap
+                const res = await fetch(`${API_URL}/api/users/${currentUser.uid}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (isMounted.current) {
+                        setUserData(data);
+                    }
                 }
             } catch (err) {
                 console.error("Failed to refresh user data:", err);
