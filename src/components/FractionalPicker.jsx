@@ -31,7 +31,7 @@ const FractionalPicker = ({ min = 30, max = 365, value, onChange, disabled, clas
             // Check if significantly off to avoid jitter
             const targetScroll = index * itemWidth - centerOffset + itemWidth / 2;
             if (Math.abs(containerRef.current.scrollLeft - targetScroll) > itemWidth) {
-                containerRef.current.scrollLeft = targetScroll;
+                containerRef.current.scrollTo({ left: targetScroll, behavior: 'smooth' });
             }
         }
     }, [value, min, step, isDragging]);

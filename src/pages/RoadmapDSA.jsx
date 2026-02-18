@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { generateRoadmap } from '../utils/roadmapGenerator';
@@ -205,11 +205,57 @@ const TOPIC_ICONS = {
     'dynamic-programming': Brain,
 };
 
-const RoadmapSection = ({ section, isOpen, onToggle, delay, onToggleTask }) => {
+const RoadmapSection = ({ section, isOpen, onToggle, delay, onToggleTask, roadmapStartDate }) => {
     const progress = Math.round((section.completed / section.totalProblems) * 100) || 0;
     const isCompleted = section.completed === section.totalProblems;
     const topicColor = TOPIC_COLORS[section.slug] || TOPIC_COLORS.default;
     const Icon = TOPIC_ICONS[section.slug] || Layers;
+
+    const getDayLabel = (dayNum) => {
+        if (!roadmapStartDate) return `Day ${dayNum}`;
+
+        const start = new Date(roadmapStartDate);
+        // Reset time to midnight for accurate day calculation
+        start.setHours(0, 0, 0, 0);
+
+        const targetDate = new Date(start);
+        targetDate.setDate(targetDate.getDate() + (dayNum - 1));
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const diffTime = targetDate - today;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays === 0) return `Day ${dayNum} • Today`;
+        if (diffDays === 1) return `Day ${dayNum} • Tomorrow`;
+        if (diffDays === -1) return `Day ${dayNum} • Yesterday`;
+
+        // Format: Day X • Mon, Aug 12
+        return `Day ${dayNum} • ${targetDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}`;
+    };
+
+    const isToday = (dayNum) => {
+        if (!roadmapStartDate) return false;
+        const start = new Date(roadmapStartDate);
+        start.setHours(0, 0, 0, 0);
+        const targetDate = new Date(start);
+        targetDate.setDate(targetDate.getDate() + (dayNum - 1));
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return targetDate.getTime() === today.getTime();
+    };
+
+    const getCurrentDay = () => {
+        if (!roadmapStartDate) return Infinity; // If not started, show all
+        const start = new Date(roadmapStartDate);
+        start.setHours(0, 0, 0, 0);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return Math.floor((today - start) / (1000 * 60 * 60 * 24)) + 1;
+    };
+
+    const currentDay = getCurrentDay();
 
     return (
         <motion.div
@@ -354,88 +400,116 @@ const RoadmapSection = ({ section, isOpen, onToggle, delay, onToggleTask }) => {
                             />
 
                             <div className="space-y-8">
-                                {section.tasks.map((dayTask, dayIdx) => (
-                                    <motion.div
-                                        key={dayIdx}
-                                        initial={{ opacity: 0, x: -20 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        transition={{
-                                            delay: 0.2 + (dayIdx * 0.1),
-                                            type: "spring",
-                                            stiffness: 50,
-                                            damping: 15
-                                        }}
-                                        className="relative"
-                                    >
-                                        <div className={`absolute -left-[3.15rem] top-2.5 w-3 h-3 rounded-full border-2 hidden sm:block transition-all duration-500 z-10 ${dayTask.items.every(i => i.completed)
-                                            ? 'bg-emerald-500 border-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]'
-                                            : 'bg-[#0a0a0a] border-zinc-700'
-                                            }`}
-                                        />
+                                {section.tasks.map((dayTask, dayIdx) => {
+                                    const isLocked = dayTask.day > currentDay;
+                                    return (
+                                        <motion.div
+                                            key={dayIdx}
+                                            ref={isToday(dayTask.day) ? todayRef : null}
+                                            initial={{ opacity: 0, x: -20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            transition={{
+                                                delay: 0.2 + (dayIdx * 0.1),
+                                                type: "spring",
+                                                stiffness: 50,
+                                                damping: 15
+                                            }}
+                                            className={`relative ${isLocked ? 'opacity-80 grayscale-[0.5]' : ''}`}
+                                        >
+                                            <div className={`absolute -left-[3.15rem] top-2.5 w-3 h-3 rounded-full border-2 hidden sm:block transition-all duration-500 z-10 ${dayTask.items.every(i => i.completed)
+                                                ? 'bg-emerald-500 border-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]'
+                                                : isLocked ? 'bg-zinc-800 border-zinc-700' : 'bg-[#0a0a0a] border-zinc-700'
+                                                }`}
+                                            />
 
-                                        <h4 className="flex items-center gap-3 text-xs font-bold text-white mb-4 uppercase tracking-wider">
-                                            <span className="px-2.5 py-1 rounded bg-white/5 border border-white/10" style={{ color: topicColor }}>
-                                                Day {dayTask.day}
-                                            </span>
-                                            <span className="h-[1px] flex-1 bg-gradient-to-r from-white/10 to-transparent" />
-                                        </h4>
-
-                                        <div className="grid gap-3 md:grid-cols-2">
-                                            {dayTask.items.map((item, itemIdx) => (
-                                                <motion.div
-                                                    key={itemIdx}
-                                                    whileHover={{ scale: 1.01, y: -2 }}
-                                                    whileTap={{ scale: 0.99 }}
-                                                    className={`group/card relative flex items-start gap-3 p-4 rounded-xl border transition-all duration-300 ${item.completed
-                                                        ? 'bg-emerald-950/20 border-emerald-500/20'
-                                                        : 'bg-white/[0.03] border-white/5 hover:bg-white/[0.05]'
+                                            <h4 className="flex items-center gap-3 text-xs font-bold text-white mb-4 uppercase tracking-wider">
+                                                <span
+                                                    className={`px-2.5 py-1 rounded border transition-colors ${isToday(dayTask.day)
+                                                            ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-400 ring-1 ring-emerald-500/30"
+                                                            : isLocked
+                                                                ? "bg-zinc-800/50 border-zinc-700/50 text-zinc-500"
+                                                                : "bg-white/5 border-white/10"
                                                         }`}
-                                                    style={!item.completed ? {
-                                                        borderColor: 'rgba(255,255,255,0.05)',
-                                                    } : {}}
+                                                    style={{ color: !isToday(dayTask.day) && !isLocked ? topicColor : undefined }}
                                                 >
-                                                    <button
-                                                        onClick={() => onToggleTask(dayIdx, itemIdx)}
-                                                        className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all duration-300 ${item.completed
-                                                            ? 'bg-emerald-500 border-emerald-500 text-black shadow-[0_0_15px_rgba(16,185,129,0.3)]'
-                                                            : 'bg-transparent border-zinc-600 group-hover/card:border-white/40'
-                                                            }`}
-                                                    >
-                                                        {item.completed && <Check size={12} strokeWidth={4} />}
-                                                    </button>
+                                                    {isLocked && <Lock size={10} className="inline mr-1.5 -mt-0.5" />}
+                                                    {getDayLabel(dayTask.day)}
+                                                </span>
+                                                {isLocked && (
+                                                    <span className="text-[10px] text-zinc-600 font-medium normal-case tracking-normal">
+                                                        Unlocks in {dayTask.day - currentDay} day{dayTask.day - currentDay > 1 ? 's' : ''}
+                                                    </span>
+                                                )}
+                                                <span className="h-[1px] flex-1 bg-gradient-to-r from-white/10 to-transparent" />
+                                            </h4>
 
-                                                    <div className="flex-1 min-w-0">
-                                                        <a href={item.link} target="_blank" rel="noopener noreferrer" className="block cursor-pointer">
-                                                            <div className="flex justify-between items-start gap-2">
-                                                                <p className={`font-semibold font-sans text-sm leading-snug transition-all duration-300 ${item.completed
-                                                                    ? 'text-zinc-500 line-through decoration-zinc-700'
-                                                                    : 'text-zinc-300 group-hover/card:text-white'
-                                                                    }`}>
-                                                                    {item.text}
-                                                                </p>
-                                                            </div>
-                                                            <div className="flex items-center gap-3 mt-3">
-                                                                <span className={`text-[10px] px-2 py-0.5 rounded font-bold tracking-wide border ${item.type === 'Easy' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' :
-                                                                    item.type === 'Hard' ? 'bg-rose-500/10 border-rose-500/20 text-rose-400' :
-                                                                        'bg-blue-500/10 border-blue-500/20 text-blue-400'
-                                                                    }`}>
-                                                                    {item.difficulty || "MIXED"}
-                                                                </span>
-                                                                <div className="h-px bg-white/10 flex-1" />
-                                                                <motion.span
-                                                                    className="text-[10px] text-zinc-500 flex items-center gap-1 group-hover/card:text-white transition-colors font-medium"
-                                                                    whileHover={{ x: 2 }}
-                                                                >
-                                                                    Solve <ArrowRight size={10} />
-                                                                </motion.span>
-                                                            </div>
-                                                        </a>
+                                            <div className={`grid gap-3 md:grid-cols-2 relative`}>
+                                                {isLocked && (
+                                                    <div className="absolute inset-0 z-20 backdrop-blur-[2px] bg-black/5 rounded-xl border border-white/5 flex items-center justify-center">
+                                                        <div className="px-4 py-2 bg-black/80 rounded-lg border border-white/10 text-xs font-medium text-zinc-400 flex items-center gap-2 shadow-xl">
+                                                            <Lock size={12} />
+                                                            Locked until {new Date(new Date(roadmapStartDate).getTime() + (dayTask.day - 1) * 86400000).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                                        </div>
                                                     </div>
-                                                </motion.div>
-                                            ))}
-                                        </div>
-                                    </motion.div>
-                                ))}
+                                                )}
+
+                                                {dayTask.items.map((item, itemIdx) => (
+                                                    <motion.div
+                                                        key={itemIdx}
+                                                        whileHover={!isLocked ? { scale: 1.01, y: -2 } : {}}
+                                                        whileTap={!isLocked ? { scale: 0.99 } : {}}
+                                                        className={`group/card relative flex items-start gap-3 p-4 rounded-xl border transition-all duration-300 ${item.completed
+                                                            ? 'bg-emerald-950/20 border-emerald-500/20'
+                                                            : 'bg-white/[0.03] border-white/5 hover:bg-white/[0.05]'
+                                                            }`}
+                                                        style={!item.completed ? {
+                                                            borderColor: 'rgba(255,255,255,0.05)',
+                                                        } : {}}
+                                                    >
+                                                        <button
+                                                            onClick={() => !isLocked && onToggleTask(dayIdx, itemIdx)}
+                                                            disabled={isLocked}
+                                                            className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all duration-300 ${item.completed
+                                                                ? 'bg-emerald-500 border-emerald-500 text-black shadow-[0_0_15px_rgba(16,185,129,0.3)]'
+                                                                : 'bg-transparent border-zinc-600 group-hover/card:border-white/40'
+                                                                } ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                        >
+                                                            {item.completed && <Check size={12} strokeWidth={4} />}
+                                                        </button>
+
+                                                        <div className="flex-1 min-w-0">
+                                                            <a href={!isLocked ? item.link : undefined} target={!isLocked ? "_blank" : undefined} rel="noopener noreferrer" className={`block ${isLocked ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
+                                                                <div className="flex justify-between items-start gap-2">
+                                                                    <p className={`font-semibold font-sans text-sm leading-snug transition-all duration-300 ${item.completed
+                                                                        ? 'text-zinc-500 line-through decoration-zinc-700'
+                                                                        : 'text-zinc-300 group-hover/card:text-white'
+                                                                        }`}>
+                                                                        {item.text}
+                                                                    </p>
+                                                                </div>
+                                                                <div className="flex items-center gap-3 mt-3">
+                                                                    <span className={`text-[10px] px-2 py-0.5 rounded font-bold tracking-wide border ${item.type === 'Easy' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' :
+                                                                        item.type === 'Hard' ? 'bg-rose-500/10 border-rose-500/20 text-rose-400' :
+                                                                            'bg-blue-500/10 border-blue-500/20 text-blue-400'
+                                                                        }`}>
+                                                                        {item.difficulty || "MIXED"}
+                                                                    </span>
+                                                                    <div className="h-px bg-white/10 flex-1" />
+                                                                    <motion.span
+                                                                        className="text-[10px] text-zinc-500 flex items-center gap-1 group-hover/card:text-white transition-colors font-medium"
+                                                                        whileHover={!isLocked ? { x: 2 } : {}}
+                                                                    >
+                                                                        {isLocked ? 'Locked' : 'Solve'} {!isLocked && <ArrowRight size={10} />}
+                                                                    </motion.span>
+                                                                </div>
+                                                            </a>
+                                                        </div>
+                                                    </motion.div>
+                                                ))}
+                                            </div>
+                                        </motion.div>
+                                    )
+                                })}
                             </div>
                         </div>
                     </motion.div>
@@ -462,6 +536,7 @@ const RoadmapSidebar = ({
 }) => {
     const navigate = useNavigate();
     const { currentUser, userData, logout } = useAuth(); // Added hooks
+    const [isUnlockHovered, setIsUnlockHovered] = useState(false);
 
     const levelStyles = {
         rose: {
@@ -552,6 +627,19 @@ const RoadmapSidebar = ({
                             disabled={isLocked}
                             className="backdrop-blur-md bg-white/5 border border-white/10 shadow-inner rounded-xl"
                         />
+                        <div className="flex justify-between items-center px-1 mt-2 min-h-[1.25rem]">
+                            <motion.span
+                                key={days}
+                                initial={{ opacity: 0, y: -5 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="text-[10px] text-zinc-500 font-medium w-full text-center"
+                            >
+                                {days === 180 && "Recommended for Beginner"}
+                                {days === 120 && "Recommended for Medium"}
+                                {days === 60 && "Recommended for Expert"}
+                                {![60, 120, 180].includes(days) && "Custom Duration"}
+                            </motion.span>
+                        </div>
                     </div>
 
                     <motion.div
@@ -578,20 +666,48 @@ const RoadmapSidebar = ({
                                 whileHover={{ scale: 1.02 }}
                                 whileTap={{ scale: 0.98 }}
                                 onClick={() => onToggleLock(true)}
-                                className="w-full px-4 py-3 bg-white text-black rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-[0_0_20px_-5px_rgba(255,255,255,0.4)] hover:shadow-white/20 z-50 relative border border-transparent"
+                                className="w-full px-4 py-3 bg-emerald-500 text-black rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-[0_0_20px_-5px_rgba(16,185,129,0.5)] hover:bg-emerald-400 hover:shadow-emerald-500/30 z-50 relative border border-transparent"
                             >
                                 <Play size={14} fill="currentColor" />
                                 Generate & Lock Plan
                             </motion.button>
                         ) : (
                             <motion.button
-                                whileHover={{ scale: 1.02, backgroundColor: "rgba(220, 38, 38, 0.15)", borderColor: "rgba(220, 38, 38, 0.4)" }}
-                                whileTap={{ scale: 0.98 }}
+                                onHoverStart={() => setIsUnlockHovered(true)}
+                                onHoverEnd={() => setIsUnlockHovered(false)}
                                 onClick={() => onToggleLock(false)}
-                                className="w-full px-4 py-3 bg-red-500/10 border border-red-500/30 text-red-400 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all backdrop-blur-sm"
+                                className={`w-full px-4 py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all duration-300 border backdrop-blur-sm ${isUnlockHovered
+                                    ? "bg-red-500/10 border-red-500/30 text-red-400 shadow-[0_0_20px_-5px_rgba(239,68,68,0.3)]"
+                                    : "bg-emerald-500/5 border-emerald-500/20 text-emerald-400 shadow-[0_0_20px_-5px_rgba(16,185,129,0.2)]"
+                                    }`}
                             >
-                                <Unlock size={14} />
-                                Unlock to Edit
+                                <AnimatePresence mode="wait" initial={false}>
+                                    {isUnlockHovered ? (
+                                        <motion.span
+                                            key="unlock"
+                                            initial={{ opacity: 0, y: 5 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, y: -5 }}
+                                            transition={{ duration: 0.15 }}
+                                            className="flex items-center gap-2"
+                                        >
+                                            <Unlock size={14} />
+                                            Unlock to Edit
+                                        </motion.span>
+                                    ) : (
+                                        <motion.span
+                                            key="locked"
+                                            initial={{ opacity: 0, y: -5 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, y: 5 }}
+                                            transition={{ duration: 0.15 }}
+                                            className="flex items-center gap-2"
+                                        >
+                                            <Lock size={14} />
+                                            Plan Active
+                                        </motion.span>
+                                    )}
+                                </AnimatePresence>
                             </motion.button>
                         )}
                     </div>
@@ -760,15 +876,25 @@ const DSARoadmap = ({ onBack }) => {
         // Only auto-highlight if it matches exact preset
         const matchedGoal = Object.keys(GOALS).find(key => GOALS[key] === d);
         setSelectedGoal(matchedGoal || null);
-        handleGenerate(d, true);
     };
 
     const handleGoalSelect = (goal) => {
         setSelectedGoal(goal);
         const newDays = GOALS[goal];
         setDays(newDays);
-        handleGenerate(newDays, true);
     };
+
+    // Debounced Generation Effect
+    useEffect(() => {
+        // Skip equality check for initial load if roadmap is null to ensure generation happens
+        if (roadmap?.daysSelected === days) return;
+
+        const timer = setTimeout(() => {
+            handleGenerate(days, true);
+        }, 600);
+
+        return () => clearTimeout(timer);
+    }, [days]);
 
     const handleGenerate = (selectedDays, mergeProgress = false) => {
         setIsGenerating(true);
@@ -840,7 +966,11 @@ const DSARoadmap = ({ onBack }) => {
 
     const toggleLock = (isLocked) => {
         if (isLocked) {
-            const updatedRoadmap = { ...roadmap, isLocked: true };
+            const updatedRoadmap = {
+                ...roadmap,
+                isLocked: true,
+                startDate: roadmap.startDate || new Date().toISOString() // Set dynamic start date if not exists or reset logic needed? User said "Plan Active". Let's assume preservation unless manual reset.
+            };
             saveRoadmap(updatedRoadmap);
         } else {
             setShowResetModal(true);
@@ -1078,8 +1208,9 @@ const DSARoadmap = ({ onBack }) => {
                                             section={section}
                                             isOpen={expandedSection === section.slug}
                                             onToggle={() => setExpandedSection(expandedSection === section.slug ? null : section.slug)}
-                                            delay={idx * 0.05}
                                             onToggleTask={(dayIdx, itemIdx) => toggleTask(section.slug, dayIdx, itemIdx)}
+                                            delay={idx * 0.1}
+                                            roadmapStartDate={roadmap?.isLocked ? roadmap.startDate : null}
                                         />
                                     </div>
                                 ))}
