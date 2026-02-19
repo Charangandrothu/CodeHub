@@ -1,9 +1,136 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, Edit2, Trash2, Save, X, Eye, EyeOff, Search } from 'lucide-react';
+import { Plus, Edit2, Trash2, Save, X, Eye, EyeOff, Search, ChevronDown, ChevronUp } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import Editor from '@monaco-editor/react';
 import { useAuth } from '../../context/AuthContext';
 import { API_URL } from '../../config';
+
+const DynamicTestCaseManager = ({ testCases, setTestCases }) => {
+    // Ensure we always have valid arrays to work with
+    const safeTestCases = {
+        visible: testCases?.visible || [],
+        hidden: testCases?.hidden || []
+    };
+
+    const [activeTab, setActiveTab] = useState('visible'); // visible, hidden
+
+    const addTestCase = () => {
+        const currentCases = safeTestCases[activeTab];
+        const newCase = activeTab === 'visible'
+            ? { input: '', output: '', explanation: '' }
+            : { input: '', output: '' };
+
+        setTestCases({
+            ...safeTestCases,
+            [activeTab]: [...currentCases, newCase]
+        });
+    };
+
+    const updateTestCase = (index, field, value) => {
+        const currentCases = safeTestCases[activeTab];
+        const updated = [...currentCases];
+        updated[index] = { ...updated[index], [field]: value };
+        setTestCases({
+            ...safeTestCases,
+            [activeTab]: updated
+        });
+    };
+
+    const removeTestCase = (index) => {
+        const currentCases = safeTestCases[activeTab];
+        const updated = currentCases.filter((_, i) => i !== index);
+        setTestCases({
+            ...safeTestCases,
+            [activeTab]: updated
+        });
+    };
+
+    return (
+        <div className="flex flex-col h-full border border-gray-800 rounded-xl overflow-hidden bg-[#161616]">
+            {/* Header Tabs */}
+            <div className="flex border-b border-gray-800 bg-[#1a1a1a]">
+                <button
+                    onClick={() => setActiveTab('visible')}
+                    className={`flex-1 py-3 text-sm font-medium transition-colors ${activeTab === 'visible' ? 'text-white bg-[#222]' : 'text-gray-500 hover:text-gray-300'}`}
+                >
+                    Visible Cases ({safeTestCases.visible.length})
+                </button>
+                <button
+                    onClick={() => setActiveTab('hidden')}
+                    className={`flex-1 py-3 text-sm font-medium transition-colors ${activeTab === 'hidden' ? 'text-white bg-[#222]' : 'text-gray-500 hover:text-gray-300'}`}
+                >
+                    Hidden Cases ({safeTestCases.hidden.length})
+                </button>
+            </div>
+
+            {/* List */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                {safeTestCases[activeTab].map((tc, idx) => (
+                    <div key={idx} className="bg-[#0a0a0a] rounded-lg border border-gray-800 p-4 relative group">
+                        <button
+                            onClick={() => removeTestCase(idx)}
+                            className="absolute top-2 right-2 p-1.5 text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                            <Trash2 size={14} />
+                        </button>
+
+                        <div className="space-y-3">
+                            <div>
+                                <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1 block">Input</label>
+                                <textarea
+                                    value={tc.input}
+                                    onChange={(e) => updateTestCase(idx, 'input', e.target.value)}
+                                    className="w-full bg-[#161616] border border-gray-800 rounded p-2 text-sm font-mono text-zinc-300 focus:border-blue-500/50 outline-none transition-colors"
+                                    rows={2}
+                                    placeholder="e.g. nums = [2,7,11,15], target = 9"
+                                />
+                            </div>
+                            <div>
+                                <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1 block">Output</label>
+                                <textarea
+                                    value={tc.output}
+                                    onChange={(e) => updateTestCase(idx, 'output', e.target.value)}
+                                    className="w-full bg-[#161616] border border-gray-800 rounded p-2 text-sm font-mono text-emerald-400/90 focus:border-emerald-500/30 outline-none transition-colors"
+                                    rows={1}
+                                    placeholder="e.g. [0,1]"
+                                />
+                            </div>
+                            {activeTab === 'visible' && (
+                                <div>
+                                    <label className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-1 block">Explanation (Optional)</label>
+                                    <input
+                                        type="text"
+                                        value={tc.explanation || ''}
+                                        onChange={(e) => updateTestCase(idx, 'explanation', e.target.value)}
+                                        className="w-full bg-[#161616] border border-gray-800 rounded p-2 text-sm text-zinc-400 focus:border-blue-500/50 outline-none transition-colors"
+                                        placeholder="Explanation for the user..."
+                                    />
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                ))}
+
+                {safeTestCases[activeTab].length === 0 && (
+                    <div className="text-center py-8 text-zinc-600 text-sm">
+                        No {activeTab} test cases added yet.
+                    </div>
+                )}
+            </div>
+
+            {/* Footer Action */}
+            <div className="p-3 border-t border-gray-800 bg-[#1a1a1a]">
+                <button
+                    onClick={addTestCase}
+                    className="w-full py-2 bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 border border-blue-600/20 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2"
+                >
+                    <Plus size={16} />
+                    Add {activeTab === 'visible' ? 'Visible' : 'Hidden'} Case
+                </button>
+            </div>
+        </div>
+    );
+};
 
 const Problems = () => {
     const { currentUser } = useAuth(); // Import useAuth
@@ -49,8 +176,8 @@ const Problems = () => {
     };
 
     const [formData, setFormData] = useState(initialFormState);
+    // Keep JSON editors for specific fields if needed, but testCases is now managed in formData directly
     const [jsonEditorContent, setJsonEditorContent] = useState({
-        testCases: JSON.stringify({ visible: [], hidden: [] }, null, 2),
         examples: JSON.stringify([], null, 2),
         constraints: JSON.stringify([], null, 2)
     });
@@ -82,7 +209,7 @@ const Problems = () => {
             // Parse JSON fields
             const payload = {
                 ...formData,
-                testCases: JSON.parse(jsonEditorContent.testCases),
+                // testCases is already an object in formData
                 examples: JSON.parse(jsonEditorContent.examples),
                 constraints: JSON.parse(jsonEditorContent.constraints),
                 // Split tags if it's a string, or ensure it's array
@@ -128,10 +255,10 @@ const Problems = () => {
                 ...problem,
                 tags: Array.isArray(problem.tags) ? problem.tags.join(', ') : problem.tags,
                 starterCode: problem.starterCode || { javascript: '', python: '' },
+                testCases: problem.testCases || { visible: [], hidden: [] }, // Ensure structure
                 theory: problem.theory || { videoTitle: '', videoUrl: '', explanation: '', timeComplexity: { value: '', explanation: '' }, spaceComplexity: { value: '', explanation: '' }, solutionCode: { javascript: '', python: '', java: '', cpp: '' } }
             });
             setJsonEditorContent({
-                testCases: JSON.stringify(problem.testCases || { visible: [], hidden: [] }, null, 2),
                 examples: JSON.stringify(problem.examples || [], null, 2),
                 constraints: JSON.stringify(problem.constraints || [], null, 2)
             });
@@ -182,7 +309,7 @@ const Problems = () => {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(100vh-200px)] overflow-y-auto pr-2">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(100vh-200px)] overflow-y-auto pr-2 custom-scrollbar">
                     {/* Left Column: Meta Data */}
                     <div className="space-y-4">
                         <div className="bg-[#111] p-6 rounded-xl border border-gray-800 space-y-4">
@@ -484,52 +611,45 @@ const Problems = () => {
                         </div>
                     </div>
 
-                    {/* Right Column: JSON Data */}
-                    <div className="space-y-4">
-                        <div className="bg-[#111] p-6 rounded-xl border border-gray-800 space-y-4 h-full flex flex-col">
-                            <h3 className="text-lg font-bold text-white border-b border-gray-800 pb-2">Test Cases & Config</h3>
+                    {/* Right Column: Dynamic Test Cases & JSON Config */}
+                    <div className="space-y-4 flex flex-col h-full">
+                        {/* Dynamic Test Case Manager */}
+                        <div className="flex-1 min-h-[500px]">
+                            <label className="text-sm text-gray-400 mb-2 block font-semibold">Test Cases (Interactive)</label>
+                            <DynamicTestCaseManager
+                                testCases={formData.testCases}
+                                setTestCases={(newTestCases) => setFormData({ ...formData, testCases: newTestCases })}
+                            />
+                        </div>
 
-                            <div className="flex-1 space-y-4">
-                                <div className="h-64 flex flex-col">
-                                    <label className="text-sm text-gray-400 mb-1">Test Cases JSON (Visible & Hidden)</label>
-                                    <div className="flex-1 border border-gray-800 rounded overflow-hidden">
-                                        <Editor
-                                            height="100%"
-                                            defaultLanguage="json"
-                                            theme="vs-dark"
-                                            value={jsonEditorContent.testCases}
-                                            onChange={(val) => setJsonEditorContent({ ...jsonEditorContent, testCases: val })}
-                                            options={{ minimap: { enabled: false }, fontSize: 12 }}
-                                        />
-                                    </div>
+                        <div className="bg-[#111] p-6 rounded-xl border border-gray-800 space-y-4">
+                            <h3 className="text-lg font-bold text-white border-b border-gray-800 pb-2">Additional Config</h3>
+
+                            <div className="h-48 flex flex-col">
+                                <label className="text-sm text-gray-400 mb-1">Examples JSON (For Description)</label>
+                                <div className="flex-1 border border-gray-800 rounded overflow-hidden">
+                                    <Editor
+                                        height="100%"
+                                        defaultLanguage="json"
+                                        theme="vs-dark"
+                                        value={jsonEditorContent.examples}
+                                        onChange={(val) => setJsonEditorContent({ ...jsonEditorContent, examples: val })}
+                                        options={{ minimap: { enabled: false }, fontSize: 12 }}
+                                    />
                                 </div>
+                            </div>
 
-                                <div className="h-48 flex flex-col">
-                                    <label className="text-sm text-gray-400 mb-1">Examples JSON</label>
-                                    <div className="flex-1 border border-gray-800 rounded overflow-hidden">
-                                        <Editor
-                                            height="100%"
-                                            defaultLanguage="json"
-                                            theme="vs-dark"
-                                            value={jsonEditorContent.examples}
-                                            onChange={(val) => setJsonEditorContent({ ...jsonEditorContent, examples: val })}
-                                            options={{ minimap: { enabled: false }, fontSize: 12 }}
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="h-48 flex flex-col">
-                                    <label className="text-sm text-gray-400 mb-1">Constraints JSON</label>
-                                    <div className="flex-1 border border-gray-800 rounded overflow-hidden">
-                                        <Editor
-                                            height="100%"
-                                            defaultLanguage="json"
-                                            theme="vs-dark"
-                                            value={jsonEditorContent.constraints}
-                                            onChange={(val) => setJsonEditorContent({ ...jsonEditorContent, constraints: val })}
-                                            options={{ minimap: { enabled: false }, fontSize: 12 }}
-                                        />
-                                    </div>
+                            <div className="h-48 flex flex-col">
+                                <label className="text-sm text-gray-400 mb-1">Constraints JSON</label>
+                                <div className="flex-1 border border-gray-800 rounded overflow-hidden">
+                                    <Editor
+                                        height="100%"
+                                        defaultLanguage="json"
+                                        theme="vs-dark"
+                                        value={jsonEditorContent.constraints}
+                                        onChange={(val) => setJsonEditorContent({ ...jsonEditorContent, constraints: val })}
+                                        options={{ minimap: { enabled: false }, fontSize: 12 }}
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -548,7 +668,6 @@ const Problems = () => {
                         setEditingId(null);
                         setFormData(initialFormState);
                         setJsonEditorContent({
-                            testCases: JSON.stringify({ visible: [], hidden: [] }, null, 2),
                             examples: JSON.stringify([], null, 2),
                             constraints: JSON.stringify([], null, 2)
                         });

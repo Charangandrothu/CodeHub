@@ -18,7 +18,15 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/ui/Button';
 import { API_URL } from '../config';
-import { updateProfile, deleteUser } from 'firebase/auth';
+import {
+    updateProfile,
+    deleteUser,
+    EmailAuthProvider,
+    reauthenticateWithCredential,
+    GoogleAuthProvider,
+    GithubAuthProvider,
+    signInWithPopup
+} from 'firebase/auth';
 import { auth } from '../firebase';
 import { useNavigate } from 'react-router-dom';
 
@@ -27,6 +35,13 @@ const Settings = () => {
     const [activeTab, setActiveTab] = useState('account');
     const [saving, setSaving] = useState(false);
     const navigate = useNavigate();
+
+    // Delete Account State
+    // Delete Account State
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [deletePassword, setDeletePassword] = useState('');
+    const [deleteError, setDeleteError] = useState('');
+    const [isDeleting, setIsDeleting] = useState(false);
 
     // Default Preferences State
     const [formData, setFormData] = useState({
@@ -125,10 +140,30 @@ const Settings = () => {
         }
     };
 
-    const handleDeleteAccount = async () => {
-        if (!confirm("Are you sure you want to delete your account? This action cannot be undone.")) return;
+    const handleDeleteClick = () => {
+        setShowDeleteConfirm(true);
+        setDeleteError('');
+        setDeletePassword('');
+    };
 
+    const confirmDeleteAccount = async () => {
+        setDeleteError('');
+        setIsDeleting(true);
         try {
+            // Re-authenticate user
+            const providerId = currentUser.providerData[0]?.providerId;
+
+            if (providerId === 'password') {
+                const credential = EmailAuthProvider.credential(currentUser.email, deletePassword);
+                await reauthenticateWithCredential(currentUser, credential);
+            } else if (providerId === 'google.com') {
+                const provider = new GoogleAuthProvider();
+                await signInWithPopup(auth, provider);
+            } else if (providerId === 'github.com') {
+                const provider = new GithubAuthProvider();
+                await signInWithPopup(auth, provider);
+            }
+
             // 1. Delete from Backend
             await fetch(`${API_URL}/api/users/${currentUser.uid}`, {
                 method: 'DELETE'
@@ -141,11 +176,15 @@ const Settings = () => {
             navigate('/');
         } catch (error) {
             console.error("Failed to delete account:", error);
-            if (error.code === 'auth/requires-recent-login') {
-                alert("For security, please log out and log in again before deleting your account.");
+            if (error.code === 'auth/wrong-password') {
+                setDeleteError("Incorrect password. Please try again.");
+            } else if (error.code === 'auth/requires-recent-login') {
+                setDeleteError("For security, please log out and log in again before deleting your account.");
             } else {
-                alert("Failed to delete account: " + error.message);
+                setDeleteError(error.message || "Failed to delete account. Please try again.");
             }
+        } finally {
+            setIsDeleting(false);
         }
     };
 
@@ -317,17 +356,86 @@ const Settings = () => {
 
                                 <div className="pt-6 border-t border-white/5">
                                     <h3 className="text-lg font-bold text-red-500 mb-4">Danger Zone</h3>
-                                    <div className="p-4 rounded-xl border border-red-500/20 bg-red-500/5 flex items-center justify-between">
-                                        <div>
-                                            <p className="text-sm font-medium text-white">Delete Account</p>
-                                            <p className="text-xs text-gray-400 mt-1">Permanently remove your account and all data.</p>
+                                    <div className="rounded-xl border border-red-500/20 bg-red-500/5 overflow-hidden transition-all duration-300">
+                                        <div className="p-4 flex items-center justify-between">
+                                            <div>
+                                                <p className="text-sm font-medium text-white">Delete Account</p>
+                                                <p className="text-xs text-gray-400 mt-1">Permanently remove your account and all data.</p>
+                                            </div>
+                                            {!showDeleteConfirm && (
+                                                <button
+                                                    onClick={handleDeleteClick}
+                                                    className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 text-xs font-semibold rounded-lg border border-red-500/20 transition-all flex items-center gap-2"
+                                                >
+                                                    <Trash size={14} /> Delete Account
+                                                </button>
+                                            )}
                                         </div>
-                                        <button
-                                            onClick={handleDeleteAccount}
-                                            className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 text-xs font-semibold rounded-lg border border-red-500/20 transition-all flex items-center gap-2"
-                                        >
-                                            <Trash size={14} /> Delete Account
-                                        </button>
+
+                                        <AnimatePresence>
+                                            {showDeleteConfirm && (
+                                                <motion.div
+                                                    initial={{ height: 0, opacity: 0 }}
+                                                    animate={{ height: 'auto', opacity: 1 }}
+                                                    exit={{ height: 0, opacity: 0 }}
+                                                    className="px-4 pb-4"
+                                                >
+                                                    <div className="pt-4 border-t border-red-500/20 space-y-4">
+                                                        <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+                                                            <p className="text-xs text-red-200">
+                                                                <strong className="block mb-1">Are you absolutely sure?</strong>
+                                                                This action cannot be undone. This will permanently delete your account and remove your data from our servers.
+                                                            </p>
+                                                        </div>
+
+                                                        {currentUser?.providerData[0]?.providerId === 'password' ? (
+                                                            <div className="space-y-2">
+                                                                <label className="text-xs font-medium text-red-300 ml-1">Confirm Password</label>
+                                                                <div className="relative group">
+                                                                    <Lock size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-red-400" />
+                                                                    <input
+                                                                        type="password"
+                                                                        value={deletePassword}
+                                                                        onChange={(e) => setDeletePassword(e.target.value)}
+                                                                        className="w-full bg-red-950/20 border border-red-500/30 rounded-xl py-2.5 pl-9 pr-4 text-white placeholder:text-red-300/50 focus:outline-none focus:border-red-500/50 focus:ring-1 focus:ring-red-500/20 text-sm transition-all"
+                                                                        placeholder="Enter your password to confirm"
+                                                                        autoFocus
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg flex items-start gap-3">
+                                                                <div className="text-amber-500 mt-0.5"><Lock size={14} /></div>
+                                                                <p className="text-amber-200/90 text-xs">
+                                                                    You will need to sign in with your provider <strong>({currentUser?.providerData[0]?.providerId})</strong> to verify your identity.
+                                                                </p>
+                                                            </div>
+                                                        )}
+
+                                                        {deleteError && (
+                                                            <p className="text-xs text-red-400 font-medium">{deleteError}</p>
+                                                        )}
+
+                                                        <div className="flex items-center justify-end gap-3 pt-2">
+                                                            <button
+                                                                onClick={() => setShowDeleteConfirm(false)}
+                                                                className="px-3 py-1.5 text-xs font-medium text-gray-400 hover:text-white transition-colors"
+                                                                disabled={isDeleting}
+                                                            >
+                                                                Cancel
+                                                            </button>
+                                                            <button
+                                                                onClick={confirmDeleteAccount}
+                                                                disabled={isDeleting || (currentUser?.providerData[0]?.providerId === 'password' && !deletePassword)}
+                                                                className="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-xs font-bold rounded-lg transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-red-500/20"
+                                                            >
+                                                                {isDeleting ? 'Deleting...' : 'Confirm Deletion'}
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
                                     </div>
                                 </div>
                             </div>
@@ -588,3 +696,4 @@ const Settings = () => {
 };
 
 export default Settings;
+

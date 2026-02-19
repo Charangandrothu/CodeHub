@@ -8,7 +8,7 @@ export default function RightPanel() {
     const navigate = useNavigate();
 
     // Calculate daily progress
-    const dailyGoal = 3;
+    const dailyGoal = userData?.preferences?.dailyTarget || 3;
     const today = new Date().toDateString();
 
     const dailySolved = userData?.submissionHistory?.filter(sub =>

@@ -8,7 +8,15 @@ const submissionSchema = new mongoose.Schema({
     verdict: { type: String, required: true },
     runtime: { type: Number, default: 0 },
     memory: { type: Number, default: 0 },
-    submittedAt: { type: Date, default: Date.now }
+    submittedAt: { type: Date, default: Date.now },
+    passedTestCases: { type: Number, default: 0 },
+    totalTestCases: { type: Number, default: 0 },
+    stderr: { type: String, default: "" },
+    failedTestCase: {
+        input: { type: String },
+        expected: { type: String },
+        actual: { type: String }
+    }
 });
 
 // Compound index to ensure one submission per problem per user
