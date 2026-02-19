@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 // eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
-import { ArrowRight, CheckCircle2, Code2, Trophy } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Code2, Trophy, Zap } from 'lucide-react';
 import { Button } from './ui/Button';
 import { useAuth } from '../context/AuthContext';
 import pythonGlass from '../assets/pythonglass.png';
@@ -27,6 +27,69 @@ const ProgressRow = ({ label, current, total, color = "blue" }) => {
             }`}
         />
       </div>
+    </div>
+  );
+};
+
+const TypingCode = () => {
+  const codeLines = [
+    { text: "class Solution {", color: "text-purple-400" },
+    { text: "  solve(head) {", color: "text-yellow-200" },
+    { text: "    if (!head) return null;", color: "text-zinc-500" },
+    { text: "    let slow = head;", color: "text-blue-400" },
+    { text: "    let fast = head;", color: "text-blue-400" },
+    { text: "    while (fast && fast.next) {", color: "text-purple-400" },
+    { text: "      slow = slow.next;", color: "text-zinc-300" },
+    { text: "      fast = fast.next.next;", color: "text-zinc-300" },
+    { text: "      if (slow === fast) return true;", color: "text-emerald-400" },
+    { text: "    }", color: "text-zinc-300" },
+    { text: "    return false;", color: "text-red-400" },
+    { text: "  }", color: "text-yellow-200" },
+    { text: "}", color: "text-purple-400" },
+  ];
+
+  const [displayedLineCount, setDisplayedLineCount] = useState(0);
+
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setDisplayedLineCount((prev) => {
+        if (prev < codeLines.length) {
+          return prev + 1;
+        }
+        return prev;
+      });
+    }, 150);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Reset loop
+  React.useEffect(() => {
+    if (displayedLineCount >= codeLines.length) {
+      const timeout = setTimeout(() => {
+        setDisplayedLineCount(0);
+      }, 3000);
+      return () => clearTimeout(timeout);
+    }
+  }, [displayedLineCount]);
+
+  return (
+    <div className="flex flex-col gap-0.5 font-mono text-[13px]">
+      {codeLines.slice(0, displayedLineCount).map((line, index) => (
+        <motion.div
+          key={index}
+          initial={{ opacity: 0, x: -5 }}
+          animate={{ opacity: 1, x: 0 }}
+          className={`${line.color} whitespace-pre`}
+        >
+          {line.text}
+        </motion.div>
+      ))}
+      <motion.div
+        animate={{ opacity: [0, 1, 0] }}
+        transition={{ repeat: Infinity, duration: 0.8 }}
+        className="w-2 h-4 bg-blue-400 ml-1 inline-block align-middle"
+      />
     </div>
   );
 };
@@ -133,42 +196,64 @@ const Hero = () => {
             initial={{ y: 20 }}
             animate={{ y: [0, -10, 0] }}
             transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md glass-card rounded-2xl p-6 shadow-2xl shadow-black/50"
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md rounded-3xl p-6 shadow-2xl shadow-black overflow-hidden group border border-white/10"
           >
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400">
-                  <Code2 size={20} />
-                </div>
-                <div>
-                  <h3 className="text-white font-semibold text-sm">DSA Progress</h3>
-                  <p className="text-xs text-gray-500">Daily Streak: 12 Days</p>
-                </div>
-              </div>
-              <div className="text-xs px-2 py-1 rounded bg-white/5 border border-white/10 text-gray-300">
-                Premium
-              </div>
-            </div>
+            {/* Pure Dark Glass Background - Deep Black */}
+            <div className="absolute inset-0 bg-[#050505] opacity-95 z-0" />
 
-            <div className="space-y-1">
-              <ProgressRow label="Arrays & Hashing" current={30} total={30} color="blue" />
-              <ProgressRow label="Binary Search" current={8} total={15} color="purple" />
-              <ProgressRow label="Dynamic Programming" current={6} total={12} color="emerald" />
-              <ProgressRow label="Graphs" current={3} total={25} color="blue" />
-            </div>
+            {/* Subtle Noise Texture */}
+            <div className="absolute inset-0 opacity-[0.02] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] z-0 pointer-events-none" />
 
-            <div className="mt-6 pt-4 border-t border-white/5 flex justify-between items-center">
-              <div className="flex -space-x-2">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="w-8 h-8 rounded-full border-2 border-[#1a1a1a] bg-gray-800 flex items-center justify-center text-[10px] text-white">
-                    U{i}
+            {/* Animated Edge Highlight */}
+            <div className="absolute inset-0 rounded-3xl p-[1px] bg-gradient-to-b from-white/10 via-white/5 to-transparent z-[1] pointer-events-none" />
+            <motion.div
+              className="absolute inset-0 rounded-3xl bg-gradient-to-r from-transparent via-white/5 to-transparent blur-sm z-0 pointer-events-none"
+              animate={{ x: ['-200%', '200%'] }}
+              transition={{ duration: 4, repeat: Infinity, ease: "linear", delay: 1 }}
+            />
+
+            {/* Content - premium animated code type */}
+            <div className="relative z-10 flex flex-col h-full min-h-[300px]">
+              {/* Header - Editor Tabs */}
+              <div className="flex items-center justify-between mb-4 border-b border-white/5 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="flex gap-1.5 ">
+                    <div className="w-2.5 h-2.5 rounded-full bg-[#ff5f56]" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-[#ffbd2e]" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-[#27c93f]" />
                   </div>
-                ))}
-                <div className="w-8 h-8 rounded-full border-2 border-[#1a1a1a] bg-gray-900 flex items-center justify-center text-[10px] text-gray-400">
-                  +42
+                  <div className="ml-4 px-3 py-1 rounded-md bg-white/5 border border-white/5 flex items-center gap-2">
+                    <Code2 size={12} className="text-blue-400" />
+                    <span className="text-[10px] font-mono text-gray-300">solver.js</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-[10px] text-gray-500 font-mono">Live</span>
                 </div>
               </div>
-              <p className="text-xs text-gray-500">Students Active Now</p>
+
+              {/* Code Area */}
+              <div className="font-mono text-sm leading-relaxed overflow-hidden flex-1 relative">
+                {/* Line Numbers */}
+                <div className="absolute left-0 top-0 bottom-0 w-6 text-zinc-700 text-xs text-right pr-2 select-none font-mono">
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19].map(n => <div key={n}>{n}</div>)}
+                </div>
+
+                {/* Typing Code */}
+                <div className="pl-8 text-zinc-300">
+                  <TypingCode />
+                </div>
+              </div>
+
+              {/* Footer - Status */}
+              <div className="mt-4 pt-3 border-t border-white/5 flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 size={12} className="text-emerald-500" />
+                  <span className="text-[10px] text-gray-400">All tests passed</span>
+                </div>
+                <span className="text-[10px] font-mono text-blue-400">0.02ms</span>
+              </div>
             </div>
           </motion.div>
 
