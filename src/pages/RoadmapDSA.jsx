@@ -627,7 +627,7 @@ const RoadmapSidebar = ({
 
 
 
-                    <div className={isLocked ? "opacity-80 grayscale cursor-not-allowed" : ""}>
+                    <div className={isLocked ? "opacity-30 grayscale cursor-not-allowed pointer-events-none transition-all duration-500" : "transition-all duration-500"}>
                         <FractionalPicker
                             min={60}
                             max={365}
@@ -650,24 +650,6 @@ const RoadmapSidebar = ({
                             </motion.span>
                         </div>
                     </div>
-
-                    <motion.div
-                        whileHover={{ scale: 1.02 }}
-                        className={`p-5 rounded-2xl border flex items-center gap-4 transition-all duration-300 relative overflow-hidden ${isLocked
-                            ? 'bg-zinc-900/50 border-white/5 opacity-50 grayscale'
-                            : `bg-gradient-to-br ${currentStyle.bgGradient} to-transparent ${currentStyle.border}`
-                            }`}
-                    >
-                        {!isLocked && <div className={`absolute -right-4 -top-4 w-20 h-20 ${currentStyle.blur} blur-2xl rounded-full`} />}
-
-                        <div className={`p-3 rounded-xl ${currentStyle.iconBg} ${currentStyle.iconText} ring-1 ${currentStyle.ring} shadow-lg ${currentStyle.shadow} relative z-10`}>
-                            {levelInfo.icon}
-                        </div>
-                        <div className="relative z-10">
-                            <p className="text-sm font-bold font-sans text-white tracking-tight">{levelInfo.label}</p>
-                            <p className="text-[10px] font-sans text-zinc-400 uppercase tracking-wide mt-1">Recommended Pace</p>
-                        </div>
-                    </motion.div>
 
                     <div className="grid grid-cols-1 gap-3">
                         {!isLocked ? (
@@ -776,7 +758,7 @@ const RoadmapSidebar = ({
                             if (!userData?.profileCompleted) {
                                 navigate('/complete-profile');
                             } else {
-                                navigate(`/${userData?.username}`);
+                                navigate(`/profile/${userData?.username}`);
                             }
                         }}
                     />
@@ -784,7 +766,7 @@ const RoadmapSidebar = ({
                         if (!userData?.profileCompleted) {
                             navigate('/complete-profile');
                         } else {
-                            navigate(`/${userData?.username}`);
+                            navigate(`/profile/${userData?.username}`);
                         }
                     }}>
                         <h4 className="text-sm font-semibold font-sans text-white truncate group-hover:text-purple-400 transition-colors">
@@ -894,6 +876,8 @@ const DSARoadmap = ({ onBack }) => {
     };
 
     // Debounced Generation Effect
+    const dailyTarget = userData?.preferences?.dailyTarget || 3;
+
     useEffect(() => {
         // Skip equality check for initial load if roadmap is null to ensure generation happens
         if (roadmap?.daysSelected === days) return;
@@ -1112,61 +1096,107 @@ const DSARoadmap = ({ onBack }) => {
                             </motion.p>
                         </div>
 
-                        {!roadmap?.isLocked && (
-                            <motion.div
-                                initial={{ opacity: 0, x: 20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                transition={{ delay: 0.4 }}
-                                className="flex flex-col items-end gap-2"
-                            >
-                                <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold mr-1">Select based on your goal</span>
-                                <div className="flex items-center gap-3 sm:gap-4">
-                                    {[
-                                        { label: 'Beginner', goal: 'beginner', questions: '365Q', color: 'text-purple-400', border: 'border-purple-500/20', bg: 'hover:bg-purple-500/10' },
-                                        { label: 'Medium', goal: 'medium', questions: '250Q', color: 'text-amber-400', border: 'border-amber-500/20', bg: 'hover:bg-amber-500/10' },
-                                        { label: 'Expert', goal: 'expert', questions: '100Q', color: 'text-rose-400', border: 'border-rose-500/20', bg: 'hover:bg-rose-500/10' }
-                                    ].map((preset) => {
-                                        const isSelected = selectedGoal === preset.goal;
-                                        // Show color if this is selected OR if nothing is selected yet
-                                        const showColor = isSelected || selectedGoal === null;
+                        <motion.div
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.4 }}
+                            className="flex flex-col items-end gap-2"
+                        >
+                            {!roadmap?.isLocked ? (
+                                <>
+                                    <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold mr-1">Select based on your goal</span>
+                                    <div className="flex items-center gap-3 sm:gap-4">
+                                        {[
+                                            { label: 'Beginner', goal: 'beginner', questions: '365Q', color: 'text-purple-400', border: 'border-purple-500/20', bg: 'hover:bg-purple-500/10' },
+                                            { label: 'Medium', goal: 'medium', questions: '250Q', color: 'text-amber-400', border: 'border-amber-500/20', bg: 'hover:bg-amber-500/10' },
+                                            { label: 'Expert', goal: 'expert', questions: '100Q', color: 'text-rose-400', border: 'border-rose-500/20', bg: 'hover:bg-rose-500/10' }
+                                        ].map((preset) => {
+                                            const isSelected = selectedGoal === preset.goal;
+                                            // Show color if this is selected OR if nothing is selected yet
+                                            const showColor = isSelected || selectedGoal === null;
 
-                                        return (
-                                            <button
-                                                key={preset.label}
-                                                onClick={() => handleGoalSelect(preset.goal)}
-                                                className={`px-4 py-2.5 rounded-xl border transition-all duration-300 flex flex-col items-center justify-center gap-0.5 group min-w-[90px] relative overflow-hidden backdrop-blur-sm cursor-pointer
-                                                    ${isSelected
-                                                        ? `bg-white/10 ring-1 ring-white/20 shadow-lg scale-105 ${preset.border}`
-                                                        : showColor
-                                                            ? `bg-white/5 border-white/10 hover:bg-white/10 hover:scale-105 hover:border-white/20`
-                                                            : 'bg-[#000000] border-zinc-900 opacity-30 hover:opacity-100 hover:border-zinc-800 scale-95 saturate-0'
-                                                    }`}
-                                            >
-                                                {isSelected && (
-                                                    <div className={`absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none`} />
-                                                )}
-                                                <span className={`text-[10px] font-bold uppercase tracking-wider relative z-10 transition-colors ${showColor ? preset.color : 'text-zinc-600 group-hover:text-zinc-400'}`}>{preset.label}</span>
-                                                <div className="flex items-center gap-1 relative z-10">
-                                                    <span className={`text-xs font-mono font-bold transition-colors ${isSelected ? 'text-zinc-200' : showColor ? 'text-zinc-400 group-hover:text-zinc-200' : 'text-zinc-600 group-hover:text-zinc-400'}`}>{GOALS[preset.goal]}d</span>
-                                                    <span className={`text-[9px] font-medium transition-colors ${isSelected ? 'text-zinc-500' : showColor ? 'text-zinc-600 group-hover:text-zinc-500' : 'text-zinc-800 group-hover:text-zinc-600'}`}>({preset.questions})</span>
-                                                </div>
-                                            </button>
-                                        );
-                                    })}
+                                            return (
+                                                <button
+                                                    key={preset.label}
+                                                    onClick={() => handleGoalSelect(preset.goal)}
+                                                    className={`px-4 py-2.5 rounded-xl border transition-all duration-300 flex flex-col items-center justify-center gap-0.5 group min-w-[90px] relative overflow-hidden backdrop-blur-sm cursor-pointer
+                                                        ${isSelected
+                                                            ? `bg-white/10 ring-1 ring-white/20 shadow-lg scale-105 ${preset.border}`
+                                                            : showColor
+                                                                ? `bg-white/5 border-white/10 hover:bg-white/10 hover:scale-105 hover:border-white/20`
+                                                                : 'bg-[#000000] border-zinc-900 opacity-30 hover:opacity-100 hover:border-zinc-800 scale-95 saturate-0'
+                                                        }`}
+                                                >
+                                                    {isSelected && (
+                                                        <div className={`absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none`} />
+                                                    )}
+                                                    <span className={`text-[10px] font-bold uppercase tracking-wider relative z-10 transition-colors ${showColor ? preset.color : 'text-zinc-600 group-hover:text-zinc-400'}`}>{preset.label}</span>
+                                                    <div className="flex items-center gap-1 relative z-10">
+                                                        <span className={`text-xs font-mono font-bold transition-colors ${isSelected ? 'text-zinc-200' : showColor ? 'text-zinc-400 group-hover:text-zinc-200' : 'text-zinc-600 group-hover:text-zinc-400'}`}>{GOALS[preset.goal]}d</span>
+                                                        <span className={`text-[9px] font-medium transition-colors ${isSelected ? 'text-zinc-500' : showColor ? 'text-zinc-600 group-hover:text-zinc-500' : 'text-zinc-800 group-hover:text-zinc-600'}`}>({preset.questions})</span>
+                                                    </div>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </>
+                            ) : (
+                                <div className="flex flex-col sm:flex-row items-end sm:items-center gap-4 sm:gap-6">
+                                    {/* Premium Progress Widget */}
+                                    <div className="hidden md:flex flex-col items-end">
+                                        {(() => {
+                                            const startDate = userData?.dsaRoadmap?.startDate;
+                                            let currentDay = 1;
+
+                                            if (startDate) {
+                                                const start = new Date(startDate);
+                                                start.setHours(0, 0, 0, 0);
+                                                const today = new Date();
+                                                today.setHours(0, 0, 0, 0);
+                                                const diffTime = today - start;
+                                                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                                                currentDay = Math.max(1, diffDays + 1);
+                                            }
+
+                                            const totalDays = days || 120;
+                                            const progressPercent = Math.min((currentDay / totalDays) * 100, 100);
+
+                                            return (
+                                                <>
+                                                    <div className="flex items-baseline gap-2 mb-1.5">
+                                                        <span className="text-[10px] font-bold text-amber-500 uppercase tracking-widest">Day {currentDay}</span>
+                                                        <span className="text-[10px] text-zinc-600 font-medium">of {totalDays}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="h-1.5 w-32 bg-zinc-800/50 rounded-full overflow-hidden border border-white/5">
+                                                            <motion.div
+                                                                initial={{ width: 0 }}
+                                                                animate={{ width: `${progressPercent}%` }}
+                                                                transition={{ duration: 1.5, ease: "circOut" }}
+                                                                className="h-full bg-gradient-to-r from-amber-600 via-amber-500 to-purple-600 shadow-[0_0_10px_rgba(217,119,6,0.3)] relative"
+                                                            >
+                                                                <div className="absolute inset-0 bg-white/20 animate-[pulse_3s_infinite]" />
+                                                            </motion.div>
+                                                        </div>
+                                                        <span className="text-xs font-bold text-white tabular-nums">{Math.round(progressPercent)}%</span>
+                                                    </div>
+                                                </>
+                                            );
+                                        })()}
+                                    </div>
+
+                                    <motion.div
+                                        initial={{ scale: 0.8, opacity: 0 }}
+                                        animate={{ scale: 1, opacity: 1 }}
+                                        transition={{ delay: 0.6, type: "spring" }}
+                                        className="px-4 py-1.5 bg-gradient-to-r from-zinc-900 to-black border border-white/10 rounded-full text-zinc-400 text-xs font-bold uppercase tracking-wider flex items-center gap-2 shadow-lg"
+                                    >
+                                        <Lock size={12} className="text-amber-500" />
+                                        <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-zinc-400">Plan Active</span>
+                                    </motion.div>
                                 </div>
-                            </motion.div>
-                        )}
-
-                        {roadmap?.isLocked && (
-                            <motion.div
-                                initial={{ scale: 0.8, opacity: 0 }}
-                                animate={{ scale: 1, opacity: 1 }}
-                                transition={{ delay: 0.6, type: "spring" }}
-                                className="px-4 py-1.5 bg-emerald-500/5 border border-emerald-500/20 rounded-full text-emerald-400 text-xs font-bold uppercase tracking-wider flex items-center gap-2 shadow-[0_0_20px_-5px_rgba(16,185,129,0.2)]"
-                            >
-                                <Lock size={12} /> Plan Active
-                            </motion.div>
-                        )}
+                            )}
+                        </motion.div>
                     </motion.div>
 
                     <AnimatePresence mode="wait">
@@ -1234,7 +1264,7 @@ const DSARoadmap = ({ onBack }) => {
                 onClose={() => setShowResetModal(false)}
                 onConfirm={confirmUnlock}
             />
-        </div>
+        </div >
     );
 };
 
