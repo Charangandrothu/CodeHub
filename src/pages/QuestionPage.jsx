@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, ChevronDown, Play, Send, RefreshCw, AlertCircle, CheckCircle2, Copy, FileText, LayoutList, History, Code2, Check, X, Zap, Clock, Cpu, TrendingUp, Lock, Move, Database, Brain, ArrowRight } from 'lucide-react';
+import { ChevronLeft, ChevronDown, Play, Send, RefreshCw, AlertCircle, CheckCircle2, Copy, FileText, LayoutList, History, Code2, Check, X, Zap, Clock, Cpu, TrendingUp, Lock, Move, Database, Brain, ArrowRight, Maximize2, Minimize2 } from 'lucide-react';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import CodeEditor from '../components/dsa/CodeEditor';
 import TestCasesPanel from '../components/dsa/TestCasesPanel';
@@ -165,6 +165,39 @@ export default function QuestionPage() {
     const messagesEndRef = useRef(null);
     const dragControls = useDragControls();
     const providerDropdownRef = useRef(null);
+    const [isEditorFocused, setIsEditorFocused] = useState(false);
+    const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
+
+    // Refs for interval and status
+    const pollIntervalRef = useRef(null);
+    const runStatusRef = useRef(runStatus);
+
+    // Keep runStatusRef in sync
+    useEffect(() => {
+        runStatusRef.current = runStatus;
+    }, [runStatus]);
+
+    // Cleanup polling on unmount
+    useEffect(() => {
+        return () => {
+            if (pollIntervalRef.current) {
+                clearInterval(pollIntervalRef.current);
+            }
+        };
+    }, []);
+
+    // Auto-close menu on language select
+    const handleCustomLanguageChange = (lang) => {
+        handleLanguageChange({ target: { value: lang } }); // Mimic event for existing handler
+        setIsLangMenuOpen(false);
+    };
+
+    // Close on click outside (simplified for clarity, or use a backdrop)
+    useEffect(() => {
+        const closeMenu = () => setIsLangMenuOpen(false);
+        if (isLangMenuOpen) window.addEventListener('click', closeMenu);
+        return () => window.removeEventListener('click', closeMenu);
+    }, [isLangMenuOpen]);
 
     // Fetch available providers from backend on mount
     useEffect(() => {
@@ -527,40 +560,34 @@ export default function QuestionPage() {
             }
 
             // 2. Poll for Result
-            const pollInterval = setInterval(async () => {
+            // Use a ref for the interval so we can clear it reliably
+            const intervalId = setInterval(async () => {
                 try {
+                    // Check if we're still mounted/running (optional safety)
+                    if (runStatusRef.current !== 'submitting') {
+                        clearInterval(intervalId);
+                        return;
+                    }
+
                     const pollRes = await fetch(`${API_URL}/api/execute/submission/${problem._id}?userId=${currentUser.uid}`);
                     if (pollRes.ok) {
                         const submissionData = await pollRes.json();
 
-                        // Check if we have a valid result (not null/pending if that was a state)
-                        // Our backend currently creates the submission record ONLY when done or failed.
-                        // So if we get a record, it's likely done. 
-                        // However, if we eventually add "Processing" state to DB, this needs a check.
-                        // For now, existence implies done.
-
                         if (submissionData) {
-                            clearInterval(pollInterval);
+                            clearInterval(intervalId);
 
-                            // If Accepted/Passed, refresh user data
-                            if (['Accepted', 'Passed'].includes(submissionData.verdict)) {
-                                if (refreshUserData) refreshUserData();
-                            } else {
-                                if (refreshUserData) refreshUserData(); // Refresh for credits deduction
+                            // Safely refresh user data
+                            if (refreshUserData) {
+                                refreshUserData().catch(e => console.warn("Failed to refresh user data", e));
                             }
 
                             setSubmissionResult({
                                 verdict: submissionData.verdict,
-                                details: submissionData.stderr || "", // Assuming stderr is helpful
-                                failedTestCase: null, // Queued logic might not return detailed failed case inGET yet, or we need to ensure GET returns it. 
-                                // UPDATE: The GET endpoint returns the whole submission document. 
-                                // The Submission model generally has: verdict, runtime, memory.
-                                // It MIGHT NOT have failedTestCase details if the model doesn't store them.
-                                // If we need failedTestCase, we might need to store it in Submission model or return it differently.
-                                // For now, we map what we have.
+                                details: submissionData.stderr || "",
+                                failedTestCase: submissionData.failedTestCase || null,
                                 time: submissionData.runtime ? (parseFloat(submissionData.runtime) * 1000).toFixed(2) : "N/A",
                                 memory: submissionData.memory ? (parseFloat(submissionData.memory) / 1024).toFixed(2) : "N/A",
-                                passedTestCases: submissionData.passedTestCases || 0, // Ensure these are saved in DB if needed
+                                passedTestCases: submissionData.passedTestCases || 0,
                                 totalTestCases: submissionData.totalTestCases || 0,
                                 type: 'submit',
                                 submittedAt: submissionData.submittedAt
@@ -570,16 +597,19 @@ export default function QuestionPage() {
                     }
                 } catch (pollErr) {
                     console.error("Polling error:", pollErr);
-                    // Don't clear immediately, retry
                 }
-            }, 2000); // Check every 2 seconds
+            }, 2000);
+
+            // Save interval ID to ref for cleanup on unmount
+            pollIntervalRef.current = intervalId;
 
             // Timeout after 30 seconds
             setTimeout(() => {
-                clearInterval(pollInterval);
-                if (runStatus === "submitting") { // If still running
+                clearInterval(intervalId);
+                // Check latest runStatus via ref
+                if (runStatusRef.current === "submitting") {
                     setRunStatus("idle");
-                    // Optional: set timed out status
+                    setSubmissionResult(prev => prev || { verdict: "Error", details: "Submission timed out", type: 'submit' });
                 }
             }, 30000);
 
@@ -857,80 +887,90 @@ export default function QuestionPage() {
     };
 
     return (
-        <div className="h-screen pt-0 bg-[#111111] flex flex-col overflow-hidden text-[#e5e5e5] font-sans selection:bg-neutral-700/30">
-            {/* Background Gradients - Very Subtle */}
-            <div className="fixed inset-0 pointer-events-none opacity-40">
-                <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-neutral-900/20 blur-[120px]" />
+        <div className={`h-screen pt-0 bg-[#0F1219] flex flex-col overflow-hidden text-[#EAEAEA] font-sans selection:bg-blue-500/30 transition-colors duration-700 ${isEditorFocused ? 'bg-[#0a0c10]' : ''}`}>
+            {/* Focus Mode Overlay */}
+            <div
+                onClick={() => setIsEditorFocused(false)}
+                className={`fixed inset-0 bg-[#0a0c10]/80 backdrop-blur-[2px] z-30 transition-opacity duration-500 ${isEditorFocused ? 'opacity-100 pointer-events-auto cursor-zoom-out' : 'opacity-0 pointer-events-none'}`}
+            />
+
+            {/* Ambient Background - Subtle Depth */}
+            <div className="fixed inset-0 pointer-events-none overflow-hidden">
+                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-blue-900/5 blur-[100px]" />
+                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-emerald-900/5 blur-[100px]" />
             </div>
 
-            {/* Top Bar - Neutral & Clean */}
-            <header className="h-14 border-b border-[#262626] bg-[#111111]/90 backdrop-blur-xl flex items-center px-5 justify-between flex-shrink-0 z-50 relative">
+            {/* Header - Compact & Simple */}
+            <header className="h-14 border-b border-white/10 bg-[#101010] flex items-center px-3 justify-between flex-shrink-0 z-40 relative">
                 <motion.div
                     onClick={() => navigate('/dsa')}
-                    className="flex items-center gap-3 cursor-pointer group"
+                    className="flex items-center gap-2 cursor-pointer group"
                     whileHover={{ scale: 1.01 }}
                     whileTap={{ scale: 0.99 }}
                 >
-                    <img
-                        src={logo_img}
-                        alt="CodeHubx"
-                        className="w-8 h-8 rounded-lg object-contain"
-                    />
-                    <div className="flex flex-col">
-                        <span className="text-sm font-semibold text-[#e5e5e5] tracking-tight group-hover:text-white transition-colors">CodeHubx</span>
+                    <div className="relative w-6 h-6">
+                        <div className="absolute inset-0 bg-blue-500/10 rounded-md blur-sm group-hover:blur-md transition-all" />
+                        <img
+                            src={logo_img}
+                            alt="CodeHubx"
+                            className="w-full h-full rounded-md object-contain relative z-10 opacity-90 group-hover:opacity-100 transition-opacity border border-white/10"
+                        />
                     </div>
-                    <div className="h-4 w-[1px] bg-[#333333] mx-1" />
-                    <span className="text-xs text-[#a3a3a3] font-medium transition-colors">Problem Solving</span>
+                    <div className="flex flex-col">
+                        <span className="text-xs font-bold text-zinc-300 tracking-wide group-hover:text-white transition-colors">CodeHub<span className="text-blue-500">X</span></span>
+                    </div>
                 </motion.div>
 
                 <div className="flex items-center gap-3">
-                    {/* Run Button with Credits */}
+                    {/* Run Button - Small Outline */}
                     <div className="flex flex-col items-end">
                         <motion.button
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                             onClick={runCode}
-                            disabled={runStatus === 'running'}
-                            title={(!userData?.isPro && userData?.stats?.runCredits <= 0) ? "Upgrade to continue" : ""}
-                            className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all border cursor-pointer ${runStatus === 'running'
-                                ? 'bg-[#262626]/50 text-[#737373] border-[#333333] cursor-not-allowed'
-                                : (!userData?.isPro && userData?.stats?.runCredits <= 0)
-                                    ? 'bg-[#262626] text-[#525252] border-[#333333] opacity-75 hover:opacity-100 hover:border-purple-500/30'
-                                    : 'bg-[#262626] hover:bg-[#333333] text-[#e5e5e5] border-[#333333] hover:border-[#404040]'}`}
+                            disabled={runStatus === 'running' || runStatus === 'submitting'}
+                            className={`relative overflow-hidden flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide transition-all border group ${runStatus === 'running' || runStatus === 'submitting'
+                                ? 'bg-zinc-800/50 text-zinc-600 border-zinc-800 cursor-not-allowed'
+                                : 'bg-transparent hover:bg-zinc-800/50 text-zinc-400 hover:text-zinc-200 border-zinc-700 hover:border-zinc-600'
+                                }`}
                         >
                             {runStatus === 'running' ? (
-                                <div className="w-3.5 h-3.5 border-2 border-[#e5e5e5]/30 border-t-[#e5e5e5] rounded-full animate-spin" />
+                                <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
                             ) : (
-                                <Play size={14} className="fill-current text-[#e5e5e5]" />
+                                <Play size={13} className="fill-current" />
                             )}
                             Run
                         </motion.button>
                         {!userData?.isPro && userData?.stats && (
-                            <span className="text-[9px] text-zinc-500 font-medium mr-1 mt-0.5">
-                                {userData.stats.runCredits}/3 left
+                            <span className="text-[9px] text-zinc-600 font-medium mr-1 mt-0.5">
+                                {userData.stats.runCredits}/3
                             </span>
                         )}
                     </div>
 
-                    {/* Submit Button with Credits */}
+                    {/* Submit Button - Small Outline Green */}
                     <div className="flex flex-col items-end">
                         <motion.button
-                            whileHover={{ scale: 1.02 }}
+                            whileHover={{ scale: 1.02, boxShadow: "0 0 10px rgba(34, 197, 94, 0.15)" }}
                             whileTap={{ scale: 0.98 }}
                             onClick={submitCode}
-                            disabled={runStatus === 'running'}
+                            disabled={runStatus === 'running' || runStatus === 'submitting'}
                             title={(!userData?.isPro && userData?.stats?.submissionCredits <= 0) ? "Upgrade to continue" : ""}
-                            className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-semibold transition-all border cursor-pointer ${(!userData?.isPro && userData?.stats?.submissionCredits <= 0)
-                                ? 'bg-red-500/10 text-red-500/50 border-red-500/10 opacity-75 hover:opacity-100 hover:border-red-500/30'
-                                : 'bg-[#22c55e]/10 hover:bg-[#22c55e]/20 text-[#22c55e] border border-[#22c55e]/20 hover:border-[#22c55e]/30'
-                                } disabled:opacity-50 disabled:cursor-not-allowed`}
+                            className={`relative overflow-hidden flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide transition-all border group ${(!userData?.isPro && userData?.stats?.submissionCredits <= 0) || runStatus === 'submitting'
+                                ? 'bg-zinc-800/50 text-zinc-600 border-zinc-800 cursor-not-allowed'
+                                : 'bg-green-500/5 hover:bg-green-500/10 text-green-500 border-green-500/50 hover:border-green-500 shadow-sm'
+                                }`}
                         >
-                            <Send size={14} />
+                            {runStatus === 'submitting' ? (
+                                <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                            ) : (
+                                <Send size={13} />
+                            )}
                             Submit
                         </motion.button>
                         {!userData?.isPro && userData?.stats && (
-                            <span className="text-[9px] text-zinc-500 font-medium mr-1 mt-0.5">
-                                {userData.stats.submissionCredits}/3 left
+                            <span className="text-[9px] text-zinc-600 font-medium mr-1 mt-0.5">
+                                {userData.stats.submissionCredits}/3
                             </span>
                         )}
                     </div>
@@ -953,7 +993,7 @@ export default function QuestionPage() {
                             animate={{ scale: 1, opacity: 1 }}
                             exit={{ scale: 0.95, opacity: 0 }}
                             onClick={(e) => e.stopPropagation()}
-                            className="bg-[#1A1A1A] border border-[#262626] rounded-xl p-6 max-w-sm w-full shadow-2xl relative"
+                            className="bg-[#181b21] border border-white/10 rounded-xl p-6 max-w-sm w-full shadow-2xl relative"
                         >
                             <button
                                 onClick={() => setLimitModal({ ...limitModal, show: false })}
@@ -967,14 +1007,11 @@ export default function QuestionPage() {
                             </div>
 
                             <h3 className="text-lg font-bold text-white text-center mb-2">
-                                {limitModal.type === 'run' ? 'Daily Run Limit Reached' :
-                                    limitModal.type === 'ai' ? 'Daily AI Limit Reached' :
-                                        limitModal.type === 'analyze' ? 'Premium Analysis Locked' :
-                                            'Submission Limit Reached'}
+                                Limit Reached
                             </h3>
 
                             <p className="text-zinc-400 text-sm text-center mb-6 leading-relaxed">
-                                {limitModal.message || "You have used all your free credits. Upgrade to Pro for unlimited access."}
+                                {limitModal.message || "Upgrade to Pro for unlimited access."}
                             </p>
 
                             <button
@@ -982,72 +1019,74 @@ export default function QuestionPage() {
                                 className="w-full py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white rounded-lg font-medium text-sm transition-all shadow-lg shadow-purple-500/25 flex items-center justify-center gap-2 cursor-pointer"
                             >
                                 <Zap size={16} className="fill-current" />
-                                Upgrade to Pro
+                                Upgrade
                             </button>
                         </motion.div>
                     </motion.div>
                 )}
             </AnimatePresence>
 
-            {/* Main Content Split */}
+            {/* Main Content Split - Dark Glass Panels */}
             <div
                 ref={containerRef}
-                className={`flex-1 flex overflow-hidden p-2 ${isDragging ? 'select-none' : ''}`}
+                className={`flex-1 flex overflow-hidden p-4 pt-2 gap-4 ${isDragging ? 'select-none cursor-col-resize' : ''}`}
             >
 
                 {/* Left Panel: Problem Description */}
                 <motion.div
-                    initial={{ opacity: 0, x: -10 }}
+                    initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.4, ease: "easeOut" }}
+                    transition={{ duration: 0.5, ease: "easeOut" }}
                     style={{ width: leftWidth, flexShrink: 0 }}
-                    className="flex flex-col bg-[#1A1A1A] rounded-xl border border-[#262626] overflow-hidden shadow-sm"
+                    className="flex flex-col bg-[#1e1e1e] rounded-2xl border border-white/10 shadow-2xl relative overflow-hidden"
                 >
-                    {/* Tabs */}
-                    <div className="flex items-center border-b border-[#262626] px-1 bg-[#1A1A1A]">
+                    {/* Tabs - Glass Header */}
+                    <div className="flex items-center border-b border-white/5 px-2 bg-[#1e1e1e] sticky top-0 z-20">
                         {[
-                            { id: 'description', label: 'Description', icon: FileText, color: 'text-blue-400' },
-                            { id: 'editorial', label: 'Editorial', icon: LayoutList, color: 'text-yellow-400' },
-                            { id: 'submissions', label: 'Submissions', icon: History, color: 'text-green-400' }
+                            { id: 'description', label: 'Description', icon: FileText, color: 'text-emerald-400' },
+                            { id: 'editorial', label: 'Editorial', icon: LayoutList, color: 'text-emerald-400' },
+                            { id: 'submissions', label: 'Submissions', icon: History, color: 'text-emerald-400' }
                         ].map((tab) => (
                             <button
                                 key={tab.id}
                                 onClick={() => { setActiveTab(tab.id); localStorage.setItem("codehub-activeTab", tab.id); }}
-                                className={`relative px-4 py-3 text-xs font-medium transition-colors flex items-center gap-2 group ${activeTab === tab.id
+                                className={`relative px-4 py-3 text-xs font-medium transition-all duration-300 flex items-center gap-2 outline-none group ${activeTab === tab.id
                                     ? 'text-white'
-                                    : 'text-[#737373] hover:text-[#a3a3a3]'
+                                    : 'text-zinc-500 hover:text-zinc-300'
                                     }`}
                             >
-                                <tab.icon size={14} className={activeTab === tab.id ? tab.color : 'text-[#525252] group-hover:text-[#737373] transition-colors'} />
-                                {tab.label}
+                                <tab.icon size={14} className={`transition-all duration-300 ${activeTab === tab.id ? `${tab.color}` : 'text-zinc-600 group-hover:text-zinc-400'}`} />
+                                <span className="tracking-wide relative z-10">{tab.label}</span>
+
                                 {activeTab === tab.id && (
                                     <motion.div
                                         layoutId="activeTabProblem"
-                                        className="absolute bottom-0 left-0 right-0 h-[2px] bg-white"
+                                        className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"
+                                        transition={{ type: "spring", stiffness: 500, damping: 30 }}
                                     />
                                 )}
                             </button>
                         ))}
                     </div>
 
-                    {/* Fixed Title Section - Only on Description Tab */}
+                    {/* Fixed Title Section */}
                     {activeTab === 'description' && (
-                        <div className="px-5 py-4 border-b border-[#262626] bg-[#1A1A1A] shrink-0">
-                            <div className="flex items-center justify-between gap-4 mb-3">
-                                <h2 className="text-2xl font-bold text-white m-0 tracking-tight leading-tight">
+                        <div className="px-6 py-5 border-b border-white/5 bg-transparent shrink-0 relative">
+                            <div className="flex items-center justify-between gap-4 mb-3 relative z-10">
+                                <h2 className="text-xl md:text-2xl font-bold text-white m-0 tracking-tight leading-tight">
                                     {problem.title}
                                 </h2>
                             </div>
 
-                            <div className="flex flex-wrap items-center gap-2">
-                                <span className={`px-2 py-0.5 rounded text-[10px] font-medium border flex items-center gap-1.5 ${problem.difficulty === 'Easy' ? 'text-[#22c55e] bg-[#22c55e]/10 border-[#22c55e]/20' :
-                                    problem.difficulty === 'Medium' ? 'text-[#f59e0b] bg-[#f59e0b]/10 border-[#f59e0b]/20' :
-                                        'text-[#ef4444] bg-[#ef4444]/10 border-[#ef4444]/20'
+                            <div className="flex flex-wrap items-center gap-2 relative z-10">
+                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold border flex items-center gap-1.5 ${problem.difficulty === 'Easy' ? 'text-emerald-400 border-emerald-500/20 bg-emerald-500/5' :
+                                    problem.difficulty === 'Medium' ? 'text-amber-400 border-amber-500/20 bg-amber-500/5' :
+                                        'text-rose-400 border-rose-500/20 bg-rose-500/5'
                                     }`}>
                                     {problem.difficulty}
                                 </span>
                                 {problem.tags && problem.tags.map(tag => (
-                                    <span key={tag} className="px-2 py-0.5 bg-[#262626] rounded text-[10px] font-medium text-[#a3a3a3] border border-[#333333]">
+                                    <span key={tag} className="px-2 py-0.5 bg-white/5 rounded text-[10px] font-medium text-zinc-400 border border-white/5 cursor-default hover:bg-white/10 transition-colors">
                                         {tag}
                                     </span>
                                 ))}
@@ -1643,89 +1682,156 @@ export default function QuestionPage() {
                 </motion.div >
 
                 {/* Resizer Handle (Horizontal) */}
-                < div
-                    className="w-4 hover:bg-blue-500/20 active:bg-blue-500/40 cursor-col-resize transition-colors flex items-center justify-center -ml-2 -mr-2 z-50 group"
+                <div
+                    className="w-4 hover:bg-emerald-500/10 active:bg-emerald-500/20 cursor-col-resize transition-colors flex items-center justify-center -ml-2 -mr-2 z-50 group relative"
                     onMouseDown={startResizingLeft}
                 >
-                    <div className="w-1 h-8 rounded-full bg-[#333333] group-hover:bg-blue-500/50 transition-colors" />
-                </div >
+                    <div className="w-1 h-12 rounded-full bg-zinc-700/50 group-hover:bg-emerald-500/50 transition-all" />
+                </div>
 
                 {/* Right Panel: Code Editor */}
-                < motion.div
+                <motion.div
                     ref={rightPanelRef}
-                    initial={{ opacity: 0, x: 10 }
-                    }
+                    initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.4, ease: "easeOut", delay: 0.1 }}
-                    className="relative flex-1 flex flex-col bg-[#1A1A1A] rounded-xl border border-[#262626] overflow-hidden shadow-sm min-w-0"
+                    transition={{ duration: 0.5, ease: "easeOut", delay: 0.1 }}
+                    className={`relative flex-1 flex flex-col bg-[#181b21]/90 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl overflow-hidden min-w-0 transition-all duration-500 ${isEditorFocused ? 'ring-1 ring-emerald-500/30 shadow-[0_0_30px_rgba(16,185,129,0.1)] z-40' : 'hover:border-white/20'
+                        }`}
                 >
                     {/* Top Section: Editor (Flexible Percent Height) */}
-                    < div
+                    <div
                         style={{ height: `${editorHeightPercent}%` }}
-                        className={`w-full flex flex-col min-h-0 bg-[#1A1A1A] overflow-hidden ${isDragging ? 'pointer-events-none' : ''}`}
+                        className={`w-full flex flex-col min-h-0 bg-[#1e1e1e] overflow-hidden ${isDragging ? 'pointer-events-none' : ''}`}
                     >
                         {/* Editor Toolbar */}
-                        < div className="h-10 bg-[#1A1A1A] border-b border-[#262626] flex items-center justify-between px-3 shrink-0" >
-                            <div className="flex items-center gap-2">
-                                <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#262626] border border-[#333333]">
-                                    <div className="w-2 h-2 rounded-full bg-[#22c55e]" />
-                                    <select
-                                        value={language}
-                                        onChange={handleLanguageChange}
-                                        className="bg-transparent text-[11px] font-medium text-[#e5e5e5] focus:outline-none cursor-pointer"
+                        <div className="h-10 bg-[#1e1e1e] border-b border-white/5 flex items-center justify-between px-4 shrink-0 z-50 relative">
+                            <div className="flex items-center gap-3">
+                                {/* Premium Language Dropdown */}
+                                <div className="relative" onClick={(e) => e.stopPropagation()}>
+                                    <button
+                                        onClick={() => setIsLangMenuOpen(!isLangMenuOpen)}
+                                        className={`flex items-center gap-2.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition-all text-[11px] font-bold text-zinc-300 min-w-[110px] justify-between group ${isLangMenuOpen ? 'bg-white/10 border-white/20 ring-1 ring-white/5' : ''}`}
                                     >
-                                        <option value="javascript">JavaScript</option>
-                                        <option value="python">Python</option>
-                                    </select>
+                                        <div className="flex items-center gap-2">
+                                            <div className={`w-2 h-2 rounded-full shadow-[0_0_8px_currentColor] ${language === 'javascript' ? 'bg-yellow-400 text-yellow-400' :
+                                                language === 'python' ? 'bg-blue-400 text-blue-400' :
+                                                    language === 'java' ? 'bg-orange-400 text-orange-400' : 'bg-cyan-400 text-cyan-400'
+                                                }`} />
+                                            <span className="uppercase tracking-wider">
+                                                {language === 'javascript' ? 'JavaScript' :
+                                                    language === 'python' ? 'Python' :
+                                                        language === 'java' ? 'Java' : 'C++'}
+                                            </span>
+                                        </div>
+                                        <ChevronDown size={12} className={`text-zinc-500 transition-transform duration-300 ${isLangMenuOpen ? 'rotate-180 text-zinc-300' : ''}`} />
+                                    </button>
+
+                                    <AnimatePresence>
+                                        {isLangMenuOpen && (
+                                            <motion.div
+                                                initial={{ opacity: 0, y: 5, scale: 0.95 }}
+                                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                                exit={{ opacity: 0, y: 5, scale: 0.95 }}
+                                                transition={{ duration: 0.1 }}
+                                                className="absolute top-full left-0 mt-1.5 w-[120px] bg-[#252526] border border-white/10 rounded-xl overflow-hidden shadow-2xl z-[100] ring-1 ring-black/50"
+                                            >
+                                                {[
+                                                    { id: 'javascript', label: 'JavaScript', color: 'bg-yellow-400 text-yellow-400' },
+                                                    { id: 'python', label: 'Python', color: 'bg-blue-400 text-blue-400' },
+                                                    { id: 'java', label: 'Java', color: 'bg-orange-400 text-orange-400' },
+                                                    { id: 'cpp', label: 'C++', color: 'bg-cyan-400 text-cyan-400' }
+                                                ].map((opt) => (
+                                                    <button
+                                                        key={opt.id}
+                                                        onClick={() => handleCustomLanguageChange(opt.id)}
+                                                        className={`w-full flex items-center gap-3 px-3 py-2.5 text-[11px] font-bold transition-colors hover:bg-white/5 text-left border-l-2 ${language === opt.id
+                                                            ? 'bg-white/5 text-white border-emerald-500'
+                                                            : 'text-zinc-400 border-transparent hover:text-zinc-200'
+                                                            }`}
+                                                    >
+                                                        <div className={`w-1.5 h-1.5 rounded-full ${opt.color} shadow-[0_0_5px_currentColor]`} />
+                                                        <span className="uppercase tracking-wider">{opt.label}</span>
+                                                    </button>
+                                                ))}
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
                                 </div>
                             </div>
                             <div className="flex items-center gap-1">
-                                <button className="p-1.5 hover:bg-[#262626] rounded-md text-[#737373] hover:text-white transition-colors">
+                                <button
+                                    onClick={() => setIsEditorFocused(!isEditorFocused)}
+                                    className={`p-1.5 hover:bg-white/5 rounded-md transition-colors ${isEditorFocused ? 'text-emerald-400 bg-emerald-500/10' : 'text-zinc-500 hover:text-white'}`}
+                                    title={isEditorFocused ? "Exit Focus Mode" : "Enter Focus Mode"}
+                                >
+                                    {isEditorFocused ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
+                                </button>
+                                <button className="p-1.5 hover:bg-white/5 rounded-md text-zinc-500 hover:text-white transition-colors" title="Copy Code">
                                     <Copy size={13} />
                                 </button>
-                                <button className="p-1.5 hover:bg-[#262626] rounded-md text-[#737373] hover:text-white transition-colors" title="Reset Code">
+                                <button
+                                    className="p-1.5 hover:bg-white/5 rounded-md text-zinc-500 hover:text-white transition-colors rotate-0 hover:rotate-180 duration-500"
+                                    title="Reset Code"
+                                    onClick={() => {
+                                        if (window.confirm("Reset code to default starter?")) {
+                                            if (problem && problem.starterCode) {
+                                                setCode(problem.starterCode[language] || problem.starterCode.javascript || '');
+                                            }
+                                        }
+                                    }}
+                                >
                                     <RefreshCw size={13} />
                                 </button>
                             </div>
-                        </div >
+                        </div>
 
                         {/* Editor Area */}
-                        < div className="flex-1 relative group bg-[#141414]" >
+                        <div className={`flex-1 relative group transition-colors duration-500 bg-[#1e1e1e]`}>
+                            {/* Editor Glow Line - Emerald */}
+                            <div className={`absolute top-0 left-0 bottom-0 w-[1.5px] bg-gradient-to-b from-emerald-500/50 via-green-500/50 to-transparent transition-opacity duration-300 ${isEditorFocused ? 'opacity-100' : 'opacity-0'}`} />
+
                             <CodeEditor
                                 language={languageMap[language]}
                                 code={code}
                                 setCode={setCode}
                             />
-                        </div >
-                    </div >
+                        </div>
+                    </div>
 
                     {/* Resizer Handle (Vertical) */}
-                    < div
-                        className="absolute left-0 right-0 h-4 z-50 cursor-row-resize flex items-center justify-center hover:bg-blue-500/10 active:bg-blue-500/20 transition-colors group"
+                    <div
+                        className="absolute left-0 right-0 h-4 z-50 cursor-row-resize flex items-center justify-center hover:bg-emerald-500/10 active:bg-emerald-500/20 transition-colors group"
                         style={{ top: `${editorHeightPercent}%`, transform: 'translateY(-50%)' }}
                         onMouseDown={startResizingBottom}
                     >
-                        <div className="h-1 w-12 rounded-full bg-[#333333] group-hover:bg-blue-500/50 transition-colors" />
-                    </div >
+                        <div className="h-1 w-12 rounded-full bg-zinc-700/50 group-hover:bg-emerald-500/50 transition-all" />
+                    </div>
 
                     {/* Bottom Panel: Test Cases (Remaining Percent Height) */}
-                    < div
+                    <div
                         style={{ height: `${100 - editorHeightPercent}%` }}
-                        className={`border-t border-[#262626] bg-[#1A1A1A] flex flex-col shrink-0 overflow-hidden ${isDragging ? 'pointer-events-none' : ''}`}
+                        className={`border-t border-white/10 bg-[#161616] flex flex-col shrink-0 overflow-hidden ${isDragging ? 'pointer-events-none' : ''}`}
                     >
-                        <div className="flex items-center border-b border-[#262626] px-2 bg-[#1A1A1A] shrink-0">
+                        <div className="flex items-center border-b border-white/5 px-2 bg-[#161616] shrink-0">
                             <button
                                 onClick={() => setActiveBottomTab('testcases')}
-                                className={`px-3 py-2 text-[11px] font-bold border-b-2 flex items-center gap-1.5 transition-colors ${activeBottomTab === 'testcases' ? 'text-white border-[#22c55e]' : 'text-[#737373] border-transparent hover:text-[#a3a3a3]'}`}
+                                className={`relative px-4 py-2.5 text-[11px] font-bold flex items-center gap-2 transition-all outline-none ${activeBottomTab === 'testcases' ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
                             >
-                                <CheckCircle2 size={12} className={activeBottomTab === 'testcases' ? "text-[#22c55e]" : "text-[#737373]"} />
+                                <CheckCircle2 size={13} className={activeBottomTab === 'testcases' ? "text-emerald-400" : "text-zinc-600"} />
                                 Test Cases
+                                {activeBottomTab === 'testcases' && (
+                                    <motion.div layoutId="activeTabBottom" className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                                )}
                             </button>
                             <button
                                 onClick={() => setActiveBottomTab('console')}
-                                className={`px-3 py-2 text-[11px] font-bold border-b-2 transition-colors ${activeBottomTab === 'console' ? 'text-white border-[#22c55e]' : 'text-[#737373] border-transparent hover:text-[#a3a3a3]'}`}
+                                className={`relative px-4 py-2.5 text-[11px] font-bold flex items-center gap-2 transition-all outline-none ${activeBottomTab === 'console' ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
                             >
+                                <LayoutList size={13} className={activeBottomTab === 'console' ? "text-emerald-400" : "text-zinc-600"} />
                                 Console
+                                {activeBottomTab === 'console' && (
+                                    <motion.div layoutId="activeTabBottom" className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                                )}
                             </button>
                         </div>
 
@@ -1733,16 +1839,16 @@ export default function QuestionPage() {
                             {activeBottomTab === 'console' ? (
                                 <div className="h-full relative overflow-hidden flex flex-col">
                                     {runStatus === 'running' ? (
-                                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#111111] z-10 space-y-4">
+                                        <div className="absolute inset-0 flex flex-col items-center justify-center z-10 space-y-4">
                                             <div className="relative">
-                                                <div className="w-16 h-16 border-4 border-purple-500/20 border-t-purple-500 rounded-full animate-spin" />
+                                                <div className="w-12 h-12 border-2 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin" />
                                                 <div className="absolute inset-0 flex items-center justify-center">
-                                                    <Code2 size={20} className="text-purple-500 animate-pulse" />
+                                                    <Code2 size={16} className="text-emerald-400 animate-pulse" />
                                                 </div>
                                             </div>
                                             <div className="text-center">
-                                                <p className="text-white font-medium mb-1">Running Code...</p>
-                                                <p className="text-zinc-500 text-xs">Analyzing complexity & correctness</p>
+                                                <p className="text-white font-bold tracking-wide mb-1">Processing...</p>
+                                                <p className="text-emerald-400/80 text-[10px] font-mono uppercase tracking-widest">Running Code...</p>
                                             </div>
                                         </div>
                                     ) : submissionResult ? (
@@ -1751,16 +1857,15 @@ export default function QuestionPage() {
                                             output={output}
                                         />
                                     ) : (
-                                        <div className="flex-1 flex flex-col items-center justify-center text-center p-8 text-zinc-500">
-                                            <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center mb-4 transition-transform hover:scale-110">
-                                                <Play size={32} className="opacity-50" />
+                                        <div className="flex-1 flex flex-col items-center justify-center text-center p-8 text-zinc-500 opacity-50">
+                                            <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center mb-4 border border-white/5">
+                                                <Play size={20} className="opacity-50" />
                                             </div>
-                                            <p className="text-sm font-medium text-zinc-400">Ready to execute</p>
-                                            <p className="text-xs mt-1">Run or Submit your code to see the results here</p>
+                                            <p className="text-[10px] font-bold uppercase tracking-widest">Console Idle</p>
                                         </div>
                                     )
                                     }
-                                </div >
+                                </div>
                             ) : (
                                 <TestCasesPanel
                                     testCases={problem.examples}
@@ -1770,9 +1875,9 @@ export default function QuestionPage() {
                                     runStatus={runStatus}
                                 />
                             )}
-                        </div >
-                    </div >
-                </motion.div >
+                        </div>
+                    </div>
+                </motion.div>
             </div >
             {/* Premium AI Assistant UI */}
             <AnimatePresence>
@@ -2049,4 +2154,3 @@ export default function QuestionPage() {
         </div >
     );
 }
-0
