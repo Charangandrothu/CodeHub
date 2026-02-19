@@ -33,8 +33,16 @@ submissionQueue.process(async (job) => {
             throw new Error("No hidden test cases defined");
         }
 
-        // 3. Parallel Execution
-        const promises = hiddenCases.map(async (testCase, index) => {
+        // 3. Sequential Execution with Early Exit
+        let finalVerdict = "Accepted";
+        let finalError = "";
+        let failedTestCase = null;
+        let passedCount = 0;
+        let maxTime = 0;
+        let maxMemory = 0;
+
+        for (let i = 0; i < hiddenCases.length; i++) {
+            const testCase = hiddenCases[i];
             const finalSourceCode = generateDriverCode(code, language, testCase.input);
             const shouldUseStdin = (finalSourceCode === code);
 
@@ -44,69 +52,51 @@ submissionQueue.process(async (job) => {
                     languageIds[language],
                     shouldUseStdin ? testCase.input : ""
                 );
-                return { index, result, testCase, success: true };
-            } catch (err) {
-                return { index, error: err.message, testCase, success: false };
-            }
-        });
 
-        const results = await Promise.all(promises);
-
-        // 4. Process Results
-        let finalVerdict = "Accepted";
-        let finalError = "";
-        let failedTestCase = null;
-        let passedCount = 0;
-        let maxTime = 0;
-        let maxMemory = 0;
-
-        for (const res of results) {
-            // Track Max Time/Memory
-            if (res.success && res.result) {
-                const t = parseFloat(res.result.time) || 0;
-                const m = parseFloat(res.result.memory) || 0;
+                // Track Max Time/Memory
+                const t = parseFloat(result.time) || 0;
+                const m = parseFloat(result.memory) || 0;
                 if (t > maxTime) maxTime = t;
                 if (m > maxMemory) maxMemory = m;
-            }
 
-            if (!res.success) {
+                const expectedOutput = normalizeOutput(testCase.output);
+                const statusId = result.status?.id;
+
+                // Check for Errors
+                if (statusId === 6 || result.compile_output) {
+                    finalVerdict = "Compilation Error";
+                    finalError = result.compile_output || result.stderr;
+                    break;
+                }
+
+                if (statusId === 5) {
+                    finalVerdict = "Time Limit Exceeded";
+                    finalError = "Time limit exceeded";
+                    failedTestCase = { input: testCase.input, expected: testCase.output, actual: "Time Limit Exceeded" };
+                    break;
+                }
+
+                if (result.stderr || (statusId >= 7 && statusId <= 12)) {
+                    finalVerdict = "Runtime Error";
+                    finalError = result.stderr || result.status?.description;
+                    failedTestCase = { input: testCase.input, expected: testCase.output, actual: "Runtime Error" };
+                    break;
+                }
+
+                const actualOutput = normalizeOutput(result.stdout);
+                if (actualOutput !== expectedOutput) {
+                    finalVerdict = "Wrong Answer";
+                    failedTestCase = { input: testCase.input, expected: testCase.output, actual: actualOutput };
+                    break;
+                }
+
+                passedCount++;
+
+            } catch (err) {
                 finalVerdict = "Runtime Error";
-                finalError = "Execution failed: " + res.error;
+                finalError = "System Error: " + err.message;
                 break;
             }
-
-            const { result, testCase, index } = res;
-            const expectedOutput = normalizeOutput(testCase.output);
-            const statusId = result.status?.id;
-
-            if (statusId === 6 || result.compile_output) {
-                finalVerdict = "Compilation Error";
-                finalError = result.compile_output || result.stderr;
-                break;
-            }
-
-            if (statusId === 5) {
-                finalVerdict = "Time Limit Exceeded";
-                finalError = "Time limit exceeded";
-                failedTestCase = { input: "Hidden", expected: "Hidden", actual: "Time Limit Exceeded" };
-                break;
-            }
-
-            if (result.stderr || (statusId >= 7 && statusId <= 12)) {
-                finalVerdict = "Runtime Error";
-                finalError = result.stderr || result.status?.description;
-                failedTestCase = { input: "Hidden", expected: "Hidden", actual: "Runtime Error" };
-                break;
-            }
-
-            const actualOutput = normalizeOutput(result.stdout);
-            if (actualOutput !== expectedOutput) {
-                finalVerdict = "Wrong Answer";
-                failedTestCase = { input: "Hidden", expected: "Hidden", actual: "Hidden" };
-                break;
-            }
-
-            passedCount++;
         }
 
         // 5. Update User Stats & Credits (If Accepted)
@@ -182,7 +172,15 @@ submissionQueue.process(async (job) => {
                 verdict: finalVerdict,
                 runtime: maxTime,
                 memory: maxMemory,
-                submittedAt: new Date()
+                submittedAt: new Date(),
+                passedTestCases: passedCount,
+                totalTestCases: hiddenCases.length,
+                stderr: finalError,
+                failedTestCase: failedTestCase ? {
+                    input: failedTestCase.input,
+                    expected: failedTestCase.expected,
+                    actual: failedTestCase.actual
+                } : null
             },
             { upsert: true, new: true }
         );
