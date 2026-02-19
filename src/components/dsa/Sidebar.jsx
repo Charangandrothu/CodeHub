@@ -186,12 +186,12 @@ export default function Sidebar() {
                     <img
                         src={userData?.photoURL || currentUser?.photoURL || `https://api.dicebear.com/9.x/adventurer/svg?seed=${userData?.username || currentUser?.email?.split('@')[0] || 'User'}`}
                         alt="Profile"
-                        className="w-10 h-10 rounded-full border-2 border-white/10 group-hover:border-blue-500/50 transition-colors object-cover"
+                        className="w-10 h-10 rounded-full border-2 border-white/10 group-hover:border-blue-500/50 transition-colors object-cover cursor-pointer"
                         onClick={() => {
                             if (!userData?.profileCompleted) {
                                 navigate('/complete-profile');
                             } else {
-                                navigate(`/${userData?.username}`);
+                                navigate(`/profile/${userData?.username}`);
                             }
                         }}
                         onError={(e) => {
@@ -199,11 +199,11 @@ export default function Sidebar() {
                             e.target.src = `https://api.dicebear.com/9.x/adventurer/svg?seed=${userData?.username || currentUser?.email?.split('@')[0] || 'User'}`;
                         }}
                     />
-                    <div className="flex-1 min-w-0" onClick={() => {
+                    <div className="flex-1 min-w-0 cursor-pointer" onClick={() => {
                         if (!userData?.profileCompleted) {
                             navigate('/complete-profile');
                         } else {
-                            navigate(`/${userData?.username}`);
+                            navigate(`/profile/${userData?.username}`);
                         }
                     }}>
                         <h4 className="text-sm font-semibold text-white truncate group-hover:text-blue-400 transition-colors">

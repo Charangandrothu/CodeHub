@@ -117,7 +117,7 @@ function AppRoutes() {
           <Settings />
         </ProtectedRoute>
       } />
-      <Route path="/:username" element={
+      <Route path="/profile/:username" element={
         <ProtectedRoute>
           <Profile />
         </ProtectedRoute>

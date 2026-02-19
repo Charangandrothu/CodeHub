@@ -344,7 +344,7 @@ const Navbar = () => {
                               return;
                             }
                             setShowProfileMenu(false);
-                            navigate(`/${userData.username}`);
+                            navigate(`/profile/${userData.username}`);
                           }}
                         />
                         <MenuLink
@@ -391,22 +391,32 @@ const Navbar = () => {
               </div>
             ) : (
               <div className="flex items-center gap-3">
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <Button
-                    variant="primary"
+                <div className="flex items-center gap-3">
+                  <motion.button
                     onClick={() => navigate('/login')}
-                    className="relative overflow-hidden !bg-white !text-black !border-0 font-semibold shadow-[0_0_20px_rgba(255,255,255,0.3)] hover:shadow-[0_0_25px_rgba(255,255,255,0.5)] transition-shadow duration-300 group"
+                    className="relative inline-flex items-center justify-center gap-2 px-5 h-[42px] rounded-[18px] bg-white/[0.08] backdrop-blur-[18px] border-0 transition-all duration-300 group hover:bg-white/[0.12] hover:-translate-y-0.5 shadow-[0_4px_12px_rgba(0,0,0,0.1)] hover:shadow-[0_8px_16px_rgba(255,255,255,0.05)]"
+                    whileTap={{ scale: 0.96 }}
+                    transition={{ duration: 0.2 }}
                   >
-                    <span className="relative z-10 flex items-center gap-2">
-                      <span>Login</span>
-                      <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                    {/* Subtle Gradient Border */}
+                    <div className="absolute inset-0 rounded-[18px] p-[1px] bg-gradient-to-b from-white/20 to-transparent opacity-50 group-hover:opacity-100 transition-opacity" style={{ maskImage: 'linear-gradient(#fff 0 0), linear-gradient(#fff 0 0)', maskClip: 'padding-box, border-box', maskComposite: 'xor' }} />
+
+                    {/* Inner Light Reflection (Top) */}
+                    <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-60" />
+
+                    {/* Ambient Glow Pulse */}
+                    <motion.div
+                      className="absolute inset-0 rounded-[18px] bg-blue-500/10 blur-md"
+                      animate={{ opacity: [0, 0.4, 0] }}
+                      transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                    />
+
+                    <span className="relative z-10 text-sm font-medium text-white/90 group-hover:text-white flex items-center gap-2 tracking-wide">
+                      Get Started
+                      <Sparkles size={12} className="text-blue-300 opacity-80 group-hover:opacity-100 group-hover:text-white transition-all duration-300" />
                     </span>
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 opacity-0 hover:opacity-100 transition-opacity duration-300" />
-                  </Button>
-                </motion.div>
+                  </motion.button>
+                </div>
               </div>
             )}
           </div>
