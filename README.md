@@ -72,5 +72,5 @@ Follow these steps to set up the project locally.
 
 ### 1. Clone the Repository
 ```bash
-git clone [https://github.com/your-username/codehub.git](https://github.com/your-username/codehub.git)
+git clone https://github.com/Charangandrothu/CodeHub.git
 cd codehub
