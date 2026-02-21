@@ -34,6 +34,7 @@ import Payments from './pages/admin/Payments'
 import Problems from './pages/admin/Problems'
 import Categories from './pages/admin/Categories'
 import AdminSettings from './pages/admin/Settings'
+import Announcements from './pages/admin/Announcements'
 
 import { useAuth } from './context/AuthContext'
 
@@ -131,6 +132,7 @@ function AppRoutes() {
         <Route path="payments" element={<Payments />} />
         <Route path="problems" element={<Problems />} />
         <Route path="categories" element={<Categories />} />
+        <Route path="announcements" element={<Announcements />} />
         <Route path="settings" element={<AdminSettings />} />
       </Route>
 
@@ -154,12 +156,15 @@ const ConditionalNavbar = () => {
   );
 };
 
+import AnnouncementBar from './components/AnnouncementBar';
+
 function App() {
   return (
     <Router>
       <div className="bg-[#0a0a0a] min-h-screen text-white relative">
         <ScrollToTop />
         <ErrorBoundary>
+          <AnnouncementBar />
           <ConditionalNavbar />
           <AppRoutes />
         </ErrorBoundary>

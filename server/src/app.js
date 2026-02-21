@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const problemRoutes = require("./routes/problemRoutes");
+const problemRoutes = require("./routes/ProblemRoutes");
 const app = express();
 
 const { limiter } = require("./middleware/rateLimiter");
@@ -43,6 +43,9 @@ app.use('/api/ai', aiRoutes);
 
 const platformRoutes = require("./routes/platform");
 app.use('/api/platform', platformRoutes);
+
+const announcementRoutes = require("./routes/announcementRoutes");
+app.use('/api/announcements', announcementRoutes);
 
 // Maintenance Mode Middleware
 const PlatformSettings = require("./models/PlatformSettings");

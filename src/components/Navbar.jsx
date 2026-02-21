@@ -111,7 +111,8 @@ const Navbar = () => {
       animate={hidden ? "hidden" : "visible"}
       exit="hidden"
       transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-      className={`fixed top-0 left-0 right-0 z-50 flex items-center justify-center px-4 sm:px-6 py-4 ${location.pathname.startsWith('/problem/') ? 'hidden' : ''}`}
+      className={`fixed left-0 right-0 z-50 flex items-center justify-center px-4 sm:px-6 py-4 transition-[top] duration-300 ${location.pathname.startsWith('/problem/') ? 'hidden' : ''}`}
+      style={{ top: 'var(--announcement-height, 0px)' }}
     >
       {/* Glassmorphism Container */}
       <div className="relative w-full max-w-7xl mx-auto flex items-center justify-between px-6 py-3 rounded-2xl border border-white/10 bg-[#0a0a0a]/70 backdrop-blur-xl shadow-lg shadow-black/20 overflow-visible">

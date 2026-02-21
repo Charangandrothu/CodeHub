@@ -85,7 +85,7 @@ const Login = () => {
           // Set the random password
           await updatePassword(user, randomPassword);
           // Update Firestore to reflect password exists
-          await updateDoc(doc(db, "users", user.uid), { hasPassword: true });
+          // await updateDoc(doc(db, "users", user.uid), { hasPassword: true });
         } catch (pwError) {
           console.error("Error setting initial random password:", pwError);
           // Don't block login if this fails, just log it
@@ -148,6 +148,8 @@ const Login = () => {
       }
 
       // If they logged in with password but Firestore says they don't have one, update it.
+      // Legacy Firestore update - removed to prevent permission errors as we rely on MongoDB/Auth
+      /* 
       if (userData && !userData.hasPassword) {
         try {
           await updateDoc(doc(db, "users", user.uid), { hasPassword: true });
@@ -155,6 +157,7 @@ const Login = () => {
           console.error("Failed to update hasPassword flag:", err);
         }
       }
+      */
 
       console.log('Login success:', user)
       setIsLoading(false)
