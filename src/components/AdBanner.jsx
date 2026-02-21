@@ -23,8 +23,7 @@ const AdBanner = ({ adSlot, adFormat = 'auto', className = '' }) => {
         if (typeof window === 'undefined') return;
 
         try {
-            const adsbygoogle = window.adsbygoogle || [];
-            adsbygoogle.push({});
+            (window.adsbygoogle = window.adsbygoogle || []).push({});
             pushed.current = true;
         } catch (err) {
             // Silently handle - ad blocker or AdSense not loaded
@@ -48,6 +47,8 @@ const AdBanner = ({ adSlot, adFormat = 'auto', className = '' }) => {
                 ref={adRef}
                 data-ad-client="ca-pub-6907980845698047"
                 data-ad-slot={adSlot}
+                data-ad-format={adFormat}
+                data-full-width-responsive="true"
             >
             </ins>
         </div>
