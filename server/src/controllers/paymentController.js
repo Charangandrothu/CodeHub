@@ -1,95 +1,108 @@
-const Razorpay = require('razorpay');
+const razorpay = require('../config/razorpay');
+const Order = require('../models/Order');
+const PricingService = require('../services/pricingService');
 const crypto = require('crypto');
-const User = require('../models/User');
-const Payment = require('../models/Payment');
 
-const razorpay = new Razorpay({
-    key_id: process.env.RAZORPAY_KEY_ID,
-    key_secret: process.env.RAZORPAY_KEY_SECRET
-});
+class PaymentController {
 
-// Create Subscription
-exports.createSubscription = async (req, res) => {
-    try {
-        const { uid } = req.body;
+    // 1. Create Order API
+    static async createOrder(req, res) {
+        try {
+            const { plan_id, billing_cycle } = req.body;
+            const currency = req.currency; // Provided by geoLocation middleware
+            const userId = req.user.uid; // Provided by auth middleware
 
-        // Use the plan ID from environment or request. 
-        // User requested hardcoded/mapped plan.
-        const plan_id = process.env.RAZORPAY_PLAN_ID;
-
-        if (!plan_id) {
-            return res.status(500).json({ error: "Configuration Error: Plan ID missing" });
-        }
-
-        const subscription = await razorpay.subscriptions.create({
-            plan_id: plan_id,
-            customer_notify: 1, // Notify via email/sms
-            total_count: 120, // 10 years (or effectively unlimited for now until cancelled)
-            notes: {
-                uid: uid
+            if (!['pro', 'elite'].includes(plan_id)) {
+                return res.status(400).json({ error: "Invalid Plan ID" });
             }
-        });
 
-        res.json({
-            subscriptionId: subscription.id,
-            keyId: process.env.RAZORPAY_KEY_ID
-        });
+            if (!['monthly', 'yearly'].includes(billing_cycle)) {
+                return res.status(400).json({ error: "Invalid Billing Cycle" });
+            }
 
-    } catch (error) {
-        console.error("Create Subscription Error:", error);
-        res.status(500).json({ error: error.message });
-    }
-};
+            // 1. Calculate price securely (Backend Truth)
+            const { finalAmount } = await PricingService.calculatePrice(plan_id, billing_cycle, currency);
 
-// Verify Payment
-exports.verifyPayment = async (req, res) => {
-    try {
-        const { razorpay_payment_id, razorpay_subscription_id, razorpay_signature, uid } = req.body;
+            // Razorpay won't process less than ₹1 (100 paise) unless it's a test hook maybe, but mathematically correct
+            if (finalAmount <= 0) {
+                return res.status(400).json({ error: "Invalid amount calculated." });
+            }
 
-        const secret = process.env.RAZORPAY_KEY_SECRET;
+            // 2. Generate unique receipt ID
+            const receiptId = `rcpt_${userId.substring(0, 5)}_${Date.now()}`;
 
-        // Signature verification formula for Subscriptions:
-        // razorpay_payment_id + "|" + razorpay_subscription_id
-        const generated_signature = crypto
-            .createHmac('sha256', secret)
-            .update(razorpay_payment_id + "|" + razorpay_subscription_id)
-            .digest('hex');
+            // 3. Create Razorpay Order
+            const options = {
+                amount: finalAmount, // Amount is in paise/cents
+                currency: currency,
+                receipt: receiptId,
+            };
 
-        if (generated_signature !== razorpay_signature) {
-            return res.status(400).json({ success: false, message: "Payment verification failed" });
+            const rpOrder = await razorpay.orders.create(options);
+
+            if (!rpOrder || !rpOrder.id) {
+                throw new Error("Razorpay Order Creation Failed");
+            }
+
+            // 4. Save Order in DB with status "created"
+            const expireTime = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes expiry
+
+            const newOrder = new Order({
+                user_id: userId,
+                plan_id,
+                billing_cycle,
+                currency,
+                amount: finalAmount,
+                razorpay_order_id: rpOrder.id,
+                status: 'created',
+                expireAt: expireTime
+            });
+
+            await newOrder.save();
+
+            // 5. Return safe data to frontend
+            return res.status(200).json({
+                success: true,
+                order_id: rpOrder.id,
+                currency: rpOrder.currency,
+                amount: rpOrder.amount, // safe to pass, frontend uses it for checkout modal display
+                key_id: process.env.RAZORPAY_KEY_ID // Safe to expose public key
+            });
+
+        } catch (error) {
+            console.error("Order Creation Error:", error);
+            return res.status(500).json({ error: "Failed to create order" });
         }
-
-        // 1. Create Payment Record (for Admin Dashboard)
-        const paymentRecord = new Payment({
-            userId: uid,
-            email: req.body.email || "", // Assuming email is passed or can be fetched
-            amount: 499, // Hardcoded for now based on context, or fetch from plan details
-            plan: 'Pro Monthly',
-            status: 'success',
-            razorpayPaymentId: razorpay_payment_id,
-            razorpayOrderId: razorpay_subscription_id // Using subscription ID as Order ID proxy
-        });
-        await paymentRecord.save();
-
-        // 2. Update User in MongoDB
-        const updatedUser = await User.findOneAndUpdate(
-            { uid: uid },
-            {
-                $set: {
-                    isPro: true,
-                    plan: 'PRO',
-                    paymentStatus: 'active',
-                    subscriptionId: razorpay_subscription_id,
-                    updatedAt: new Date()
-                }
-            },
-            { new: true }
-        );
-
-        res.json({ success: true, message: "Subscription activated", user: updatedUser });
-
-    } catch (error) {
-        console.error("Verify Payment Error:", error);
-        res.status(500).json({ error: error.message });
     }
-};
+
+    // 2. Fetch Pricing Data for Frontend
+    static async getPricing(req, res) {
+        try {
+            const currency = req.currency || 'INR'; // Detected by GeoLocation middleware
+            const plans = ['pro', 'elite'];
+            const responseData = {};
+
+            for (const planId of plans) {
+                const monthly = await PricingService.calculatePrice(planId, 'monthly', currency);
+                const yearly = await PricingService.calculatePrice(planId, 'yearly', currency);
+
+                responseData[planId] = {
+                    monthly: Math.floor(monthly.finalAmount / 100),       // Convert back from paise/cents to display format
+                    yearly: Math.floor(yearly.finalAmount / 100),
+                    originalMonthly: Math.floor(monthly.basePrice / 100),
+                    originalYearly: Math.floor(yearly.basePrice / 100),
+                    currencySymbol: currency === 'INR' ? '₹' : '$',
+                    currencyCode: currency
+                };
+            }
+
+            return res.status(200).json({ success: true, pricing: responseData });
+
+        } catch (error) {
+            console.error("Fetch Pricing Error:", error);
+            return res.status(500).json({ error: "Failed to fetch pricing" });
+        }
+    }
+}
+
+module.exports = PaymentController;
