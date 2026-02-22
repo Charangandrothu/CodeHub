@@ -83,9 +83,11 @@ const calculateStreak = (history) => {
     // Get unique normalized dates (Midnight timestamp)
     const uniqueDays = new Set();
     history.forEach(sub => {
-        const d = new Date(sub.submittedAt);
-        d.setHours(0, 0, 0, 0); // Normalize to midnight
-        uniqueDays.add(d.getTime());
+        if (sub.verdict === 'Accepted') {
+            const d = new Date(sub.submittedAt);
+            d.setHours(0, 0, 0, 0); // Normalize to midnight
+            uniqueDays.add(d.getTime());
+        }
     });
 
     const sortedDays = Array.from(uniqueDays).sort((a, b) => b - a); // Descending (Newest first)
