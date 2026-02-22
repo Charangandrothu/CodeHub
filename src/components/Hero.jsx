@@ -296,7 +296,7 @@ const Hero = () => {
                   y: isHovered ? 90 : 0,
                   scale: isHovered ? 1.2 : 1,
                   zIndex: isHovered ? 10 : 20,
-                  filter: isHovered ? "drop-shadow(0 0 20px rgba(255,100,100,0.5))" : "drop-shadow(0 0 0 rgba(0,0,0,0))"
+                  filter: isHovered ? "drop-shadow(0px 0px 20px rgba(255,100,100,0.5))" : "drop-shadow(0px 0px 0px rgba(0,0,0,0))"
                 }}
                 transition={{ duration: 0.6, ease: "easeInOut" }}
               >
@@ -317,7 +317,7 @@ const Hero = () => {
                   y: isHovered ? -90 : 0,
                   scale: isHovered ? 1.2 : 1,
                   zIndex: isHovered ? 20 : 10,
-                  filter: isHovered ? "drop-shadow(0 0 20px rgba(50,150,255,0.5))" : "drop-shadow(0 0 0 rgba(0,0,0,0))"
+                  filter: isHovered ? "drop-shadow(0px 0px 20px rgba(50,150,255,0.5))" : "drop-shadow(0px 0px 0px rgba(0,0,0,0))"
                 }}
                 transition={{ duration: 0.6, ease: "easeInOut" }}
               >

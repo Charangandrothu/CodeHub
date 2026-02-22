@@ -99,28 +99,29 @@ submissionQueue.process(async (job) => {
             }
         }
 
-        // 5. Update User Stats & Credits (If Accepted)
-        if (finalVerdict === "Accepted") {
-            const userUpdate = await User.findOne({ uid: userId });
-            if (userUpdate) {
-                if (!userUpdate.stats) userUpdate.stats = {};
-                if (!userUpdate.stats.solvedProblemIds) userUpdate.stats.solvedProblemIds = [];
+        // 5. Update User Stats & Credits
+        const userUpdate = await User.findOne({ uid: userId });
+        if (userUpdate) {
+            if (!userUpdate.stats) userUpdate.stats = {};
+            if (!userUpdate.stats.solvedProblemIds) userUpdate.stats.solvedProblemIds = [];
 
-                // Add to history
-                const existingHistoryIndex = userUpdate.submissionHistory.findIndex(s => s.problemId === problemId);
-                const historyEntry = {
-                    problemId: problemId,
-                    problemTitle: problem.title || "Unknown Problem",
-                    verdict: "Accepted",
-                    submittedAt: new Date()
-                };
+            // Add to history ALWAYS
+            const historyEntry = {
+                problemId: problemId,
+                problemTitle: problem.title || "Unknown Problem",
+                verdict: finalVerdict,
+                submittedAt: new Date()
+            };
 
-                if (existingHistoryIndex !== -1) {
-                    userUpdate.submissionHistory[existingHistoryIndex] = historyEntry;
-                } else {
-                    userUpdate.submissionHistory.push(historyEntry);
-                }
+            userUpdate.submissionHistory.push(historyEntry);
 
+            // Limit to 2000 to prevent unbounded growth
+            if (userUpdate.submissionHistory.length > 2000) {
+                userUpdate.submissionHistory = userUpdate.submissionHistory.slice(userUpdate.submissionHistory.length - 2000);
+            }
+
+            // Only update streak and solved counts if Accepted
+            if (finalVerdict === "Accepted") {
                 if (!userUpdate.stats.solvedProblemIds.includes(problemId)) {
                     userUpdate.stats.solvedProblemIds.push(problemId);
                     userUpdate.stats.solvedProblems = userUpdate.stats.solvedProblemIds.length;
@@ -144,14 +145,14 @@ submissionQueue.process(async (job) => {
                     }
                     userUpdate.stats.lastSolvedDate = now;
                 }
+            }
 
-                await userUpdate.save();
+            await userUpdate.save();
 
-                // Invalidate cache
-                await redis.del(`cache:/api/users/${userId}`);
-                if (userUpdate.username) {
-                    await redis.del(`cache:/api/users/handle/${userUpdate.username}`);
-                }
+            // Invalidate cache
+            await redis.del(`cache:/api/users/${userId}`);
+            if (userUpdate.username) {
+                await redis.del(`cache:/api/users/handle/${userUpdate.username}`);
             }
         }
 

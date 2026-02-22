@@ -1,13 +1,17 @@
 const express = require('express');
 const cors = require('cors');
-const problemRoutes = require("./routes/ProblemRoutes");
+const helmet = require('helmet');
+const cookieParser = require('cookie-parser');
+const problemRoutes = require("./routes/problemRoutes");
 const app = express();
 
 const { limiter } = require("./middleware/rateLimiter");
 
 //Middleware
 app.disable("x-powered-by");
-app.use(cors());
+app.use(helmet());
+app.use(cors({ origin: true, credentials: true })); // Allow secure cross-origin cookies
+app.use(cookieParser());
 app.use(express.json());
 
 // Global Rate Limiting
@@ -36,6 +40,11 @@ const paymentRoutes = require("./routes/paymentRoutes");
 app.use('/api/payment', paymentRoutes);
 
 const adminRoutes = require("./routes/adminRoutes");
+const adminAuthRoutes = require("./routes/adminAuthRoutes");
+const adminPricingRoutes = require("./routes/adminPricingRoutes");
+
+app.use('/api/admin/auth', adminAuthRoutes);
+app.use('/api/admin/pricing', adminPricingRoutes);
 app.use('/api/admin', adminRoutes);
 
 const aiRoutes = require("./routes/aiRoutes");
@@ -46,6 +55,9 @@ app.use('/api/platform', platformRoutes);
 
 const announcementRoutes = require("./routes/announcementRoutes");
 app.use('/api/announcements', announcementRoutes);
+
+const webhookRoutes = require("./routes/webhookRoutes");
+app.use('/api/webhooks', webhookRoutes);
 
 // Maintenance Mode Middleware
 const PlatformSettings = require("./models/PlatformSettings");
