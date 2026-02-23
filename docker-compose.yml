@@ -1,7 +1,34 @@
 version: '3.8'
+
 services:
   web:
     build: .
     ports:
       - "5173:80"
+    restart: unless-stopped
+
+  api:
+    build: ./server
+    container_name: codehubx-api
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./server/.env
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  worker:
+    build: ./server
+    container_name: codehubx-worker
+    command: node src/worker.js
+    env_file:
+      - ./server/.env
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: codehubx-redis
     restart: unless-stopped
