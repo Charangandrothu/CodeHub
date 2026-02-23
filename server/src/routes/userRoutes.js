@@ -41,7 +41,7 @@ router.post('/sync', async (req, res) => {
                 email,
                 username: (displayName || email.split('@')[0]).toLowerCase().replace(/[^a-z0-9]/g, ''), // Default username sanitized
                 displayName: displayName || "", // Save displayName
-                photoURL: photoURL || "",
+                photoURL: photoURL || "https://api.dicebear.com/9.x/adventurer/svg?seed=Emery&backgroundColor=d1d4f9",
                 isPro: false,
                 stats: {
                     streak: 0,
@@ -163,8 +163,20 @@ router.get('/handle/:username', cacheMiddleware(60), async (req, res) => {
 
         // Recalculate Streak Dynamically
         const dynamicStreak = calculateStreak(user.submissionHistory);
+        let saveNeeded = false;
         if (user.stats.streak !== dynamicStreak) {
             user.stats.streak = dynamicStreak;
+            saveNeeded = true;
+        }
+
+        // Check Subscription Expiration
+        if (user.isPro && user.subscriptionEndDate && new Date() > new Date(user.subscriptionEndDate)) {
+            user.isPro = false;
+            user.plan = 'FREE';
+            saveNeeded = true;
+        }
+
+        if (saveNeeded) {
             await user.save();
         }
 
@@ -211,10 +223,22 @@ router.get('/:uid', cacheMiddleware(2), async (req, res) => {
 
         // Recalculate Streak Dynamically to ensure consistency
         const dynamicStreak = calculateStreak(user.submissionHistory);
+        let saveNeeded = false;
 
         // Update if different
         if (user.stats.streak !== dynamicStreak) {
             user.stats.streak = dynamicStreak;
+            saveNeeded = true;
+        }
+
+        // Check Subscription Expiration
+        if (user.isPro && user.subscriptionEndDate && new Date() > new Date(user.subscriptionEndDate)) {
+            user.isPro = false;
+            user.plan = 'FREE';
+            saveNeeded = true;
+        }
+
+        if (saveNeeded) {
             await user.save();
         }
 
@@ -418,6 +442,7 @@ router.put('/roadmap/:uid', async (req, res) => {
         await user.save();
 
         await redis.del(`cache:/api/users/${req.params.uid}`);
+        await redis.del(`cache:/api/users/roadmap/${req.params.uid}`);
 
         res.json({ success: true, roadmap: user.dsaRoadmap });
     } catch (err) {
