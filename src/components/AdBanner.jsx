@@ -42,13 +42,11 @@ const AdBanner = ({ adSlot, adFormat = 'auto', className = '' }) => {
                     display: 'inline-block',
                     width: '100%',
                     maxWidth: '728px',
-                    height: '90px'
+                    height: '30px'
                 }}
                 ref={adRef}
                 data-ad-client="ca-pub-6907980845698047"
                 data-ad-slot={adSlot}
-                data-ad-format={adFormat}
-                data-full-width-responsive="true"
             >
             </ins>
         </div>
