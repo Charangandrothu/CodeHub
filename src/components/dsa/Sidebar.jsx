@@ -79,7 +79,12 @@ export default function Sidebar() {
                     <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white via-gray-200 to-gray-400 tracking-tight">
                         CodeHubx
                     </h1>
-                    <p className="text-[10px] text-gray-500 font-medium tracking-wider uppercase group-hover:text-blue-400 transition-colors">Pro </p>
+                    <p className={`text-[10px] font-medium tracking-wider uppercase transition-colors ${userData?.isElite ? 'text-emerald-500 group-hover:text-emerald-400' :
+                            userData?.isPro ? 'text-blue-500 group-hover:text-blue-400' :
+                                'text-gray-500 group-hover:text-gray-400'
+                        }`}>
+                        {userData?.isElite ? 'Elite' : userData?.isPro ? 'Pro' : 'Free'}
+                    </p>
                 </div>
             </div>
 
