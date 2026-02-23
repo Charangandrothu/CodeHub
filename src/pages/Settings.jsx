@@ -638,6 +638,21 @@ const Settings = () => {
                                             </span>
                                         </div>
                                         <h3 className="text-2xl font-bold text-white mb-2">{userData?.isPro ? "CodeHub Pro" : "CodeHub Free"}</h3>
+
+                                        {userData?.isPro && userData?.subscriptionEndDate && (
+                                            <div className="flex items-center gap-4 mb-4">
+                                                <div className="px-3 py-1 rounded bg-black/40 border border-white/10 flex flex-col">
+                                                    <span className="text-[10px] text-gray-400 uppercase font-semibold tracking-wider">Plan</span>
+                                                    <span className="text-sm text-white font-bold uppercase">{userData?.plan || 'pro'}</span>
+                                                </div>
+                                                <div className="px-3 py-1 rounded bg-black/40 border border-white/10 flex flex-col">
+                                                    <span className="text-[10px] text-gray-400 uppercase font-semibold tracking-wider">Days Left</span>
+                                                    <span className="text-sm text-amber-500 font-bold">
+                                                        {Math.max(0, Math.ceil((new Date(userData.subscriptionEndDate) - new Date()) / (1000 * 60 * 60 * 24)))} Days
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        )}
                                         <p className={`${userData?.isPro ? "text-amber-200/70" : "text-blue-200/70"} text-sm mb-6 max-w-sm`}>
                                             {userData?.isPro
                                                 ? "You have full access to all premium features, unlimited submissions, and advanced analytics."

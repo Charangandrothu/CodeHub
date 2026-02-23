@@ -138,7 +138,7 @@ export default function QuestionPage() {
     const [problem, setProblem] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [activeTab, setActiveTab] = useState(() => localStorage.getItem("codehub-activeTab") || 'description');
+    const [activeTab, setActiveTab] = useState('description'); // Always default to description on open
     const [language, setLanguage] = useState(() => localStorage.getItem("codehub-language") || "javascript");
     const [code, setCode] = useState(() => {
         if (!slug) return '';
