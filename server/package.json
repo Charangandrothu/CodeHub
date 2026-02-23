@@ -27,7 +27,10 @@
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.1.4",
     "nodemailer": "^8.0.1",
-    "razorpay": "^2.9.6"
+    "puppeteer": "^24.37.5",
+    "qrcode": "^1.5.4",
+    "razorpay": "^2.9.6",
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.11"

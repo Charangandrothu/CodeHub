@@ -604,7 +604,12 @@ const RoadmapSidebar = ({
                     <h1 className="text-xl font-bold font-sans bg-clip-text text-transparent bg-gradient-to-r from-white via-zinc-200 to-zinc-400 tracking-tight">
                         CodeHubx
                     </h1>
-                    <p className="text-[10px] text-zinc-500 font-medium tracking-widest uppercase group-hover:text-purple-400 transition-colors">Pro Dashboard</p>
+                    <p className={`text-[10px] font-medium tracking-widest uppercase transition-colors ${userData?.isElite ? 'text-emerald-500 group-hover:text-emerald-400' :
+                        userData?.isPro ? 'text-blue-500 group-hover:text-blue-400' :
+                            'text-zinc-500 group-hover:text-zinc-400'
+                        }`}>
+                        {userData?.isElite ? 'Elite Dashboard' : userData?.isPro ? 'Pro Dashboard' : 'Free Dashboard'}
+                    </p>
                 </div>
             </motion.div>
 
@@ -798,21 +803,21 @@ const GOALS = {
 };
 
 const DSARoadmap = ({ onBack }) => {
-    const { currentUser, userData, refreshUserData } = useAuth(); // Destructure refreshUserData
+    const { currentUser, userData, refreshUserData } = useAuth();
     const [selectedGoal, setSelectedGoal] = useState(null);
     const [days, setDays] = useState(GOALS["medium"]);
     const [roadmap, setRoadmap] = useState(null);
     const [expandedSection, setExpandedSection] = useState(null);
     const [showResetModal, setShowResetModal] = useState(false);
     const [isGenerating, setIsGenerating] = useState(false);
+    const [loadingRoadmap, setLoadingRoadmap] = useState(true);
+    const hasInitialized = useRef(false);
 
-    // Persist to LocalStorage & Backend
-    // Persist to LocalStorage & Backend
+    // Persist to Backend (MongoDB only — no localStorage)
     const saveRoadmap = async (newRoadmap) => {
         setRoadmap(newRoadmap);
-        localStorage.setItem('dsa-roadmap', JSON.stringify(newRoadmap));
 
-        // Sync to DB if user is logged in (regardless of lock status so they don't lose progress)
+        // Sync to DB for the logged-in user
         if (currentUser) {
             try {
                 const res = await fetch(`${API_URL}/api/users/roadmap/${currentUser.uid}`, {
@@ -831,36 +836,30 @@ const DSARoadmap = ({ onBack }) => {
         }
     };
 
-    // Load Roadmap on Mount
+    // Load Roadmap on Mount — Backend only, no localStorage
     useEffect(() => {
-        // Priority 1: Backend Data (if exists)
-        if (userData?.dsaRoadmap) {
+        // Wait until userData is available from AuthContext
+        if (!userData) return;
+
+        // Prevent re-initialization after first load
+        if (hasInitialized.current) return;
+        hasInitialized.current = true;
+
+        if (userData.dsaRoadmap) {
             setRoadmap(userData.dsaRoadmap);
             if (userData.dsaRoadmap.daysSelected) {
                 setDays(userData.dsaRoadmap.daysSelected);
-                // Sync the selected goal badge
                 const matchedGoal = Object.keys(GOALS).find(key => GOALS[key] === userData.dsaRoadmap.daysSelected);
                 setSelectedGoal(matchedGoal || null);
             }
+            setLoadingRoadmap(false);
+        } else {
+            // No backend data: generate a default roadmap and save to backend
+            handleGenerate(120, false);
+            setSelectedGoal("medium");
+            setLoadingRoadmap(false);
         }
-        // Priority 2: Local Storage
-        else {
-            const saved = localStorage.getItem('dsa-roadmap');
-            if (saved) {
-                const parsed = JSON.parse(saved);
-                setRoadmap(parsed);
-                if (parsed.daysSelected) {
-                    setDays(parsed.daysSelected);
-                    const matchedGoal = Object.keys(GOALS).find(key => GOALS[key] === parsed.daysSelected);
-                    setSelectedGoal(matchedGoal || null);
-                }
-            } else {
-                // Priority 3: Default Generation
-                handleGenerate(120, false); // Default to Medium (120d)
-                setSelectedGoal("medium");
-            }
-        }
-    }, [userData]); // Re-run if userData loads later
+    }, [userData]);
 
     const handleDaysChange = (d) => {
         setDays(d);
@@ -993,6 +992,44 @@ const DSARoadmap = ({ onBack }) => {
     };
 
     const levelInfo = getLevelInfo(days);
+
+    // Show loading state while fetching roadmap data from backend
+    if (loadingRoadmap) {
+        return (
+            <div className="fixed inset-0 z-10 flex items-center justify-center bg-[#030303] text-white font-sans">
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="flex flex-col items-center gap-6"
+                >
+                    <div className="relative w-20 h-20">
+                        <motion.span
+                            className="absolute inset-0 border-2 border-purple-500/30 rounded-full"
+                            animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0, 0.5] }}
+                            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                        />
+                        <motion.span
+                            className="absolute inset-2 border-2 border-purple-500/60 rounded-full"
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                        />
+                        <motion.span
+                            className="absolute inset-0 border-t-2 border-purple-500 rounded-full"
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+                        />
+                    </div>
+                    <motion.span
+                        animate={{ opacity: [0.5, 1, 0.5] }}
+                        transition={{ duration: 1.5, repeat: Infinity }}
+                        className="text-sm font-medium text-zinc-400 font-mono tracking-wide"
+                    >
+                        Loading your roadmap...
+                    </motion.span>
+                </motion.div>
+            </div>
+        );
+    }
 
     return (
         <div className="fixed inset-0 top-0 z-10 flex bg-[#030303] text-white overflow-hidden font-sans">

@@ -36,6 +36,9 @@ import Categories from './pages/admin/Categories'
 import AdminSettings from './pages/admin/Settings'
 import Announcements from './pages/admin/Announcements'
 
+import SecureAdminLogin from './pages/admin/SecureAdminLogin'
+import SecureAdminPricing from './pages/admin/SecureAdminPricing'
+
 import { useAuth } from './context/AuthContext'
 
 import PublicRoute from './components/routes/PublicRoute';
@@ -126,6 +129,8 @@ function AppRoutes() {
 
       {/* Admin Routes */}
       <Route path="/unauthorized" element={<Unauthorized />} />
+      <Route path="/secure-admin-portal" element={<SecureAdminLogin />} />
+      <Route path="/secure-admin/pricing" element={<SecureAdminPricing />} />
       <Route path="/admin" element={<AdminLayout />}>
         <Route index element={<AdminDashboard />} />
         <Route path="users" element={<UsersManagement />} />

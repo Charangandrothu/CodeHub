@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { motion, useMotionValue, useTransform, useSpring, AnimatePresence } from 'framer-motion'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { Mail, Lock, ArrowRight, Loader2, Eye, EyeOff } from 'lucide-react'
 import { signInWithEmailAndPassword, signInWithPopup, updatePassword } from 'firebase/auth'
 import { doc, updateDoc } from 'firebase/firestore'
@@ -14,6 +14,7 @@ import LoginSuccessScreen from '../components/LoginSuccessScreen'
 
 const Login = () => {
   const navigate = useNavigate()
+  const location = useLocation()
   const { currentUser, userData } = useAuth();
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -29,12 +30,12 @@ const Login = () => {
     // Only redirect automatically if NOT processing a login flow manually (which we are if isLoginSuccess is true)
     if (currentUser && !isLoading && !isGoogleLoginProcessing && !isLoginSuccess) {
       if (userData?.profileCompleted && userData?.username) {
-        navigate('/dashboard');
+        navigate(location.state?.from || '/dashboard');
       } else if (userData && (!userData.profileCompleted || !userData.username)) {
         navigate('/complete-profile');
       }
     }
-  }, [currentUser, userData, isLoading, isGoogleLoginProcessing, navigate, isLoginSuccess]);
+  }, [currentUser, userData, isLoading, isGoogleLoginProcessing, navigate, location.state, isLoginSuccess]);
 
   // Mouse parallax effect
   const mouseX = useMotionValue(0)
@@ -107,7 +108,7 @@ const Login = () => {
         // Show success screen
         setIsLoginSuccess(true);
         setTimeout(() => {
-          navigate('/dashboard');
+          navigate(location.state?.from || '/dashboard');
         }, 2500);
       }
     } catch (error) {
@@ -117,7 +118,7 @@ const Login = () => {
       if (auth.currentUser) {
         setIsLoginSuccess(true);
         setTimeout(() => {
-          navigate('/dashboard');
+          navigate(location.state?.from || '/dashboard');
         }, 2500);
       } else {
         setError("Failed to sign in with Google");
@@ -163,7 +164,7 @@ const Login = () => {
       setIsLoading(false)
       setIsLoginSuccess(true)
       setTimeout(() => {
-        navigate('/dashboard')
+        navigate(location.state?.from || '/dashboard')
       }, 2500);
 
     } catch (error) {

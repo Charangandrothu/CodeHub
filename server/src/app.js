@@ -59,6 +59,15 @@ app.use('/api/announcements', announcementRoutes);
 const webhookRoutes = require("./routes/webhookRoutes");
 app.use('/api/webhooks', webhookRoutes);
 
+// Certificate routes (PDFs are generated in-memory, no static file serving needed)
+const path = require("path");
+
+// Serve frontend public folder for certificate images
+app.use(express.static(path.join(__dirname, '../../public')));
+
+const certificateRoutes = require("./routes/certificateRoutes");
+app.use('/api/certificates', certificateRoutes);
+
 // Maintenance Mode Middleware
 const PlatformSettings = require("./models/PlatformSettings");
 

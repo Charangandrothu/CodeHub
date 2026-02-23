@@ -2,6 +2,13 @@ import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 
 const SubmissionHeatmap = ({ submissions = [] }) => {
+    // Helper to get local date string YYYY-MM-DD
+    const getLocalDateStr = (d) => {
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
 
     // 1. Process Submissions Map
     const activityMap = useMemo(() => {
@@ -10,7 +17,7 @@ const SubmissionHeatmap = ({ submissions = [] }) => {
             submissions.forEach(sub => {
                 if (sub.submittedAt) {
                     const date = new Date(sub.submittedAt);
-                    const key = date.toISOString().split('T')[0];
+                    const key = getLocalDateStr(date);
                     map[key] = (map[key] || 0) + 1;
                 }
             });
@@ -49,7 +56,7 @@ const SubmissionHeatmap = ({ submissions = [] }) => {
             // Add actual days
             for (let day = 1; day <= daysInMonth; day++) {
                 const dateObj = new Date(year, monthIndex, day);
-                const dateStr = dateObj.toISOString().split('T')[0];
+                const dateStr = getLocalDateStr(dateObj);
                 const count = activityMap[dateStr] || 0;
 
                 // Check if future

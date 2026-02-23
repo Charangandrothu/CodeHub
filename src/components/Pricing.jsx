@@ -1,22 +1,139 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, Star, ArrowRight, Lock, Crown, Zap, TrendingUp, Trophy, Sparkles } from 'lucide-react';
+import { Check, Star, ArrowRight, Lock, Crown, Zap, TrendingUp, Trophy, Sparkles, Loader2 } from 'lucide-react';
+import { API_URL } from '../config';
+import logo_img from '../assets/logo_img.png';
+import PaymentSuccessScreen from './PaymentSuccessScreen';
 
 const Pricing = () => {
     const { currentUser } = useAuth();
     const navigate = useNavigate();
     const [billingCycle, setBillingCycle] = useState('yearly'); // 'monthly' | 'yearly'
     const [selectedPlan, setSelectedPlan] = useState('pro'); // 'starter' | 'pro' | 'elite'
+    const [pricingData, setPricingData] = useState(null);
+    const [isPaymentSuccess, setIsPaymentSuccess] = useState(false);
+    const [processingPlan, setProcessingPlan] = useState(null);
+    useEffect(() => {
+        const fetchPricing = async () => {
+            try {
+                const response = await fetch(`${API_URL}/api/payment/pricing`);
+                const data = await response.json();
+                if (data.success) {
+                    setPricingData(data.pricing);
+                }
+            } catch (error) {
+                console.error("Failed to fetch dynamic pricing:", error);
+            }
+        };
+        fetchPricing();
+    }, []);
 
-    const handleGetStarted = (planId) => {
+    const loadRazorpayScript = () => {
+        return new Promise((resolve) => {
+            if (window.Razorpay) {
+                resolve(true);
+                return;
+            }
+            const script = document.createElement('script');
+            script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+            script.onload = () => resolve(true);
+            script.onerror = () => resolve(false);
+            document.body.appendChild(script);
+        });
+    };
+
+    const handleGetStarted = async (planId) => {
         setSelectedPlan(planId);
-        // Add navigation or checkout logic here if needed, or simply let the button click handle it
-        if (currentUser) {
+
+        if (!currentUser) {
+            navigate('/login', { state: { from: '/pricing', plan: planId } });
+            return;
+        }
+
+        if (planId === 'starter') {
             navigate('/dashboard');
-        } else {
-            navigate('/login');
+            return;
+        }
+
+        setProcessingPlan(planId);
+
+        try {
+            const isLoaded = await loadRazorpayScript();
+            if (!isLoaded) {
+                alert("Failed to load Razorpay SDK. Check your connection.");
+                setProcessingPlan(null);
+                return;
+            }
+
+            // Call Backend to generate order
+            // Assuming API_URL is imported from config or using relative path if proxied
+            const uid = currentUser?.uid;
+
+            // Adjust the URL based on your API setup if needed
+            const response = await fetch(`${API_URL}/api/payment/create-order`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-user-uid': uid
+                },
+                body: JSON.stringify({
+                    plan_id: planId,
+                    billing_cycle: billingCycle
+                })
+            });
+
+            const data = await response.json();
+
+            if (!data.success) {
+                alert("Failed to create order: " + (data.error || 'Unknown error'));
+                setProcessingPlan(null);
+                return;
+            }
+
+            // Open Razorpay Checkout Window
+            const options = {
+                key: data.key_id,
+                amount: data.amount,
+                currency: data.currency,
+                name: "CodeHub",
+                description: `CodeHub ${planId} Subscription`,
+                order_id: data.order_id,
+                prefill: {
+                    name: currentUser.displayName,
+                    email: currentUser.email,
+                },
+                theme: {
+                    color: "#3B82F6"
+                },
+                handler: function (response) {
+                    // Payment successful locally (webhook handles backend activation)
+                    setIsPaymentSuccess(true);
+                    setTimeout(() => {
+                        navigate('/dashboard');
+                    }, 3000);
+                },
+                modal: {
+                    ondismiss: function () {
+                        setProcessingPlan(null);
+                    }
+                }
+            };
+
+            const rzp = new window.Razorpay(options);
+
+            rzp.on('payment.failed', function (response) {
+                alert("Payment Failed: " + response.error.description);
+                setProcessingPlan(null);
+            });
+
+            rzp.open();
+
+        } catch (error) {
+            console.error("Payment initiation error:", error);
+            alert("Something went wrong during checkout.");
+            setProcessingPlan(null);
         }
     };
 
@@ -25,10 +142,14 @@ const Pricing = () => {
     };
 
     return (
-        <div className="relative min-h-screen bg-[#0B0F1A] font-sans text-white overflow-hidden selection:bg-blue-500/30">
+        <>
+            <AnimatePresence>
+                {isPaymentSuccess && <PaymentSuccessScreen key="payment-success" />}
+            </AnimatePresence>
+            <section id="pricing" className="relative min-h-screen bg-[#0B0F1A] font-sans text-white overflow-hidden selection:bg-blue-500/30">
 
-            {/* Optional Top Strip */}
-            <div className="bg-gradient-to-r from-blue-600/20 via-purple-600/20 to-blue-600/20 border-b border-white/5 backdrop-blur-md">
+                {/* Optional Top Strip */}
+                {/* <div className="bg-gradient-to-r from-blue-600/20 via-purple-600/20 to-blue-600/20 border-b border-white/5 backdrop-blur-md">
                 <div className="max-w-7xl mx-auto px-4 py-2 text-center">
                     <motion.p
                         initial={{ opacity: 0 }}
@@ -40,188 +161,194 @@ const Pricing = () => {
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
                             <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
                         </span>
-                        🎉 Launch Offer — First 500 Users Get Pro at <span className="font-bold text-white">₹799/year</span>
+                        🎉 Launch Offer — First 500 Users Get Pro at <span className="font-bold text-white">{pricingData ? pricingData.pro.currencySymbol : '₹'}{pricingData ? pricingData.pro.yearly : '999'}/year</span>
                     </motion.p>
                 </div>
-            </div>
+            </div> */}
 
-            {/* Background Ambient Effects */}
-            <div className="absolute inset-0 pointer-events-none overflow-hidden">
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-purple-900/10 rounded-full blur-[120px] opacity-60" />
-                <div className="absolute bottom-0 right-0 w-[800px] h-[800px] bg-emerald-900/5 rounded-full blur-[120px] opacity-40" />
-                {/* Grid Pattern Overlay */}
-                <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_60%_60%_at_50%_50%,#000_70%,transparent_100%)] opacity-20" />
-            </div>
-
-            <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 relative z-10">
-
-                {/* Section Header */}
-                <div className="text-center mb-16 space-y-4">
-                    <motion.h2
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.6 }}
-                        className="text-4xl md:text-5xl font-bold tracking-tight text-white drop-shadow-lg"
-                    >
-                        Choose Your Growth Plan
-                    </motion.h2>
-                    <motion.p
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.6, delay: 0.1 }}
-                        className="text-gray-400 text-lg max-w-2xl mx-auto"
-                    >
-                        Structured DSA. Real Interview Preparation. AI-Powered Practice.
-                    </motion.p>
-
-                    {/* Toggle */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.6, delay: 0.2 }}
-                        className="flex items-center justify-center mt-8"
-                    >
-                        <div className="p-1 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm flex items-center relative">
-                            <button
-                                onClick={() => setBillingCycle('monthly')}
-                                className={`px-6 py-2 rounded-lg text-sm font-medium transition-all duration-300 relative z-10 ${billingCycle === 'monthly' ? 'text-white' : 'text-gray-400 hover:text-gray-200'}`}
-                            >
-                                Monthly
-                            </button>
-                            <button
-                                onClick={() => setBillingCycle('yearly')}
-                                className={`px-6 py-2 rounded-lg text-sm font-medium transition-all duration-300 relative z-10 ${billingCycle === 'yearly' ? 'text-white' : 'text-gray-400 hover:text-gray-200'}`}
-                            >
-                                Yearly
-                            </button>
-
-                            {/* Sliding Background */}
-                            <motion.div
-                                className="absolute top-1 bottom-1 bg-white/10 rounded-lg shadow-sm border border-white/5"
-                                initial={false}
-                                animate={{
-                                    left: billingCycle === 'monthly' ? '4px' : '50%',
-                                    right: billingCycle === 'monthly' ? '50%' : '4px',
-                                    width: 'calc(50% - 6px)'
-                                }}
-                                transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                            />
-                        </div>
-                        {billingCycle === 'yearly' && (
-                            <span className="ml-3 text-[10px] font-bold text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded-full border border-emerald-400/20">
-                                Save up to 44%
-                            </span>
-                        )}
-                    </motion.div>
+                {/* Background Ambient Effects */}
+                <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-purple-900/10 rounded-full blur-[120px] opacity-60" />
+                    <div className="absolute bottom-0 right-0 w-[800px] h-[800px] bg-emerald-900/5 rounded-full blur-[120px] opacity-40" />
+                    {/* Grid Pattern Overlay */}
+                    <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_60%_60%_at_50%_50%,#000_70%,transparent_100%)] opacity-20" />
                 </div>
 
-                {/* Cards Grid */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start max-w-6xl mx-auto">
+                <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 relative z-10">
 
-                    {/* STARTER CARD */}
-                    <PricingCard
-                        className="order-2 lg:order-1"
-                        id="starter"
-                        isSelected={selectedPlan === 'starter'}
-                        onSelect={() => handleSelectPlan('starter')}
-                        title="Starter"
-                        subtitle="Perfect to begin your journey."
-                        price="0"
-                        period="forever"
-                        description="Forever Free"
-                        features={[
-                            "Access to Easy Problems",
-                            "3 Submissions per Day",
-                            "Limited AI Debug",
-                            "Sample Test Cases",
-                            "Community Access"
-                        ]}
-                        lockedFeatures={[
-                            "Full DSA Library",
-                            "Hidden Test Cases",
-                            "Placement Tools"
-                        ]}
-                        buttonText="Start Free"
-                        buttonVariant="outline"
-                        delay={0.1}
-                        onClick={() => handleGetStarted('starter')}
-                        cardStyle="dark"
-                    />
+                    {/* Section Header */}
+                    <div className="text-center mb-16 space-y-4">
+                        <motion.h2
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.6 }}
+                            className="text-4xl md:text-5xl font-bold tracking-tight text-white drop-shadow-lg"
+                        >
+                            Choose Your Growth Plan
+                        </motion.h2>
+                        <motion.p
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.6, delay: 0.1 }}
+                            className="text-gray-400 text-lg max-w-2xl mx-auto"
+                        >
+                            Structured DSA. Real Interview Preparation. AI-Powered Practice.
+                        </motion.p>
 
-                    {/* PRO CARD - Highlighted */}
-                    <PricingCard
-                        className="order-1 lg:order-2"
-                        id="pro"
-                        isSelected={selectedPlan === 'pro'}
-                        onSelect={() => handleSelectPlan('pro')}
-                        title="Pro"
-                        subtitle="Serious DSA Preparation with AI Support."
-                        price={billingCycle === 'yearly' ? "999" : "199"}
-                        period={billingCycle === 'yearly' ? "year" : "month"}
-                        originalPrice={billingCycle === 'yearly' ? "1788" : "399"}
-                        saveText={billingCycle === 'yearly' ? "Save 44%" : ""}
-                        subPriceLabel={billingCycle === 'yearly' ? "Just ₹83/month" : ""}
-                        features={[
-                            "Full DSA Library (Easy → Hard)",
-                            "AI Debug & Step-by-Step Explanations",
-                            "Hidden & Edge Test Cases",
-                            "Complexity Analysis",
-                            "Weekly Ranking Competitions",
-                            "100% Ad-Free Experience",
-                            "Premium Completion Certificate"
-                        ]}
-                        buttonText="Unlock Pro"
-                        buttonVariant="gradient"
-                        delay={0.2}
-                        onClick={() => handleGetStarted('pro')}
-                        featureIcons={{
-                            "AI Debug": Zap,
-                            "Complexity Analysis": TrendingUp,
-                            "Weekly Rankings": Trophy,
-                            "Ad-Free": Sparkles,
-                            "Certificate": Crown
-                        }}
-                    />
+                        {/* Toggle */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.6, delay: 0.2 }}
+                            className="flex items-center justify-center mt-8"
+                        >
+                            <div className="p-1 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm flex items-center relative">
+                                <button
+                                    onClick={() => setBillingCycle('monthly')}
+                                    className={`px-6 py-2 rounded-lg text-sm font-medium transition-all duration-300 relative z-10 ${billingCycle === 'monthly' ? 'text-white' : 'text-gray-400 hover:text-gray-200'}`}
+                                >
+                                    Monthly
+                                </button>
+                                <button
+                                    onClick={() => setBillingCycle('yearly')}
+                                    className={`px-6 py-2 rounded-lg text-sm font-medium transition-all duration-300 relative z-10 ${billingCycle === 'yearly' ? 'text-white' : 'text-gray-400 hover:text-gray-200'}`}
+                                >
+                                    Yearly
+                                </button>
 
-                    {/* ELITE CARD */}
-                    <PricingCard
-                        className="order-3 lg:order-3"
-                        id="elite"
-                        isSelected={selectedPlan === 'elite'}
-                        onSelect={() => handleSelectPlan('elite')}
-                        title="Elite"
-                        subtitle="Complete Placement Acceleration Pack."
-                        price={billingCycle === 'yearly' ? "1999" : "399"}
-                        period={billingCycle === 'yearly' ? "year" : "month"}
-                        features={[
-                            "Everything in Pro, plus:",
-                            "Placement Readiness Score",
-                            "Company-Specific Question Sets",
-                            "Resume Builder",
-                            "Priority Support",
-                            "Advanced Performance Analytics",
-                            "Verified Premium Certificate",
-                            "Early Access to Mock Interviews"
-                        ]}
-                        buttonText="Go Elite"
-                        buttonVariant="solid" // Dark solid button as per prompt
-                        badge="🚀 For Placement Aspirants"
-                        delay={0.3}
-                        onClick={() => handleGetStarted('elite')}
-                        cardStyle="dark"
-                        featureIcons={{
-                            "Placement Readiness": Trophy,
-                            "Company-Specific": TrendingUp,
-                            "Resume Builder": Sparkles,
-                            "Priority Support": Zap,
-                            "Certificate": Crown
-                        }}
-                    />
+                                {/* Sliding Background */}
+                                <motion.div
+                                    className="absolute top-1 bottom-1 bg-white/10 rounded-lg shadow-sm border border-white/5"
+                                    initial={false}
+                                    animate={{
+                                        left: billingCycle === 'monthly' ? '4px' : '50%',
+                                        right: billingCycle === 'monthly' ? '50%' : '4px',
+                                        width: 'calc(50% - 6px)'
+                                    }}
+                                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                                />
+                            </div>
+                            {billingCycle === 'yearly' && (
+                                <span className="ml-3 text-[10px] font-bold text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded-full border border-emerald-400/20">
+                                    Save up to 44%
+                                </span>
+                            )}
+                        </motion.div>
+                    </div>
+
+                    {/* Cards Grid */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start max-w-6xl mx-auto">
+
+                        {/* STARTER CARD */}
+                        <PricingCard
+                            className="order-2 lg:order-1"
+                            id="starter"
+                            isSelected={selectedPlan === 'starter'}
+                            onSelect={() => handleSelectPlan('starter')}
+                            title="Starter"
+                            subtitle="Perfect to begin your journey."
+                            price="0"
+                            period="forever"
+                            description="Forever Free"
+                            features={[
+                                "Access to Easy Problems",
+                                "3 Submissions per Day",
+                                "Limited AI Debug",
+                                "Sample Test Cases",
+                                "Community Access"
+                            ]}
+                            lockedFeatures={[
+                                "Full DSA Library",
+                                "Hidden Test Cases",
+                                "Placement Tools"
+                            ]}
+                            buttonText="Start Free"
+                            buttonVariant="outline"
+                            delay={0.1}
+                            onClick={() => handleGetStarted('starter')}
+                            isProcessing={processingPlan === 'starter'}
+                            cardStyle="dark"
+                        />
+
+                        {/* PRO CARD - Highlighted */}
+                        <PricingCard
+                            className="order-1 lg:order-2"
+                            id="pro"
+                            isSelected={selectedPlan === 'pro'}
+                            onSelect={() => handleSelectPlan('pro')}
+                            title="Pro"
+                            subtitle="Serious DSA Preparation with AI Support."
+                            price={pricingData ? pricingData.pro[billingCycle] : (billingCycle === 'yearly' ? "999" : "199")}
+                            currencySymbol={pricingData ? pricingData.pro.currencySymbol : "₹"}
+                            period={billingCycle === 'yearly' ? "year" : "month"}
+                            originalPrice={pricingData ? pricingData.pro[billingCycle === 'yearly' ? 'originalYearly' : 'originalMonthly'] : (billingCycle === 'yearly' ? "1788" : "399")}
+                            saveText={billingCycle === 'yearly' ? "Save 44%" : ""}
+                            subPriceLabel={billingCycle === 'yearly' ? (pricingData ? `Just ${pricingData.pro.currencySymbol}${Math.floor(pricingData.pro.yearly / 12)}/month` : "Just ₹83/month") : ""}
+                            features={[
+                                "Full DSA Library (Easy → Hard)",
+                                "AI Debug & Step-by-Step Explanations",
+                                "Hidden & Edge Test Cases",
+                                "Complexity Analysis",
+                                "Weekly Ranking Competitions",
+                                "100% Ad-Free Experience",
+                                "Premium Completion Certificate"
+                            ]}
+                            buttonText="Unlock Pro"
+                            buttonVariant="gradient"
+                            delay={0.2}
+                            onClick={() => handleGetStarted('pro')}
+                            isProcessing={processingPlan === 'pro'}
+                            featureIcons={{
+                                "AI Debug": Zap,
+                                "Complexity Analysis": TrendingUp,
+                                "Weekly Rankings": Trophy,
+                                "Ad-Free": Sparkles,
+                                "Certificate": Crown
+                            }}
+                        />
+
+                        {/* ELITE CARD */}
+                        <PricingCard
+                            className="order-3 lg:order-3"
+                            id="elite"
+                            isSelected={selectedPlan === 'elite'}
+                            onSelect={() => handleSelectPlan('elite')}
+                            title="Elite"
+                            subtitle="Complete Placement Acceleration Pack."
+                            price={pricingData ? pricingData.elite[billingCycle] : (billingCycle === 'yearly' ? "1999" : "399")}
+                            currencySymbol={pricingData ? pricingData.elite.currencySymbol : "₹"}
+                            period={billingCycle === 'yearly' ? "year" : "month"}
+                            features={[
+                                "Everything in Pro, plus:",
+                                "Placement Readiness Score",
+                                "Company-Specific Question Sets",
+                                "Resume Builder",
+                                "Priority Support",
+                                "Advanced Performance Analytics",
+                                "Verified Premium Certificate",
+                                "Early Access to Mock Interviews"
+                            ]}
+                            buttonText="Go Elite"
+                            buttonVariant="solid" // Dark solid button as per prompt
+                            badge="🚀 For Placement Aspirants"
+                            delay={0.3}
+                            onClick={() => handleGetStarted('elite')}
+                            isProcessing={processingPlan === 'elite'}
+                            cardStyle="dark"
+                            featureIcons={{
+                                "Placement Readiness": Trophy,
+                                "Company-Specific": TrendingUp,
+                                "Resume Builder": Sparkles,
+                                "Priority Support": Zap,
+                                "Certificate": Crown
+                            }}
+                        />
+
+                    </div>
 
                 </div>
-
-            </div>
-        </div>
+            </section>
+        </>
     );
 };
 
@@ -229,7 +356,7 @@ const Pricing = () => {
 
 const PricingCard = ({
     id, isSelected, onSelect, title, subtitle, price, period, originalPrice, saveText, subPriceLabel,
-    features, lockedFeatures, buttonText, buttonVariant, badge, delay, onClick, className, cardStyle, featureIcons
+    features, lockedFeatures, buttonText, buttonVariant, badge, delay, onClick, isProcessing, className, cardStyle, featureIcons, currencySymbol = "₹"
 }) => {
     // Determine active styling based on selection and ID
     const isPro = id === 'pro';
@@ -304,7 +431,7 @@ const PricingCard = ({
             {/* Pricing Section */}
             <div className="mb-7 relative z-10">
                 <div className="flex items-baseline gap-1">
-                    <span className={`text-4xl lg:text-5xl font-bold tracking-tight ${isActive && isPro ? 'text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400' : isActive && isElite ? 'text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400' : 'text-white'}`}>₹{price}</span>
+                    <span className={`text-4xl lg:text-5xl font-bold tracking-tight ${isActive && isPro ? 'text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400' : isActive && isElite ? 'text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400' : 'text-white'}`}>{price === '0' ? '' : currencySymbol}{price}</span>
                     {period && <span className="text-gray-500 text-sm font-medium">/{period}</span>}
                 </div>
 
@@ -314,7 +441,7 @@ const PricingCard = ({
 
                 {originalPrice && (
                     <div className="flex items-center gap-2 mt-2 text-sm">
-                        <span className="text-gray-500 line-through">₹{originalPrice}</span>
+                        <span className="text-gray-500 line-through">{currencySymbol}{originalPrice}</span>
                         {saveText && <span className="text-red-400 bg-red-400/10 px-2 py-0.5 rounded text-[10px] font-bold">{saveText}</span>}
                         {isPro && <span className="text-amber-400 text-[10px] bg-amber-400/10 px-1.5 py-0.5 rounded border border-amber-400/20">POPULAR</span>}
                     </div>
@@ -343,12 +470,14 @@ const PricingCard = ({
             {/* CTA Button */}
             <div className="relative z-10 mt-auto w-full">
                 <button
+                    disabled={isProcessing}
                     onClick={(e) => {
                         e.stopPropagation(); // Prevent card select click
                         onClick();
                     }}
                     className={`
                         w-full py-3.5 rounded-[18px] font-bold text-sm tracking-wide transition-all duration-300 flex items-center justify-center gap-2 group
+                        ${isProcessing ? 'opacity-75 cursor-wait' : 'cursor-pointer'}
                         ${buttonVariant === 'outline'
                             ? 'bg-transparent border border-white/10 text-gray-300 hover:bg-white/5 hover:text-white'
                             : ''}
@@ -364,7 +493,15 @@ const PricingCard = ({
                             : ''}
                     `}
                 >
-                    {buttonText} <ArrowRight size={16} className={`transition-transform duration-300 ${buttonVariant !== 'outline' ? 'group-hover:translate-x-1' : ''}`} />
+                    {isProcessing ? (
+                        <>
+                            <Loader2 size={16} className="animate-spin" /> Processing...
+                        </>
+                    ) : (
+                        <>
+                            {buttonText} <ArrowRight size={16} className={`transition-transform duration-300 ${buttonVariant !== 'outline' ? 'group-hover:translate-x-1' : ''}`} />
+                        </>
+                    )}
                 </button>
             </div>
 

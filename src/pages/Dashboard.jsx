@@ -15,7 +15,8 @@ import {
     Layout,
     Clock,
     Zap,
-    Crown
+    Crown,
+    Award
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import DailyQuote from '../components/dsa/DailyQuote';
@@ -26,10 +27,60 @@ const Dashboard = () => {
     const { currentUser, userData } = useAuth();
     const navigate = useNavigate();
 
-    // Weekly Leaderboard State
     const [weeklyLeaderboard, setWeeklyLeaderboard] = useState([]);
     const [myWeeklyStats, setMyWeeklyStats] = useState({ rank: null, count: 0 });
     const [nextTask, setNextTask] = useState(null);
+    const [isGeneratingCert, setIsGeneratingCert] = useState(false);
+
+    // Certificate Modal State
+    const [showCertModal, setShowCertModal] = useState(false);
+    const [certDisplayName, setCertDisplayName] = useState(userData?.displayName || currentUser?.displayName || '');
+    const [certError, setCertError] = useState("");
+
+    const handleGenerateCertificate = async () => {
+        if (!certDisplayName.trim()) {
+            setCertError("Please enter your name");
+            return;
+        }
+        setIsGeneratingCert(true);
+        setCertError("");
+        try {
+            const progress = Math.round(((userData?.stats?.solvedProblems || 0) / (userData?.stats?.totalProblems || 150)) * 100);
+            const res = await fetch(`${API_URL}/api/certificates/generate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId: currentUser.uid,
+                    name: certDisplayName,
+                    progress
+                })
+            });
+
+            if (res.ok) {
+                // Response is now a PDF blob, not JSON
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                setShowCertModal(false);
+                const link = document.createElement('a');
+                link.href = url;
+                link.target = '_blank';
+                link.rel = 'noopener noreferrer';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                // Clean up the object URL after a delay
+                setTimeout(() => URL.revokeObjectURL(url), 10000);
+            } else {
+                const errData = await res.json().catch(() => ({}));
+                setCertError(errData.message || errData.error || "Failed to generate certificate");
+            }
+        } catch (err) {
+            setCertError("An error occurred while generating");
+            console.error("Error generating cert", err);
+        } finally {
+            setIsGeneratingCert(false);
+        }
+    };
 
     useEffect(() => {
         const fetchData = async () => {
@@ -290,6 +341,55 @@ const Dashboard = () => {
                             </div>
                         </motion.div>
 
+                        {/* Premium Certificate Banner */}
+                        <motion.div variants={itemVariants} className="mt-6">
+                            <div className="relative overflow-hidden rounded-2xl border border-yellow-500/30 bg-gradient-to-br from-yellow-500/10 via-[#0a0a0a] to-[#0a0a0a] p-6 shadow-lg">
+                                {/* Ambient glow */}
+                                <div className="absolute top-0 right-0 w-64 h-64 bg-yellow-500/5 rounded-full blur-3xl pointer-events-none" />
+
+                                <div className="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-6">
+                                    <div className="flex items-center gap-5">
+                                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-yellow-400 to-amber-600 flex items-center justify-center shadow-lg shadow-yellow-500/20 shrink-0 border border-yellow-300/20">
+                                            <Award size={32} className="text-white drop-shadow-md" />
+                                        </div>
+                                        <div>
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <h3 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-yellow-200 to-amber-500">DSA Experience Certificate</h3>
+                                            </div>
+                                            <p className="text-sm text-gray-400 max-w-sm mb-2">Complete 75% of the DSA roadmap to unlock your official verified certificate.</p>
+
+                                            {/* Mini Progress Bar */}
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-48 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                                                    <motion.div
+                                                        initial={{ width: 0 }}
+                                                        animate={{ width: `${Math.min(100, Math.round(((userData?.stats?.solvedProblems || 0) / (userData?.stats?.totalProblems || 150)) * 100))}%` }}
+                                                        className="h-full bg-gradient-to-r from-yellow-400 to-amber-500 rounded-full shadow-[0_0_10px_rgba(250,204,21,0.5)]"
+                                                    />
+                                                </div>
+                                                <span className="text-xs font-bold text-yellow-500">{Math.round(((userData?.stats?.solvedProblems || 0) / (userData?.stats?.totalProblems || 150)) * 100)}%</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        onClick={() => setShowCertModal(true)}
+                                        disabled={Math.round(((userData?.stats?.solvedProblems || 0) / (userData?.stats?.totalProblems || 150)) * 100) < 75}
+                                        className={`shrink-0 px-6 py-3 rounded-xl font-bold text-sm tracking-wide transition-all shadow-lg flex items-center justify-center min-w-[160px] 
+                                            ${Math.round(((userData?.stats?.solvedProblems || 0) / (userData?.stats?.totalProblems || 150)) * 100) >= 75
+                                                ? 'bg-gradient-to-r from-yellow-500 to-amber-500 text-black hover:scale-105 shadow-yellow-500/25 border-none'
+                                                : 'bg-white/5 text-gray-500 cursor-not-allowed border border-white/10'}`}
+                                    >
+                                        {Math.round(((userData?.stats?.solvedProblems || 0) / (userData?.stats?.totalProblems || 150)) * 100) >= 75 ? (
+                                            'Claim Certificate'
+                                        ) : (
+                                            'Locked (75% Req)'
+                                        )}
+                                    </button>
+                                </div>
+                            </div>
+                        </motion.div>
+
                         {/* Ad placement — between progress cards and sidebar, free users only */}
                         {!userData?.isPro && (
                             <motion.div variants={itemVariants}>
@@ -346,7 +446,7 @@ const Dashboard = () => {
                                 {weeklyLeaderboard.slice(0, 3).map((user, idx) => (
                                     <div
                                         key={user.uid}
-                                        onClick={() => navigate(`/${user.username || user.uid}`)}
+                                        onClick={() => navigate(`/profile/${user.username || user.uid}`)}
                                         className="flex items-center justify-between p-2 rounded-lg hover:bg-white/5 cursor-pointer transition-colors group"
                                     >
                                         <div className="flex items-center gap-3">
@@ -380,6 +480,63 @@ const Dashboard = () => {
 
                 </div>
             </motion.div>
+
+            {/* Certificate Name Modal */}
+            {showCertModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="bg-[#0a0a0a] border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl relative"
+                    >
+                        <button
+                            onClick={() => setShowCertModal(false)}
+                            className="absolute top-4 right-4 p-2 text-gray-500 hover:text-white transition-colors"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                            </svg>
+                        </button>
+                        <div className="text-center mb-6">
+                            <div className="w-14 h-14 bg-gradient-to-br from-yellow-400 to-amber-600 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-yellow-500/20">
+                                <Award size={28} className="text-white drop-shadow-md" />
+                            </div>
+                            <h3 className="text-xl font-bold text-white mb-2">Claim Your Certificate</h3>
+                            <p className="text-sm text-gray-400">Enter your name exactly as you want it to appear on your official digital certificate.</p>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Full Name</label>
+                                <input
+                                    type="text"
+                                    value={certDisplayName}
+                                    onChange={(e) => {
+                                        setCertDisplayName(e.target.value);
+                                        setCertError('');
+                                    }}
+                                    placeholder="e.g. John Doe"
+                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-yellow-500/50 focus:ring-1 focus:ring-yellow-500/50 transition-all font-medium"
+                                />
+                                {certError && <p className="text-red-400 text-sm mt-2">{certError}</p>}
+                            </div>
+
+                            <button
+                                onClick={handleGenerateCertificate}
+                                disabled={isGeneratingCert}
+                                className="w-full bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-black font-bold py-3.5 rounded-xl transition-all shadow-[0_0_20px_rgba(250,204,21,0.3)] disabled:opacity-50 flex items-center justify-center"
+                            >
+                                {isGeneratingCert ? (
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-4 h-4 rounded-full border-2 border-black/30 border-transparent border-t-black animate-spin" />
+                                        Generating...
+                                    </div>
+                                ) : "Generate Certificate ✨"}
+                            </button>
+                        </div>
+                    </motion.div>
+                </div>
+            )}
         </div>
     );
 };

@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Montserrat:wght@600;700;800&display=swap');
+
+        @page {
+            size: A4 landscape;
+            margin: 0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            width: 1123px;
+            height: 794px;
+            overflow: hidden;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: linear-gradient(135deg, #f0f4ff 0%, #e8f0fe 30%, #ffffff 60%, #f5f0ff 100%);
+            position: relative;
+        }
+
+        /* ── Decorative Background Layers ── */
+        .bg-circles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 0;
+        }
+
+        .bg-circles::before {
+            content: '';
+            position: absolute;
+            top: -120px;
+            right: -120px;
+            width: 450px;
+            height: 450px;
+            background: radial-gradient(circle, rgba(30, 77, 183, 0.06) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .bg-circles::after {
+            content: '';
+            position: absolute;
+            bottom: -100px;
+            left: -80px;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(212, 175, 55, 0.06) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        /* Subtle grid overlay */
+        .bg-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                linear-gradient(rgba(30, 77, 183, 0.015) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(30, 77, 183, 0.015) 1px, transparent 1px);
+            background-size: 60px 60px;
+            z-index: 1;
+        }
+
+        /* Faint code watermark */
+        .bg-code {
+            position: absolute;
+            top: 35%;
+            left: -5%;
+            width: 110%;
+            font-family: 'Courier New', monospace;
+            font-size: 90px;
+            color: rgba(30, 77, 183, 0.018);
+            transform: rotate(-20deg);
+            white-space: nowrap;
+            z-index: 1;
+            pointer-events: none;
+            letter-spacing: 5px;
+        }
+
+        /* ── Main Certificate Frame ── */
+        .certificate {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            bottom: 20px;
+            border: 6px solid #1E4DB7;
+            border-radius: 4px;
+            z-index: 5;
+        }
+
+        .certificate-inner {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            right: 8px;
+            bottom: 8px;
+            border: 2px solid #D4AF37;
+            border-radius: 2px;
+        }
+
+        /* ── Glass Panel (Puppeteer-safe glassmorphism) ── */
+        .glass-panel {
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            right: 30px;
+            bottom: 30px;
+            background: linear-gradient(160deg, rgba(255, 255, 255, 0.92), rgba(245, 248, 255, 0.88), rgba(255, 255, 255, 0.92));
+            border: 1px solid rgba(255, 255, 255, 0.95);
+            border-radius: 8px;
+            box-shadow:
+                0 8px 32px rgba(30, 77, 183, 0.04),
+                0 2px 8px rgba(0, 0, 0, 0.02),
+                inset 0 1px 0 rgba(255, 255, 255, 1),
+                inset 0 -1px 0 rgba(255, 255, 255, 0.5);
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 35px 50px 25px 50px;
+        }
+
+        /* Top shine effect (simulated glass reflection) */
+        .glass-panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 50%;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.5) 0%, transparent 100%);
+            border-radius: 8px 8px 0 0;
+            pointer-events: none;
+        }
+
+        /* ── Content ── */
+        .content {
+            position: relative;
+            z-index: 15;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100%;
+        }
+
+        /* Logo */
+        .logo {
+            margin-bottom: 6px;
+        }
+
+        .logo img {
+            height: 72px;
+            object-fit: contain;
+        }
+
+        .brand {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 18px;
+            font-weight: 800;
+            color: #1E4DB7;
+            letter-spacing: 6px;
+            text-transform: uppercase;
+            margin-bottom: 18px;
+        }
+
+        /* Title */
+        .cert-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 52px;
+            font-weight: 700;
+            color: #0a1f5c;
+            margin-bottom: 14px;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+        }
+
+        /* Subtitle */
+        .cert-subtitle {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 5px;
+            color: #999;
+            text-transform: uppercase;
+            margin-bottom: 22px;
+        }
+
+        /* Name with Gold Lines */
+        .name-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 85%;
+            margin-bottom: 22px;
+        }
+
+        .gold-line {
+            flex: 1;
+            height: 1.5px;
+            background: linear-gradient(90deg, transparent 0%, #D4AF37 50%, transparent 100%);
+            max-width: 140px;
+        }
+
+        .recipient-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 46px;
+            font-weight: 600;
+            font-style: italic;
+            color: #0A2A66;
+            padding: 0 35px;
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        /* Description */
+        .cert-desc {
+            font-size: 15px;
+            line-height: 1.7;
+            color: #444;
+            text-align: center;
+            max-width: 80%;
+            margin-bottom: 18px;
+        }
+
+        .cert-desc b {
+            color: #0a1f5c;
+            font-weight: 600;
+        }
+
+        /* Meta (ID + Date) */
+        .cert-meta {
+            font-size: 12px;
+            color: #777;
+            text-align: center;
+            margin-bottom: auto;
+            /* Push footer to bottom */
+        }
+
+        .cert-meta .meta-label {
+            color: #999;
+        }
+
+        .cert-meta .meta-value {
+            color: #1E4DB7;
+            font-weight: 600;
+        }
+
+        .cert-meta .separator {
+            margin: 0 12px;
+            color: #ccc;
+        }
+
+        /* Footer */
+        .cert-footer {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-top: 10px;
+        }
+
+        /* QR */
+        .qr-block {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .qr-wrap {
+            width: 88px;
+            height: 88px;
+            padding: 5px;
+            background: white;
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .qr-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .qr-info {
+            font-size: 11px;
+            color: #888;
+            line-height: 1.5;
+        }
+
+        .qr-info b {
+            color: #1E4DB7;
+            display: block;
+            font-size: 10px;
+            margin-top: 2px;
+        }
+
+        /* Signature */
+        .sig-block {
+            text-align: center;
+        }
+
+        .sig-block img {
+            height: 55px;
+            object-fit: contain;
+            display: block;
+            margin: 0 auto 4px auto;
+        }
+
+        .sig-line {
+            width: 200px;
+            height: 1px;
+            background: #999;
+            margin: 0 auto 6px auto;
+        }
+
+        .sig-title {
+            font-size: 12px;
+            color: #666;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Background Layers -->
+    <div class="bg-circles"></div>
+    <div class="bg-grid"></div>
+    <div class="bg-code">func solve(arr) { sort(merge); } // DSA.init() → O(n log n)</div>
+
+    <!-- Certificate Frame -->
+    <div class="certificate">
+        <div class="certificate-inner">
+            <div class="glass-panel">
+                <div class="content">
+
+                    <div class="logo">
+                        <img src="{{LOGO_URL}}" alt="CodeHubX">
+                    </div>
+                    <div class="brand">CodeHubX</div>
+
+                    <div class="cert-title">Certificate of Achievement</div>
+
+                    <div class="cert-subtitle">This is to certify that</div>
+
+                    <div class="name-row">
+                        <div class="gold-line"></div>
+                        <div class="recipient-name">{{NAME}}</div>
+                        <div class="gold-line"></div>
+                    </div>
+
+                    <div class="cert-desc">
+                        has successfully completed the <b>DSA Coding Experience Program</b> and demonstrated strong
+                        proficiency in Data Structures and Algorithms through rigorous problem-solving and practical
+                        implementation.
+                    </div>
+
+                    <div class="cert-meta">
+                        <span class="meta-label">Certificate ID:</span> <span
+                            class="meta-value">{{CERTIFICATE_ID}}</span>
+                        <span class="separator">•</span>
+                        <span class="meta-label">Date of Completion:</span> <span class="meta-value">{{DATE}}</span>
+                    </div>
+
+                    <div class="cert-footer">
+                        <div class="qr-block">
+                            <div class="qr-wrap">
+                                <img src="{{QR_CODE}}" alt="">
+                            </div>
+                            <div class="qr-info">
+                                Verify this certificate at:<br>
+                                <b>codehubx.in/verify/{{CERTIFICATE_ID}}</b>
+                            </div>
+                        </div>
+
+                        <div class="sig-block">
+                            <img src="{{SIGNATURE_IMAGE}}" alt="">
+                            <div class="sig-line"></div>
+                            <div class="sig-title">Founder, CodeHubX</div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

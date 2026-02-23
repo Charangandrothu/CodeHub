@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Megaphone, AlertTriangle, CheckCircle, Info, Sparkles } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { API_URL } from '../config';
 
 const AnnouncementBar = () => {
@@ -10,6 +10,10 @@ const AnnouncementBar = () => {
     const [announcement, setAnnouncement] = useState(null);
     const [isVisible, setIsVisible] = useState(true);
     const barRef = useRef(null);
+    const location = useLocation();
+
+    // Check if we are on the question page to hide the announcement entirely
+    const isQuestionPage = location.pathname.startsWith('/problem/');
 
     useEffect(() => {
         const fetchAnnouncement = async () => {
@@ -66,7 +70,7 @@ const AnnouncementBar = () => {
 
     // Manage CSS variable for Navbar offset
     useEffect(() => {
-        if (isVisible && announcement && barRef.current) {
+        if (isVisible && announcement && !isQuestionPage && barRef.current) {
             const height = barRef.current.offsetHeight;
             document.documentElement.style.setProperty('--announcement-height', `${height}px`);
         } else {
@@ -76,25 +80,35 @@ const AnnouncementBar = () => {
         return () => {
             document.documentElement.style.setProperty('--announcement-height', '0px');
         }
-    }, [isVisible, announcement]);
+    }, [isVisible, announcement, isQuestionPage]);
 
-    if (!announcement || !isVisible) return null;
+    if (!announcement || !isVisible || isQuestionPage) return null;
 
     const handleDismiss = () => {
         setIsVisible(false);
     };
 
-    // Style Types
-    const styles = {
-        blue: "from-blue-600 via-indigo-600 to-blue-600",
-        red: "from-red-600 via-red-500 to-red-600",
-        green: "from-emerald-600 via-green-500 to-emerald-600",
-        purple: "from-purple-600 via-pink-600 to-purple-600",
-        // Default
-        default: "from-blue-600 via-indigo-600 to-blue-600"
-    };
+    // Role-based Glassmorphism Theme
+    const isElite = userData?.isElite;
+    const isPro = userData?.isPro;
 
-    const gradientClass = styles[announcement.bgStyle] || styles.default;
+    const glassStyle = isElite
+        ? "bg-emerald-950/40 backdrop-blur-xl text-emerald-50"
+        : isPro
+            ? "bg-blue-950/40 backdrop-blur-xl text-blue-50"
+            : "bg-[#050505]/40 backdrop-blur-xl text-zinc-100";
+
+    const glowStyle = isElite
+        ? "bg-emerald-500/40 shadow-[0_0_10px_rgba(16,185,129,0.5)]"
+        : isPro
+            ? "bg-blue-500/40 shadow-[0_0_10px_rgba(59,130,246,0.5)]"
+            : "bg-white/20 shadow-[0_0_10px_rgba(255,255,255,0.1)]";
+
+    const btnStyle = isElite
+        ? "bg-emerald-500/20 hover:bg-emerald-500/30 border-emerald-500/30"
+        : isPro
+            ? "bg-blue-500/20 hover:bg-blue-500/30 border-blue-500/30"
+            : "bg-white/10 hover:bg-white/20 border-white/20";
 
     // Icons
     const Icons = {
@@ -120,20 +134,20 @@ const AnnouncementBar = () => {
                             document.documentElement.style.setProperty('--announcement-height', `${height}px`);
                         }
                     }}
-                    className={`fixed top-0 left-0 right-0 z-[60] bg-gradient-to-r ${gradientClass} text-white overflow-hidden shadow-lg`}
+                    className={`fixed top-0 left-0 right-0 z-[60] ${glassStyle} overflow-hidden shadow-2xl`}
                 >
-                    <div className="max-w-7xl mx-auto px-4 py-1 sm:py-1.5 flex items-center justify-between gap-3">
+                    <div className="max-w-7xl mx-auto px-4 py-1 sm:py-1.5 flex items-center justify-between gap-3 relative z-10">
 
                         {/* Content */}
                         <div className="flex-1 flex items-center justify-center gap-2 text-center text-[10px] sm:text-xs font-medium tracking-wide">
-                            <Icon size={14} className="text-white/90 hidden sm:block animate-pulse" />
+                            <Icon size={14} className="opacity-90 hidden sm:block animate-pulse" />
                             <span>{announcement.message}</span>
 
                             {/* CTA */}
                             {announcement.ctaText && announcement.ctaLink && (
                                 <Link
                                     to={announcement.ctaLink}
-                                    className="ml-2 px-2.5 py-0.5 bg-white/20 hover:bg-white/30 rounded-full text-[9px] sm:text-[10px] font-bold transition-all border border-white/20 whitespace-nowrap"
+                                    className={`ml-2 px-2.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold transition-all border whitespace-nowrap ${btnStyle}`}
                                 >
                                     {announcement.ctaText} &rarr;
                                 </Link>
@@ -151,7 +165,7 @@ const AnnouncementBar = () => {
                     </div>
 
                     {/* Bottom Glow Border */}
-                    <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-white/10" />
+                    <div className={`absolute bottom-0 left-0 right-0 h-[1px] ${glowStyle}`} />
                 </motion.div>
             )}
         </AnimatePresence>

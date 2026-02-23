@@ -4,7 +4,7 @@ const userSchema = new mongoose.Schema({
     uid: { type: String, required: true, unique: true }, // Firebase UID
     email: { type: String, required: true, unique: true },
     username: { type: String, unique: true, sparse: true }, // Added username (handle)
-    photoURL: { type: String, default: "" }, // Added photoURL
+    photoURL: { type: String, default: "https://api.dicebear.com/9.x/adventurer/svg?seed=Emery&backgroundColor=d1d4f9" }, // Added photoURL
     isPro: { type: Boolean, default: false },
     createdAt: { type: Date, default: Date.now },
     stats: {
@@ -55,9 +55,12 @@ const userSchema = new mongoose.Schema({
     },
 
     // Subscription Details
-    plan: { type: String, default: 'FREE' }, // 'FREE' or 'PRO'
+    plan: { type: String, default: 'FREE' }, // 'FREE', 'pro', 'elite'
     paymentStatus: { type: String, default: 'inactive' },
     subscriptionId: { type: String },
+    subscriptionStartDate: { type: Date, default: null },
+    subscriptionEndDate: { type: Date, default: null },
+    billingCycle: { type: String, default: 'monthly' }, // 'monthly' or 'yearly'
     billingHistory: [{
         date: { type: Date, default: Date.now },
         amount: String,
@@ -70,6 +73,15 @@ const userSchema = new mongoose.Schema({
     // AI Usage
     aiUsage: { type: Number, default: 0 },
     lastAiResetDate: { type: Date, default: Date.now },
+
+    // Certificate Data (stored on user profile, not separate collection)
+    certificate: {
+        certificateId: { type: String, default: null },
+        name: { type: String, default: null },
+        course: { type: String, default: "DSA Coding Experience" },
+        progress: { type: Number, default: null },
+        issuedAt: { type: Date, default: null }
+    },
 
     updatedAt: { type: Date, default: Date.now }
 });

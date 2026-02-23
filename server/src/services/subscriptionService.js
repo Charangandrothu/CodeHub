@@ -34,7 +34,15 @@ class SubscriptionService {
         // Update User profile (We assume we track "isPro" on user for easy frontend access)
         await User.findOneAndUpdate(
             { uid: userId },
-            { $set: { isPro: true, activePlan: planId } }
+            {
+                $set: {
+                    isPro: true,
+                    plan: planId,
+                    billingCycle: billingCycle,
+                    subscriptionStartDate: startDate,
+                    subscriptionEndDate: endDate
+                }
+            }
         );
 
         return subscription;
