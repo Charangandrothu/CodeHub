@@ -9,51 +9,55 @@ const RoadmapPage = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { userData } = useAuth();
-    const [activeView, setActiveView] = useState('menu');
+    const [isMobile, setIsMobile] = useState(() => {
+        if (typeof window === 'undefined') return false;
+        return window.matchMedia('(max-width: 768px)').matches;
+    });
 
     const isPremium = userData?.isPro || userData?.plan === 'pro' || userData?.plan === 'elite';
 
+    const activeView = location.pathname.includes('/roadmap/dsa')
+        ? 'dsa'
+        : location.pathname.includes('/roadmap/mock')
+            ? 'mock'
+            : location.pathname.includes('/roadmap/aptitude')
+                ? 'aptitude'
+                : 'menu';
+
     useEffect(() => {
-        if (location.pathname.includes('/roadmap/dsa')) {
-            setActiveView('dsa');
-        } else if (location.pathname.includes('/roadmap/mock')) {
-            setActiveView('mock');
-        } else if (location.pathname.includes('/roadmap/aptitude')) {
-            setActiveView('aptitude');
-        } else {
-            setActiveView('menu');
-        }
-    }, [location.pathname]);
+        const mediaQuery = window.matchMedia('(max-width: 768px)');
+        const onChange = (event) => setIsMobile(event.matches);
+        mediaQuery.addEventListener('change', onChange);
+        return () => mediaQuery.removeEventListener('change', onChange);
+    }, []);
 
     const handleNavigate = (view) => {
         if (view === 'menu') navigate('/roadmap');
         else navigate(`/roadmap/${view}`);
     };
 
-    // Gate: Free users see upgrade prompt
     if (!isPremium) {
         return (
             <div className="min-h-screen bg-[#050505] text-white pt-20 pb-20 px-4 sm:px-6 overflow-hidden selection:bg-purple-500/30">
-                <div className="fixed top-20 left-1/4 w-96 h-96 bg-blue-600/10 rounded-full blur-[128px] pointer-events-none" />
-                <div className="fixed bottom-20 right-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-[128px] pointer-events-none" />
+                <div className="fixed top-20 left-1/4 w-96 h-96 bg-blue-600/10 rounded-full blur-[128px] pointer-events-none hidden sm:block" />
+                <div className="fixed bottom-20 right-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-[128px] pointer-events-none hidden sm:block" />
 
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="max-w-2xl mx-auto text-center space-y-10 pt-16 relative z-10"
+                    className="max-w-2xl mx-auto text-center space-y-8 sm:space-y-10 pt-10 sm:pt-16 relative z-10"
                 >
-                    {/* Glowing Lock Icon */}
                     <motion.div
                         initial={{ scale: 0.8, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
-                        transition={{ delay: 0.2, type: "spring" }}
-                        className="relative mx-auto w-32 h-32"
+                        transition={{ delay: 0.2, type: 'spring' }}
+                        className="relative mx-auto w-24 h-24 sm:w-32 sm:h-32"
                     >
                         <div className="absolute inset-0 bg-gradient-to-br from-amber-500/20 to-purple-500/20 rounded-3xl blur-xl" />
                         <div className="relative w-full h-full rounded-3xl bg-gradient-to-br from-amber-500/10 to-purple-500/10 border border-amber-500/20 flex items-center justify-center shadow-[0_0_60px_rgba(217,119,6,0.15)]">
                             <motion.div
                                 animate={{ rotate: [0, -5, 5, 0] }}
-                                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                                transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
                             >
                                 <Crown size={48} className="text-amber-500" />
                             </motion.div>
@@ -65,26 +69,21 @@ const RoadmapPage = () => {
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.3 }}
-                            className="text-4xl md:text-5xl font-black tracking-tight"
+                            className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight"
                         >
-                            <span className="bg-clip-text text-transparent bg-gradient-to-r from-white via-white to-white/60">
-                                Unlock Your
-                            </span>{' '}
-                            <span className="bg-clip-text text-transparent bg-gradient-to-r from-amber-400 via-yellow-400 to-orange-400">
-                                Roadmap
-                            </span>
+                            <span className="bg-clip-text text-transparent bg-gradient-to-r from-white via-white to-white/60">Unlock Your</span>{' '}
+                            <span className="bg-clip-text text-transparent bg-gradient-to-r from-amber-400 via-yellow-400 to-orange-400">Roadmap</span>
                         </motion.h1>
                         <motion.p
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             transition={{ delay: 0.4 }}
-                            className="text-zinc-400 text-lg leading-relaxed max-w-md mx-auto"
+                            className="text-zinc-400 text-base sm:text-lg leading-relaxed max-w-md mx-auto"
                         >
                             The personalized DSA Roadmap with day-by-day plans, progress tracking, and structured learning is available exclusively for Pro and Elite members.
                         </motion.p>
                     </div>
 
-                    {/* Feature Highlights */}
                     <motion.div
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -92,9 +91,9 @@ const RoadmapPage = () => {
                         className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-xl mx-auto"
                     >
                         {[
-                            { icon: Code, label: "Structured DSA Plan", color: "text-blue-400" },
-                            { icon: Sparkles, label: "Day-by-Day Tracking", color: "text-purple-400" },
-                            { icon: BrainCircuit, label: "Personalized Goals", color: "text-emerald-400" },
+                            { icon: Code, label: 'Structured DSA Plan', color: 'text-blue-400' },
+                            { icon: Sparkles, label: 'Day-by-Day Tracking', color: 'text-purple-400' },
+                            { icon: BrainCircuit, label: 'Personalized Goals', color: 'text-emerald-400' },
                         ].map((feat, i) => (
                             <div key={i} className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-white/[0.02] border border-white/5">
                                 <feat.icon size={20} className={feat.color} />
@@ -103,16 +102,15 @@ const RoadmapPage = () => {
                         ))}
                     </motion.div>
 
-                    {/* CTA Buttons */}
                     <motion.div
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.6 }}
-                        className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4"
+                        className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-4 pt-4"
                     >
                         <button
                             onClick={() => navigate('/pricing')}
-                            className="group px-8 py-3.5 bg-gradient-to-r from-amber-500 to-orange-500 text-black font-bold rounded-xl text-sm transition-all shadow-[0_0_30px_rgba(217,119,6,0.3)] hover:shadow-[0_0_40px_rgba(217,119,6,0.5)] hover:scale-105 flex items-center gap-2"
+                            className="group w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-amber-500 to-orange-500 text-black font-bold rounded-xl text-sm transition-all shadow-[0_0_30px_rgba(217,119,6,0.3)] hover:shadow-[0_0_40px_rgba(217,119,6,0.5)] hover:scale-105 flex items-center justify-center gap-2"
                         >
                             <Crown size={16} />
                             Upgrade to Pro
@@ -120,13 +118,12 @@ const RoadmapPage = () => {
                         </button>
                         <button
                             onClick={() => navigate('/dashboard')}
-                            className="px-6 py-3 text-zinc-400 hover:text-white text-sm font-medium transition-colors"
+                            className="w-full sm:w-auto px-6 py-3 text-zinc-400 hover:text-white text-sm font-medium transition-colors"
                         >
                             Back to Dashboard
                         </button>
                     </motion.div>
 
-                    {/* Lock Badge */}
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
@@ -143,18 +140,13 @@ const RoadmapPage = () => {
 
     return (
         <div className="min-h-screen bg-[#050505] text-white pt-20 pb-20 px-4 sm:px-6 overflow-hidden selection:bg-purple-500/30">
-            {/* Ambient Background Glows - Global */}
-            <div className="fixed top-20 left-1/4 w-96 h-96 bg-blue-600/10 rounded-full blur-[128px] pointer-events-none" />
-            <div className="fixed bottom-20 right-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-[128px] pointer-events-none" />
+            <div className="fixed top-20 left-1/4 w-96 h-96 bg-blue-600/10 rounded-full blur-[128px] pointer-events-none hidden sm:block" />
+            <div className="fixed bottom-20 right-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-[128px] pointer-events-none hidden sm:block" />
 
             <div className="max-w-7xl mx-auto relative z-10">
                 <AnimatePresence mode="wait">
-                    {activeView === 'menu' && (
-                        <SelectionMenu onSelect={handleNavigate} key="menu" />
-                    )}
-                    {activeView === 'dsa' && (
-                        <DSARoadmap onBack={() => handleNavigate('menu')} key="dsa" />
-                    )}
+                    {activeView === 'menu' && <SelectionMenu onSelect={handleNavigate} key="menu" isMobile={isMobile} />}
+                    {activeView === 'dsa' && <DSARoadmap onBack={() => handleNavigate('menu')} key="dsa" />}
                     {(activeView === 'mock' || activeView === 'aptitude') && (
                         <MaintenanceView title={activeView === 'mock' ? 'Mock Tests' : 'Aptitude'} onBack={() => handleNavigate('menu')} key="maintenance" />
                     )}
@@ -164,7 +156,7 @@ const RoadmapPage = () => {
     );
 };
 
-const SelectionMenu = ({ onSelect }) => {
+const SelectionMenu = ({ onSelect, isMobile }) => {
     const cards = [
         {
             id: 'dsa',
@@ -194,13 +186,13 @@ const SelectionMenu = ({ onSelect }) => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="space-y-12 py-10"
+            className="space-y-8 sm:space-y-12 py-6 sm:py-10"
         >
             <div className="text-center space-y-4">
-                <h1 className="text-5xl md:text-6xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-b from-white via-white to-white/50">
+                <h1 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-b from-white via-white to-white/50">
                     Choose Your Path
                 </h1>
-                <p className="text-zinc-400 text-lg">Select a module to begin your journey to mastery.</p>
+                <p className="text-zinc-400 text-base sm:text-lg">Select a module to begin your journey to mastery.</p>
             </div>
 
             <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
@@ -208,12 +200,12 @@ const SelectionMenu = ({ onSelect }) => {
                     <motion.button
                         key={card.id}
                         onClick={() => onSelect(card.id)}
-                        whileHover={{ y: -5 }}
+                        whileHover={!isMobile ? { y: -5 } : undefined}
                         whileTap={{ scale: 0.98 }}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: idx * 0.1 }}
-                        className="relative group text-left p-8 rounded-3xl bg-[#0A0A0A]/80 backdrop-blur-xl border border-white/10 overflow-hidden hover:border-white/20 transition-all shadow-2xl"
+                        className="relative group text-left p-5 sm:p-8 rounded-3xl bg-[#0A0A0A]/80 backdrop-blur-xl border border-white/10 overflow-hidden hover:border-white/20 transition-all shadow-2xl"
                     >
                         <div className={`absolute inset-0 bg-gradient-to-br ${card.styles.glow} to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
                         <div className="relative z-10 space-y-6">
@@ -221,10 +213,8 @@ const SelectionMenu = ({ onSelect }) => {
                                 <card.icon size={28} />
                             </div>
                             <div className="space-y-2">
-                                <h3 className="text-2xl font-bold text-white group-hover:text-purple-300 transition-colors">{card.title}</h3>
-                                <p className="text-sm text-zinc-400 leading-relaxed font-medium">
-                                    {card.desc}
-                                </p>
+                                <h3 className="text-xl sm:text-2xl font-bold text-white group-hover:text-purple-300 transition-colors">{card.title}</h3>
+                                <p className="text-sm text-zinc-400 leading-relaxed font-medium">{card.desc}</p>
                             </div>
                             <div className="flex items-center gap-2 text-xs font-bold text-zinc-500 uppercase tracking-wider group-hover:text-white transition-colors">
                                 <span>Explore</span>
@@ -243,9 +233,8 @@ const MaintenanceView = ({ title, onBack }) => (
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="max-w-2xl mx-auto text-center space-y-12 pt-16 relative"
+        className="max-w-2xl mx-auto text-center space-y-8 sm:space-y-12 pt-10 sm:pt-16 relative"
     >
-        {/* Background Glow */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-yellow-500/10 rounded-full blur-[100px] pointer-events-none" />
 
         <button
@@ -257,18 +246,16 @@ const MaintenanceView = ({ title, onBack }) => (
         </button>
 
         <div className="relative z-10 space-y-6">
-            <div className="w-28 h-28 rounded-3xl bg-gradient-to-br from-yellow-500/20 to-orange-500/20 flex items-center justify-center mx-auto border border-yellow-500/30 text-yellow-400 shadow-[0_0_40px_rgba(234,179,8,0.2)]">
-                <Construction size={48} className="animate-pulse" />
+            <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-gradient-to-br from-yellow-500/20 to-orange-500/20 flex items-center justify-center mx-auto border border-yellow-500/30 text-yellow-400 shadow-[0_0_40px_rgba(234,179,8,0.2)]">
+                <Construction size={44} className="animate-pulse" />
             </div>
 
             <div className="space-y-4 max-w-lg mx-auto">
-                <h2 className="text-4xl md:text-5xl font-black tracking-tight text-white">
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-white">
                     {title} <br />
-                    <span className="bg-clip-text text-transparent bg-gradient-to-r from-yellow-400 to-orange-400">
-                        Under Construction
-                    </span>
+                    <span className="bg-clip-text text-transparent bg-gradient-to-r from-yellow-400 to-orange-400">Under Construction</span>
                 </h2>
-                <p className="text-zinc-400 text-lg leading-relaxed">
+                <p className="text-zinc-400 text-base sm:text-lg leading-relaxed">
                     We're currently crafting a premium experience for this module.
                     Expect high-quality content and interactive features coming soon.
                 </p>
@@ -279,13 +266,10 @@ const MaintenanceView = ({ title, onBack }) => (
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-yellow-500"></span>
                 </span>
-                <span className="text-xs font-bold text-yellow-500 tracking-wider uppercase">
-                    Development in Progress
-                </span>
+                <span className="text-xs font-bold text-yellow-500 tracking-wider uppercase">Development in Progress</span>
             </div>
         </div>
     </motion.div>
 );
 
 export default RoadmapPage;
-

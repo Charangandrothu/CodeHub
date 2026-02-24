@@ -218,10 +218,10 @@ const Settings = () => {
     ];
 
     return (
-        <div className="min-h-screen bg-[#0a0a0a] pt-24 pb-12 px-4 sm:px-6 lg:px-8 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/10 via-[#0a0a0a] to-[#0a0a0a]">
+        <div className="min-h-screen bg-[#0a0a0a] pt-24 pb-12 px-4 sm:px-6 lg:px-8 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/10 via-[#0a0a0a] to-[#0a0a0a] overflow-x-hidden">
             {/* Header */}
             <div className="max-w-6xl mx-auto mb-8">
-                <h1 className="text-3xl font-bold text-white tracking-tight mb-2">Settings</h1>
+                <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight mb-2">Settings</h1>
                 <p className="text-gray-400">Manage your account preferences and settings</p>
             </div>
 
@@ -235,6 +235,8 @@ const Settings = () => {
                                 <img
                                     src={currentUser?.photoURL || `https://api.dicebear.com/9.x/adventurer/svg?seed=${currentUser?.displayName || 'User'}`}
                                     alt="Profile"
+                                    loading="lazy"
+                                    decoding="async"
                                     className="w-full h-full rounded-full object-cover border-2 border-[#1a1a1a]"
                                 />
                             </div>
@@ -286,14 +288,14 @@ const Settings = () => {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.3 }}
-                        className="bg-[#111] rounded-3xl border border-white/10 p-6 md:p-8 relative overflow-hidden"
+                        className="bg-[#111] rounded-3xl border border-white/10 p-4 sm:p-6 md:p-8 relative overflow-hidden"
                     >
                         {/* Background Glow */}
                         <div className="absolute top-0 right-0 w-64 h-64 bg-blue-900/10 blur-[100px] pointer-events-none" />
 
                         {activeTab === 'account' && (
                             <div className="space-y-8 relative z-10">
-                                <div className="flex items-center justify-between pb-6 border-b border-white/5">
+                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-white/5">
                                     <div>
                                         <h2 className="text-xl font-bold text-white mb-1">Personal Information</h2>
                                         <p className="text-sm text-gray-400">Update your personal details here.</p>
@@ -443,7 +445,7 @@ const Settings = () => {
 
                         {activeTab === 'preferences' && (
                             <div className="space-y-8 relative z-10">
-                                <div className="flex items-center justify-between pb-6 border-b border-white/5">
+                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-white/5">
                                     <div>
                                         <h2 className="text-xl font-bold text-white mb-1">Learning Preferences</h2>
                                         <p className="text-sm text-gray-400">Customize your daily goals and topic focus.</p>
@@ -503,7 +505,7 @@ const Settings = () => {
                                     </div>
                                 </div>
 
-                                <div className="p-4 rounded-xl border border-orange-500/20 bg-orange-500/5 flex items-center justify-between">
+                                <div className="p-4 rounded-xl border border-orange-500/20 bg-orange-500/5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                                     <div className="flex items-center gap-4">
                                         <div className="p-2.5 rounded-lg bg-orange-500/10 text-orange-500">
                                             <Zap size={18} />
@@ -530,7 +532,7 @@ const Settings = () => {
 
                         {activeTab === 'notifications' && (
                             <div className="space-y-6 relative z-10">
-                                <div className="flex items-center justify-between pb-6 border-b border-white/5">
+                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-white/5">
                                     <div>
                                         <h2 className="text-xl font-bold text-white mb-1">Notifications</h2>
                                         <p className="text-sm text-gray-400">Choose what you want to be notified about.</p>
@@ -546,7 +548,7 @@ const Settings = () => {
                                     { id: 'newProblems', title: 'New Problems', desc: 'Notify when new problems are added' },
                                     { id: 'marketing', title: 'Marketing Emails', desc: 'Tips, offers, and platform updates' }
                                 ].map((item) => (
-                                    <div key={item.id} className="flex items-center justify-between py-2">
+                                    <div key={item.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 py-2">
                                         <div>
                                             <p className="text-sm font-medium text-white">{item.title}</p>
                                             <p className="text-xs text-gray-500">{item.desc}</p>
@@ -564,7 +566,7 @@ const Settings = () => {
 
                         {activeTab === 'general' && (
                             <div className="space-y-8 relative z-10">
-                                <div className="flex items-center justify-between pb-6 border-b border-white/5">
+                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-white/5">
                                     <div>
                                         <h2 className="text-xl font-bold text-white mb-1">General Settings</h2>
                                         <p className="text-sm text-gray-400">Configure appearance and language.</p>
@@ -576,7 +578,7 @@ const Settings = () => {
 
                                 <div className="space-y-4">
                                     <label className="text-sm font-medium text-white block">Appearance</label>
-                                    <div className="grid grid-cols-3 gap-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                         {[
                                             { name: 'dark', label: 'Dark', icon: Moon },
                                             { name: 'light', label: 'Light', icon: Sun },
@@ -594,7 +596,7 @@ const Settings = () => {
                                     </div>
                                 </div>
 
-                                <div className="flex items-center justify-between py-4 border-t border-white/5">
+                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 py-4 border-t border-white/5">
                                     <div>
                                         <p className="text-sm font-medium text-white">Animations</p>
                                         <p className="text-xs text-gray-500">Enable smooth transitions and effects</p>
@@ -660,7 +662,7 @@ const Settings = () => {
                                             }
                                         </p>
 
-                                        <div className="flex items-center gap-4">
+                                        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
                                             <button className={`px-4 py-2 text-sm font-bold rounded-lg transition-colors shadow-lg ${userData?.isPro ? 'bg-amber-500 hover:bg-amber-400 text-black shadow-amber-500/20' : 'bg-blue-500 hover:bg-blue-400 text-white shadow-blue-500/20'}`} onClick={() => navigate('/pricing')}>
                                                 {userData?.isPro ? "Manage Billing" : "Upgrade Now"}
                                             </button>
@@ -678,7 +680,7 @@ const Settings = () => {
                                     <div className="rounded-xl border border-white/10 overflow-hidden">
                                         {userData?.billingHistory && userData.billingHistory.length > 0 ? (
                                             userData.billingHistory.map((invoice, i) => (
-                                                <div key={i} className="flex items-center justify-between p-4 border-b border-white/5 last:border-0 bg-white/[0.02] hover:bg-white/[0.04] transition-colors">
+                                                <div key={i} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border-b border-white/5 last:border-0 bg-white/[0.02] hover:bg-white/[0.04] transition-colors">
                                                     <div className="flex items-center gap-4">
                                                         <div className="p-2 rounded-lg bg-green-500/10 text-green-500">
                                                             <Check size={16} />
