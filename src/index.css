@@ -92,9 +92,63 @@ body {
 
 /* AdSense Responsive Fix */
 @media (max-width: 768px) {
+
+  img,
+  video,
+  canvas,
+  svg {
+    max-width: 100%;
+  }
+
+  html,
+  body,
+  #root {
+    overflow-x: hidden;
+  }
+
+  /* Crisp text on mobile — avoid GPU compositing blur */
+  :root {
+    text-rendering: optimizeSpeed;
+    -webkit-font-smoothing: subpixel-antialiased;
+  }
+
+  body {
+    font-size: 15px;
+  }
+
+  /* Disable backdrop-filter on mobile to prevent blurry text/icons */
+  * {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+
+  button,
+  [role="button"],
+  a {
+    min-height: 44px;
+  }
+
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    touch-action: manipulation;
+  }
+
   .adsbygoogle {
-    width: 320px !important;
+    width: min(100%, 320px) !important;
     height: 50px !important;
+  }
+
+  html:focus-within {
+    scroll-behavior: auto;
+  }
+
+  .animate-\[shimmer\_1\.5s\_infinite\],
+  .animate-pulse,
+  [class*="animate-[sweep_"] {
+    animation: none !important;
   }
 }
 

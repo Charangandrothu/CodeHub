@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { generateRoadmap } from '../utils/roadmapGenerator';
-import { ChevronDown, Check, ArrowRight, Play, RefreshCw, Layers, Zap, Trophy, Flame, Target, Calendar, Lock, Unlock, Clock, AlertTriangle, ArrowLeft, Code, Settings, Shield, LogOut, Crown, Sparkles, MinusCircle, PlusCircle, Puzzle, Rocket, Filter, Box, Hash, Search, Database, GitMerge, Share2, ArrowUpDown, Rows, Type, Link, Repeat, BarChart3, GitBranch, Brain } from 'lucide-react';
+import { ChevronDown, Check, ArrowRight, Play, RefreshCw, Layers, Zap, Trophy, Flame, Target, Calendar, Lock, Unlock, Clock, AlertTriangle, ArrowLeft, Code, Settings, Shield, LogOut, Crown, Sparkles, MinusCircle, PlusCircle, Puzzle, Rocket, Filter, Box, Hash, Search, Database, GitMerge, Share2, ArrowUpDown, Rows, Type, Link, Repeat, BarChart3, GitBranch, Brain, Menu, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getAuth, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
 import logo_img from '../assets/logo_img.png';
@@ -139,11 +139,10 @@ const containerVariants = {
 };
 
 const itemVariants = {
-    hidden: { opacity: 0, y: 30, filter: 'blur(8px)', scale: 0.98 },
+    hidden: { opacity: 0, y: 30, scale: 0.98 },
     visible: {
         opacity: 1,
         y: 0,
-        filter: 'blur(0px)',
         scale: 1,
         transition: {
             type: "spring",
@@ -155,11 +154,10 @@ const itemVariants = {
 };
 
 const sidebarItemVariants = {
-    hidden: { opacity: 0, x: -20, filter: 'blur(5px)' },
+    hidden: { opacity: 0, x: -20 },
     visible: {
         opacity: 1,
         x: 0,
-        filter: 'blur(0px)',
         transition: { type: "spring", stiffness: 100, damping: 18 }
     }
 };
@@ -205,7 +203,7 @@ const TOPIC_ICONS = {
     'dynamic-programming': Brain,
 };
 
-const RoadmapSection = ({ section, isOpen, onToggle, delay, onToggleTask, roadmapStartDate }) => {
+const RoadmapSection = ({ section, isOpen, onToggle, delay, onToggleTask, roadmapStartDate, isMobile = false }) => {
     const activeDayRef = useRef(null);
     const progress = Math.round((section.completed / section.totalProblems) * 100) || 0;
     const isCompleted = section.completed === section.totalProblems;
@@ -269,12 +267,25 @@ const RoadmapSection = ({ section, isOpen, onToggle, delay, onToggleTask, roadma
     return (
         <motion.div
             layout
-            variants={itemVariants}
+            variants={isMobile ? {
+                hidden: { opacity: 0, y: 20, scale: 0.99 },
+                visible: {
+                    opacity: 1,
+                    y: 0,
+                    scale: 1,
+                    transition: {
+                        type: "spring",
+                        stiffness: 80,
+                        damping: 15,
+                        mass: 0.8
+                    }
+                }
+            } : itemVariants}
             initial="hidden"
             whileInView="visible"
             whileHover={!isOpen ? { y: -5, scale: 1.005, transition: { duration: 0.2 } } : {}}
             viewport={{ once: true, margin: "-50px" }}
-            className={`relative backdrop-blur-xl border transition-all duration-500 group -ml-16 w-[calc(100%+12px)] overflow-hidden rounded-2xl ${isOpen
+            className={`relative border transition-all duration-500 group ${isMobile ? 'ml-0 w-full' : '-ml-16 w-[calc(100%+12px)]'} overflow-hidden rounded-2xl ${isOpen
                 ? `bg-gradient-to-b from-[#151515] to-[#050505] shadow-2xl`
                 : 'bg-white/[0.02] border-white/5 hover:bg-white/[0.04] hover:border-white/10'
                 }`}
@@ -331,7 +342,7 @@ const RoadmapSection = ({ section, isOpen, onToggle, delay, onToggleTask, roadma
                         <motion.div
                             whileHover={{ rotate: 180, scale: 1.1 }}
                             transition={{ type: "spring", stiffness: 200, damping: 10 }}
-                            className={`w-12 h-12 rounded-xl flex items-center justify-center backdrop-blur-2xl border shadow-lg ${isCompleted
+                            className={`w-12 h-12 rounded-xl flex items-center justify-center border shadow-lg ${isCompleted
                                 ? 'bg-emerald-500/10 border-emerald-500/20 shadow-emerald-500/10 text-emerald-400'
                                 : 'bg-gradient-to-br from-white/5 to-white/0 border-white/10 text-white/90 shadow-black/20'
                                 }`}
@@ -395,7 +406,7 @@ const RoadmapSection = ({ section, isOpen, onToggle, delay, onToggleTask, roadma
                         animate={{ height: "auto", opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
                         transition={{ duration: 0.5, ease: [0.04, 0.62, 0.23, 0.98] }}
-                        className="border-t border-white/5 bg-[#050505]/40 backdrop-blur-xl"
+                        className="border-t border-white/5 bg-[#080808]"
                     >
                         <div className="p-6 md:p-8 grid gap-8 sm:grid-cols-[auto_1fr]">
                             <motion.div
@@ -541,7 +552,10 @@ const RoadmapSidebar = ({
     levelInfo,
     roadmap,
     activeSection,
-    onSectionClick
+    onSectionClick,
+    isMobile = false,
+    isOpen = false,
+    onClose = () => { }
 }) => {
     const navigate = useNavigate();
     const { currentUser, userData, logout } = useAuth(); // Added hooks
@@ -581,11 +595,22 @@ const RoadmapSidebar = ({
 
     return (
         <motion.div
-            initial={{ x: -60, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            className="w-80 h-full flex flex-col bg-[#050505]/80 backdrop-blur-xl border-r border-white/10 shrink-0 z-30"
+            initial={isMobile ? false : { x: -60, opacity: 0 }}
+            animate={isMobile ? { opacity: 1 } : { x: 0, opacity: 1 }}
+            transition={isMobile ? { duration: 0 } : { duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+            className={`h-full flex flex-col bg-[#050505] border-r border-white/10 shrink-0 z-30 transition-[left] duration-300 ${isMobile ? `fixed top-0 w-[85vw] max-w-80 ${isOpen ? 'left-0' : '-left-[85vw]'}` : 'w-80'}`}
         >
+            {isMobile && (
+                <div className="absolute top-4 right-4 z-50">
+                    <button
+                        onClick={onClose}
+                        className="h-9 w-9 inline-flex items-center justify-center rounded-lg border border-white/10 bg-white/5 text-gray-200"
+                        aria-label="Close roadmap sidebar"
+                    >
+                        <X size={16} />
+                    </button>
+                </div>
+            )}
             {/* Logo Section - Replaces Header */}
             <motion.div
                 className="flex items-center gap-4 p-6 mb-2 cursor-pointer group border-b border-white/5 relative overflow-hidden"
@@ -639,7 +664,7 @@ const RoadmapSidebar = ({
                             value={days}
                             onChange={(val) => !isLocked && setDays(val)}
                             disabled={isLocked}
-                            className="backdrop-blur-md bg-white/5 border border-white/10 shadow-inner rounded-xl"
+                            className="bg-white/5 border border-white/10 shadow-inner rounded-xl"
                         />
                         <div className="flex justify-between items-center px-1 mt-2 min-h-[1.25rem]">
                             <motion.span
@@ -672,7 +697,7 @@ const RoadmapSidebar = ({
                                 onHoverStart={() => setIsUnlockHovered(true)}
                                 onHoverEnd={() => setIsUnlockHovered(false)}
                                 onClick={() => onToggleLock(false)}
-                                className={`w-full px-4 py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all duration-300 border backdrop-blur-sm ${isUnlockHovered
+                                className={`w-full px-4 py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all duration-300 border ${isUnlockHovered
                                     ? "bg-red-500/10 border-red-500/30 text-red-400 shadow-[0_0_20px_-5px_rgba(239,68,68,0.3)]"
                                     : "bg-emerald-500/5 border-emerald-500/20 text-emerald-400 shadow-[0_0_20px_-5px_rgba(16,185,129,0.2)]"
                                     }`}
@@ -723,7 +748,10 @@ const RoadmapSidebar = ({
                         {roadmap?.sections.map((section, idx) => (
                             <motion.button
                                 key={section.slug}
-                                onClick={() => onSectionClick(section.slug)}
+                                onClick={() => {
+                                    onSectionClick(section.slug);
+                                    if (isMobile) onClose();
+                                }}
                                 variants={{
                                     hidden: { opacity: 0, x: -10 },
                                     visible: { opacity: 1, x: 0 }
@@ -752,7 +780,7 @@ const RoadmapSidebar = ({
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.5 }}
-                className="mt-auto pt-4 pb-6 px-4 border-t border-white/5 shrink-0 bg-[#050505]/50 backdrop-blur-xl"
+                className="mt-auto pt-4 pb-6 px-4 border-t border-white/5 shrink-0 bg-[#050505]"
             >
                 <div className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-colors cursor-pointer group border border-transparent hover:border-white/5">
                     <img
@@ -811,7 +839,17 @@ const DSARoadmap = ({ onBack }) => {
     const [showResetModal, setShowResetModal] = useState(false);
     const [isGenerating, setIsGenerating] = useState(false);
     const [loadingRoadmap, setLoadingRoadmap] = useState(true);
+    const [isMobile, setIsMobile] = useState(false);
+    const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
     const hasInitialized = useRef(false);
+
+    useEffect(() => {
+        const mediaQuery = window.matchMedia('(max-width: 768px)');
+        const onChange = (event) => setIsMobile(event.matches);
+        setIsMobile(mediaQuery.matches);
+        mediaQuery.addEventListener('change', onChange);
+        return () => mediaQuery.removeEventListener('change', onChange);
+    }, []);
 
     // Persist to Backend (MongoDB only — no localStorage)
     const saveRoadmap = async (newRoadmap) => {
@@ -1033,6 +1071,24 @@ const DSARoadmap = ({ onBack }) => {
 
     return (
         <div className="fixed inset-0 top-0 z-10 flex bg-[#030303] text-white overflow-hidden font-sans">
+            {isMobile && (
+                <>
+                    <div className="fixed top-24 left-4 z-[60]">
+                        <button
+                            onClick={() => setMobileSidebarOpen((prev) => !prev)}
+                            className="h-10 w-10 inline-flex items-center justify-center rounded-xl border border-white/15 bg-[#0a0a0a]/90 text-white"
+                            aria-label={mobileSidebarOpen ? 'Close roadmap menu' : 'Open roadmap menu'}
+                        >
+                            {mobileSidebarOpen ? <X size={18} /> : <Menu size={18} />}
+                        </button>
+                    </div>
+                    <div
+                        className={`fixed inset-0 bg-black/60 z-[40] transition-opacity duration-300 ${mobileSidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+                        onClick={() => setMobileSidebarOpen(false)}
+                    />
+                </>
+            )}
+
             {/* Left Sidebar */}
             <RoadmapSidebar
                 onBack={onBack}
@@ -1046,6 +1102,9 @@ const DSARoadmap = ({ onBack }) => {
                 roadmap={roadmap}
                 activeSection={expandedSection}
                 onSectionClick={scrollToSection}
+                isMobile={isMobile}
+                isOpen={mobileSidebarOpen}
+                onClose={() => setMobileSidebarOpen(false)}
             />
 
             {/* Main Content Area */}
@@ -1094,15 +1153,15 @@ const DSARoadmap = ({ onBack }) => {
                     />
                 </div>
 
-                <div className="p-10 max-w-5xl mx-auto space-y-8 pb-40">
+                <div className="px-4 sm:px-8 lg:px-10 py-6 sm:py-10 max-w-5xl mx-auto space-y-6 sm:space-y-8 pb-28 sm:pb-40">
                     {/* Header for Content Area */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.6, delay: 0.2 }}
-                        className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-12 border-b border-white/5 pb-8"
+                        className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 sm:gap-6 mb-8 sm:mb-12 border-b border-white/5 pb-6 sm:pb-8"
                     >
-                        <div className="relative z-10 w-full sm:w-auto text-left -ml-14">
+                        <div className="relative z-10 w-full sm:w-auto text-left ml-0 sm:-ml-14">
                             <div className="absolute -inset-x-4 -inset-y-4 bg-purple-500/5 blur-2xl rounded-full opacity-50 pointer-events-none" />
                             <div className="overflow-hidden relative">
                                 <motion.h1
@@ -1115,7 +1174,7 @@ const DSARoadmap = ({ onBack }) => {
                                         y: { duration: 0.8, ease: [0.16, 1, 0.3, 1] },
                                         backgroundPosition: { duration: 5, repeat: Infinity, ease: "linear" }
                                     }}
-                                    className="text-3xl font-bold font-sans tracking-tight bg-clip-text text-transparent bg-[linear-gradient(to_right,#ffffff,#e2e8f0,#a855f7,#e2e8f0,#ffffff)] bg-[length:200%_auto] mb-2 block pb-1 selection:bg-purple-500/30"
+                                    className="text-2xl sm:text-3xl font-bold font-sans tracking-tight bg-clip-text text-transparent bg-[linear-gradient(to_right,#ffffff,#e2e8f0,#a855f7,#e2e8f0,#ffffff)] bg-[length:200%_auto] mb-2 block pb-1 selection:bg-purple-500/30"
                                     style={{
                                         textShadow: "0 0 30px rgba(168,85,247,0.1)"
                                     }}
@@ -1142,7 +1201,7 @@ const DSARoadmap = ({ onBack }) => {
                             {!roadmap?.isLocked ? (
                                 <>
                                     <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold mr-1">Select based on your goal</span>
-                                    <div className="flex items-center gap-3 sm:gap-4">
+                                    <div className="flex flex-wrap justify-end items-center gap-2 sm:gap-4">
                                         {[
                                             { label: 'Beginner', goal: 'beginner', questions: '365Q', color: 'text-purple-400', border: 'border-purple-500/20', bg: 'hover:bg-purple-500/10' },
                                             { label: 'Medium', goal: 'medium', questions: '250Q', color: 'text-amber-400', border: 'border-amber-500/20', bg: 'hover:bg-amber-500/10' },
@@ -1156,7 +1215,7 @@ const DSARoadmap = ({ onBack }) => {
                                                 <button
                                                     key={preset.label}
                                                     onClick={() => handleGoalSelect(preset.goal)}
-                                                    className={`px-4 py-2.5 rounded-xl border transition-all duration-300 flex flex-col items-center justify-center gap-0.5 group min-w-[90px] relative overflow-hidden backdrop-blur-sm cursor-pointer
+                                                    className={`px-4 py-2.5 rounded-xl border transition-all duration-300 flex flex-col items-center justify-center gap-0.5 group min-w-[90px] relative overflow-hidden cursor-pointer
                                                         ${isSelected
                                                             ? `bg-white/10 ring-1 ring-white/20 shadow-lg scale-105 ${preset.border}`
                                                             : showColor
@@ -1242,7 +1301,7 @@ const DSARoadmap = ({ onBack }) => {
                                 key="loader"
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
-                                exit={{ opacity: 0, scale: 0.95, filter: "blur(10px)" }}
+                                exit={{ opacity: 0, scale: 0.95 }}
                                 transition={{ duration: 0.3 }}
                                 className="h-64 flex flex-col items-center justify-center text-zinc-500 gap-6"
                             >
@@ -1287,6 +1346,7 @@ const DSARoadmap = ({ onBack }) => {
                                             onToggleTask={(dayIdx, itemIdx) => toggleTask(section.slug, dayIdx, itemIdx)}
                                             delay={idx * 0.1}
                                             roadmapStartDate={roadmap?.isLocked ? roadmap.startDate : null}
+                                            isMobile={isMobile}
                                         />
                                     </div>
                                 ))}

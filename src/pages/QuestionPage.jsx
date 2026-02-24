@@ -1893,7 +1893,7 @@ export default function QuestionPage() {
                         <div className="flex items-center justify-between px-5 py-3 border-b border-white/5 bg-gradient-to-r from-indigo-500/5 to-transparent">
                             <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center shadow-lg shadow-indigo-500/20 overflow-hidden">
-                                    <img src={logo_img} alt="CodeHub AI" className="w-full h-full object-cover opacity-90" />
+                                    <img src={logo_img} alt="CodeHub AI" loading="lazy" decoding="async" className="w-full h-full object-cover opacity-90" />
                                 </div>
                                 <div>
                                     <h3 className="font-bold text-white text-[15px] tracking-tight">AI Assistant</h3>

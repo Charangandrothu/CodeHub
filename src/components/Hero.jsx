@@ -118,6 +118,21 @@ const Hero = () => {
 
   return (
     <section id="home" className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[#0a0a0a] px-4 sm:px-6 lg:px-8">
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <video
+          className="absolute inset-0 h-full w-full object-cover scale-105 opacity-45 blur-[2px]"
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="metadata"
+          aria-hidden="true"
+        >
+          <source src="/animated.MP4" type="video/mp4" />
+        </video>
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0a]/35 via-[#0a0a0a]/45 to-[#0a0a0a]/60" />
+      </div>
+
       {/* Ambient Background */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
         <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-purple-900/10 rounded-full blur-[120px]" />
@@ -305,7 +320,7 @@ const Hero = () => {
                   animate={{ y: [0, -6, 0] }}
                   transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
                 >
-                  <img src={javaGlass} alt="Java" className="w-28 h-28 object-contain drop-shadow-md" />
+                  <img src={javaGlass} alt="Java" loading="lazy" decoding="async" className="w-28 h-28 object-contain drop-shadow-md" />
                 </motion.div>
               </motion.div>
 
@@ -326,7 +341,7 @@ const Hero = () => {
                   animate={{ y: [0, 6, 0] }}
                   transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
                 >
-                  <img src={pythonGlass} alt="Python" className="w-28 h-28 object-contain drop-shadow-md" />
+                  <img src={pythonGlass} alt="Python" loading="lazy" decoding="async" className="w-28 h-28 object-contain drop-shadow-md" />
                 </motion.div>
               </motion.div>
 
