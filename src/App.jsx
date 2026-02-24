@@ -1,5 +1,6 @@
+import { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom'
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence, MotionConfig } from 'framer-motion';
 import ScrollToTop from './components/ScrollToTop';
 import ErrorBoundary from './components/ErrorBoundary';
 import LandingPage from './pages/LandingPage'
@@ -164,16 +165,35 @@ const ConditionalNavbar = () => {
 import AnnouncementBar from './components/AnnouncementBar';
 
 function App() {
+  const [reduceMotion, setReduceMotion] = useState(false);
+
+  useEffect(() => {
+    const mobileQuery = window.matchMedia('(max-width: 768px)');
+
+    const updateMotionPreference = () => {
+      setReduceMotion(mobileQuery.matches);
+    };
+
+    updateMotionPreference();
+    mobileQuery.addEventListener('change', updateMotionPreference);
+
+    return () => {
+      mobileQuery.removeEventListener('change', updateMotionPreference);
+    };
+  }, []);
+
   return (
     <Router>
-      <div className="bg-[#0a0a0a] min-h-screen text-white relative">
-        <ScrollToTop />
-        <ErrorBoundary>
-          <AnnouncementBar />
-          <ConditionalNavbar />
-          <AppRoutes />
-        </ErrorBoundary>
-      </div>
+      <MotionConfig reducedMotion={reduceMotion ? 'always' : 'never'}>
+        <div className="bg-[#0a0a0a] min-h-screen text-white relative">
+          <ScrollToTop />
+          <ErrorBoundary>
+            <AnnouncementBar />
+            <ConditionalNavbar />
+            <AppRoutes />
+          </ErrorBoundary>
+        </div>
+      </MotionConfig>
     </Router>
   )
 }
