@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Rocket, Box, GitMerge, Search, Layers, Database, Hash, Code, Puzzle, Filter, Code2, LogOut, User, Settings, Sparkles, Crown, Shield, Zap, Network, Share2, ArrowUpDown, Rows, Type, Link, Repeat, BarChart3, GitBranch, Brain } from 'lucide-react';
+import { Rocket, Box, GitMerge, Search, Layers, Database, Hash, Code, Puzzle, Filter, Code2, LogOut, User, Settings, Sparkles, Crown, Shield, Zap, Network, Share2, ArrowUpDown, Rows, Type, Link, Repeat, BarChart3, GitBranch, Brain, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { motion } from 'framer-motion';
 import logo_img from '../../assets/logo_img.png';
@@ -24,7 +24,7 @@ export const TOPICS = [
     { id: 'dynamic-programming', label: 'Dynamic Programming', icon: Brain, color: '#f43f5e' },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ isMobileOpen = false, onCloseMobile = () => { } }) {
     const navigate = useNavigate();
     const location = useLocation();
     const { currentUser, userData, logout } = useAuth();
@@ -59,20 +59,40 @@ export default function Sidebar() {
     };
 
     return (
-        <motion.aside
-            initial={{ x: -280, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="w-72 h-screen fixed top-0 left-0 flex flex-col bg-[#0a0a0a] border-r border-white/5 z-50 p-6"
-        >
+        <>
+            <div
+                className={`lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-[54] transition-opacity duration-300 ${isMobileOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+                onClick={onCloseMobile}
+            />
+
+            <motion.aside
+                initial={{ x: -280, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                className={`w-72 h-screen fixed top-0 left-0 flex flex-col bg-[#0a0a0a] border-r border-white/5 z-[55] lg:z-50 p-4 sm:p-6 lg:p-6 transform transition-transform duration-300 lg:translate-x-0 ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}`}
+            >
+                <div className="lg:hidden flex justify-end mb-2">
+                    <button
+                        onClick={onCloseMobile}
+                        className="h-9 w-9 inline-flex items-center justify-center rounded-lg border border-white/10 bg-white/5 text-gray-200"
+                        aria-label="Close sidebar"
+                    >
+                        <X size={16} />
+                    </button>
+                </div>
             {/* Logo Section */}
             <div
                 className="flex items-center gap-3 mb-10 px-2 shrink-0 cursor-pointer group"
-                onClick={() => navigate('/dashboard')}
+                onClick={() => {
+                    onCloseMobile();
+                    navigate('/dashboard');
+                }}
             >
                 <img
                     src={logo_img}
                     alt="CodeHubx Logo"
+                    loading="eager"
+                    decoding="async"
                     className="w-9 h-9 rounded-xl shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform duration-300 object-cover"
                 />
                 <div>
@@ -133,7 +153,10 @@ export default function Sidebar() {
                     return (
                         <button
                             key={topic.id}
-                            onClick={() => navigate(`/dsa/${topic.id}`)}
+                            onClick={() => {
+                                onCloseMobile();
+                                navigate(`/dsa/${topic.id}`);
+                            }}
                             className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-all duration-300 group relative overflow-hidden ${active
                                 ? 'text-white border' // Border color handled by style
                                 : 'text-gray-400 hover:text-white hover:bg-white/5 border border-transparent'
@@ -191,8 +214,11 @@ export default function Sidebar() {
                     <img
                         src={userData?.photoURL || currentUser?.photoURL || `https://api.dicebear.com/9.x/adventurer/svg?seed=${userData?.username || currentUser?.email?.split('@')[0] || 'User'}`}
                         alt="Profile"
+                        loading="lazy"
+                        decoding="async"
                         className="w-10 h-10 rounded-full border-2 border-white/10 group-hover:border-blue-500/50 transition-colors object-cover cursor-pointer"
                         onClick={() => {
+                            onCloseMobile();
                             if (!userData?.profileCompleted) {
                                 navigate('/complete-profile');
                             } else {
@@ -205,6 +231,7 @@ export default function Sidebar() {
                         }}
                     />
                     <div className="flex-1 min-w-0 cursor-pointer" onClick={() => {
+                        onCloseMobile();
                         if (!userData?.profileCompleted) {
                             navigate('/complete-profile');
                         } else {
@@ -218,7 +245,10 @@ export default function Sidebar() {
                     </div>
                     {userData?.role === 'admin' && (
                         <button
-                            onClick={() => navigate('/admin')}
+                            onClick={() => {
+                                onCloseMobile();
+                                navigate('/admin');
+                            }}
                             className="p-2 text-gray-500 hover:text-white hover:bg-white/10 rounded-lg transition-all cursor-pointer"
                             title="Admin Dashboard"
                         >
@@ -226,7 +256,10 @@ export default function Sidebar() {
                         </button>
                     )}
                     <button
-                        onClick={() => navigate('/settings')}
+                        onClick={() => {
+                            onCloseMobile();
+                            navigate('/settings');
+                        }}
                         className="p-2 text-gray-500 hover:text-white hover:bg-white/10 rounded-lg transition-all cursor-pointer"
                         title="Settings"
                     >
@@ -234,6 +267,7 @@ export default function Sidebar() {
                     </button>
                 </div>
             </div>
-        </motion.aside>
+            </motion.aside>
+        </>
     );
 }
