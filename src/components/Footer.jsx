@@ -59,6 +59,8 @@ const Footer = () => {
                             <img
                                 src={logo_img}
                                 alt="CodeHubX Logo"
+                                loading="lazy"
+                                decoding="async"
                                 className="w-8 h-8 rounded-lg shadow-lg shadow-emerald-500/10 group-hover:scale-105 transition-transform duration-300 object-cover"
                             />
                             <span className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">

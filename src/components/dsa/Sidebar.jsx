@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { motion } from 'framer-motion';
 import logo_img from '../../assets/logo_img.png';
 import { API_URL } from '../../config';
+import useIsMobile from '../../hooks/useIsMobile';
 
 export const TOPICS = [
     { id: 'patterns', label: 'Patterns', icon: Puzzle, color: '#a855f7' },
@@ -29,6 +30,7 @@ export default function Sidebar() {
     const location = useLocation();
     const { currentUser, userData, logout } = useAuth();
     const [topicStats, setTopicStats] = useState({});
+    const isMobile = useIsMobile();
 
     const isActive = (id) => location.pathname.includes(id) || (location.pathname === '/dsa' && id === 'beginner');
 
@@ -57,6 +59,43 @@ export default function Sidebar() {
             console.error('Failed to log out', error);
         }
     };
+
+
+
+    if (isMobile) {
+        return (
+            <div className="dsa-mobile-sidebar sticky top-[calc(var(--announcement-height,0px)+72px)] z-40 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 mb-4 bg-[#0a0a0a]/95 border-y border-white/5 backdrop-blur-sm">
+                <div className="flex items-center justify-between gap-3 mb-3">
+                    <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/dashboard')}>
+                        <img src={logo_img} alt="CodeHubx Logo" className="w-8 h-8 rounded-lg object-cover" loading="lazy" decoding="async" />
+                        <span className="text-sm font-semibold text-white">DSA Topics</span>
+                    </div>
+                    <button
+                        onClick={() => navigate('/settings')}
+                        className="min-h-11 px-3 rounded-lg text-xs text-gray-300 border border-white/10 bg-white/5"
+                    >
+                        Settings
+                    </button>
+                </div>
+                <div className="flex gap-2 overflow-x-auto pb-1 dsa-mobile-topic-scroll">
+                    {TOPICS.map((topic) => {
+                        const active = isActive(topic.id);
+                        return (
+                            <button
+                                key={topic.id}
+                                onClick={() => navigate(`/dsa/${topic.id}`)}
+                                className={`shrink-0 min-h-11 px-4 rounded-full text-xs font-medium border transition-colors ${active
+                                    ? 'text-white border-white/25 bg-white/10'
+                                    : 'text-gray-300 border-white/10 bg-white/5'}`}
+                            >
+                                {topic.label}
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
+        );
+    }
 
     return (
         <motion.aside

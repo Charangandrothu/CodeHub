@@ -2,13 +2,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { generateRoadmap } from '../utils/roadmapGenerator';
-import { ChevronDown, Check, ArrowRight, Play, RefreshCw, Layers, Zap, Trophy, Flame, Target, Calendar, Lock, Unlock, Clock, AlertTriangle, ArrowLeft, Code, Settings, Shield, LogOut, Crown, Sparkles, MinusCircle, PlusCircle, Puzzle, Rocket, Filter, Box, Hash, Search, Database, GitMerge, Share2, ArrowUpDown, Rows, Type, Link, Repeat, BarChart3, GitBranch, Brain } from 'lucide-react';
+import { ChevronDown, Check, ArrowRight, Play, RefreshCw, Layers, Zap, Trophy, Flame, Target, Calendar, Lock, Unlock, Clock, AlertTriangle, ArrowLeft, Code, Settings, Shield, LogOut, Crown, Sparkles, MinusCircle, PlusCircle, Puzzle, Rocket, Filter, Box, Hash, Search, Database, GitMerge, Share2, ArrowUpDown, Rows, Type, Link, Repeat, BarChart3, GitBranch, Brain, Menu, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getAuth, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
 import logo_img from '../assets/logo_img.png';
 
 import FractionalPicker from '../components/FractionalPicker';
 import { API_URL } from '../config';
+import useIsMobile from '../hooks/useIsMobile';
 
 // --- Utility Components ---
 
@@ -748,7 +749,7 @@ const RoadmapSidebar = ({
             </div >
 
             {/* User Profile Footer */}
-            < motion.div
+            <motion.div
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.5 }}
@@ -812,6 +813,8 @@ const DSARoadmap = ({ onBack }) => {
     const [isGenerating, setIsGenerating] = useState(false);
     const [loadingRoadmap, setLoadingRoadmap] = useState(true);
     const hasInitialized = useRef(false);
+    const isMobile = useIsMobile();
+    const [sidebarOpen, setSidebarOpen] = useState(false);
 
     // Persist to Backend (MongoDB only — no localStorage)
     const saveRoadmap = async (newRoadmap) => {
@@ -890,6 +893,7 @@ const DSARoadmap = ({ onBack }) => {
 
     const handleGenerate = (selectedDays, mergeProgress = false) => {
         setIsGenerating(true);
+        if (isMobile) setSidebarOpen(false);
         setTimeout(() => {
             const baseRoadmap = generateRoadmap(selectedDays);
             const newRoadmap = { ...baseRoadmap, daysSelected: selectedDays, isLocked: roadmap?.isLocked || false };
@@ -977,6 +981,7 @@ const DSARoadmap = ({ onBack }) => {
 
     const scrollToSection = (slug) => {
         setExpandedSection(slug);
+        if (isMobile) setSidebarOpen(false);
         setTimeout(() => {
             const element = document.getElementById(`section-${slug}`);
             if (element) {
@@ -1032,21 +1037,37 @@ const DSARoadmap = ({ onBack }) => {
     }
 
     return (
-        <div className="fixed inset-0 top-0 z-10 flex bg-[#030303] text-white overflow-hidden font-sans">
+        <div className="roadmap-mobile fixed inset-0 top-0 z-10 flex bg-[#030303] text-white overflow-hidden font-sans">
+            {isMobile && (
+                <div className="fixed top-[calc(var(--announcement-height,0px)+64px)] left-3 z-20">
+                    <button
+                        onClick={() => setSidebarOpen((prev) => !prev)}
+                        className="w-11 h-11 rounded-xl border border-white/15 bg-[#0a0a0a]/85 flex items-center justify-center"
+                        aria-label={sidebarOpen ? 'Close roadmap menu' : 'Open roadmap menu'}
+                    >
+                        {sidebarOpen ? <X size={18} /> : <Menu size={18} />}
+                    </button>
+                </div>
+            )}
             {/* Left Sidebar */}
-            <RoadmapSidebar
-                onBack={onBack}
-                days={days}
-                setDays={handleDaysChange}
-                isLocked={roadmap?.isLocked}
-                onToggleLock={toggleLock}
-                onGenerate={() => handleGenerate(days, true)}
-                isGenerating={isGenerating}
-                levelInfo={levelInfo}
-                roadmap={roadmap}
-                activeSection={expandedSection}
-                onSectionClick={scrollToSection}
-            />
+            {isMobile && sidebarOpen && (
+                <div className="fixed inset-0 z-20 bg-black/60" onClick={() => setSidebarOpen(false)} />
+            )}
+            <div className={`${isMobile ? `fixed left-0 top-0 h-full z-30 transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}` : 'relative'}`}>
+                <RoadmapSidebar
+                    onBack={onBack}
+                    days={days}
+                    setDays={handleDaysChange}
+                    isLocked={roadmap?.isLocked}
+                    onToggleLock={toggleLock}
+                    onGenerate={() => handleGenerate(days, true)}
+                    isGenerating={isGenerating}
+                    levelInfo={levelInfo}
+                    roadmap={roadmap}
+                    activeSection={expandedSection}
+                    onSectionClick={scrollToSection}
+                />
+            </div>
 
             {/* Main Content Area */}
             <div className="flex-1 h-full overflow-y-auto custom-scrollbar relative bg-[#030303]">
@@ -1094,7 +1115,7 @@ const DSARoadmap = ({ onBack }) => {
                     />
                 </div>
 
-                <div className="p-10 max-w-5xl mx-auto space-y-8 pb-40">
+                <div className="roadmap-content p-4 pt-16 sm:p-8 lg:p-10 max-w-5xl mx-auto space-y-6 sm:space-y-8 pb-28 sm:pb-40">
                     {/* Header for Content Area */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}

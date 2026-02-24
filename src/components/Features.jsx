@@ -1,4 +1,5 @@
 import React from 'react';
+import useIsMobile from '../hooks/useIsMobile';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
@@ -19,6 +20,8 @@ import {
 } from 'lucide-react';
 
 const Features = () => {
+    const isMobile = useIsMobile();
+
     return (
         <section id="features" className="relative min-h-screen bg-[#0a0a0a] overflow-hidden py-12 sm:py-16">
 
@@ -29,9 +32,13 @@ const Features = () => {
                 <div className="absolute top-[40%] left-[20%] w-[300px] h-[300px] bg-emerald-900/5 rounded-full blur-[80px]" />
 
                 {/* Floating Icons Background */}
-                <FloatingIcon icon={Code2} top="15%" left="15%" delay={0} color="text-blue-500/20" />
-                <FloatingIcon icon={Trophy} top="25%" right="15%" delay={2} color="text-yellow-500/20" />
-                <FloatingIcon icon={BrainCircuit} bottom="20%" left="20%" delay={4} color="text-purple-500/20" />
+                {!isMobile && (
+                    <>
+                        <FloatingIcon icon={Code2} top="15%" left="15%" delay={0} color="text-blue-500/20" />
+                        <FloatingIcon icon={Trophy} top="25%" right="15%" delay={2} color="text-yellow-500/20" />
+                        <FloatingIcon icon={BrainCircuit} bottom="20%" left="20%" delay={4} color="text-purple-500/20" />
+                    </>
+                )}
             </div>
 
             {/* Features Hero Section */}
@@ -39,7 +46,7 @@ const Features = () => {
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: false, amount: 0.3 }}
+                    viewport={{ once: true, amount: 0.3 }}
                     transition={{ duration: 0.6 }}
                 >
                     <span className="inline-block px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-sm font-semibold tracking-wide mb-6">
@@ -65,6 +72,7 @@ const Features = () => {
 
                 {/* 1. DSA Practice & Learning */}
                 <FeatureSection
+                    isMobile={isMobile}
                     title="Master Data Structures & Algorithms"
                     description="Comprehensive topic-wise practice with curated problems from top product-based companies. Track your mastery across Arrays, Graphs, DP, and more."
                     link="/dsa"
@@ -92,7 +100,7 @@ const Features = () => {
                             <motion.div
                                 initial="hidden"
                                 whileInView="visible"
-                                viewport={{ once: false, amount: 0.3 }}
+                                viewport={{ once: true, amount: 0.3 }}
                                 variants={{
                                     visible: { transition: { staggerChildren: 0.1 } }
                                 }}
@@ -114,6 +122,7 @@ const Features = () => {
 
                 {/* 3. Aptitude & Reasoning */}
                 <FeatureSection
+                    isMobile={isMobile}
                     title="Aptitude & Logical Reasoning"
                     description="Don't let aptitude be the bottleneck. Dedicated modules for Quantitative, Logical, and Verbal ability with theory, practice, and timed tests."
                     link="/aptitude"
@@ -137,6 +146,7 @@ const Features = () => {
 
                 {/* 4. Mock Tests */}
                 <FeatureSection
+                    isMobile={isMobile}
                     title="Company-Specific Mock Tests"
                     description="Simulate the actual placement drive environment. Focused tests on Aptitude and Reasoning tailored for specific companies."
                     link="/mock-tests"
@@ -168,10 +178,11 @@ const Features = () => {
                             </div>
                         </div>
                     </div>
-                </FeatureSection >
+                </FeatureSection>
 
                 {/* 5. Analytics */}
-                < FeatureSection
+                <FeatureSection
+                    isMobile={isMobile}
                     title="Deep Performance Analytics"
                     description="Understand your strengths and weaknesses with detailed visual reports. Get an 'Interview Readiness Score' to know exactly when you're ready."
                     icon={Activity}
@@ -206,10 +217,11 @@ const Features = () => {
                             </div>
                         </div>
                     </div>
-                </FeatureSection >
+                </FeatureSection>
 
                 {/* 6. AI Assistance */}
-                < FeatureSection
+                <FeatureSection
+                    isMobile={isMobile}
                     title="AI-Powered Assistance"
                     description="Stuck on a problem? Get intelligent hints, complexity analysis, and step-by-step explanations without seeing the full solution."
                     icon={Sparkles}
@@ -242,7 +254,7 @@ const Features = () => {
                             </div>
                         </div>
                     </div>
-                </FeatureSection >
+                </FeatureSection>
             </div >
 
 
@@ -251,7 +263,7 @@ const Features = () => {
 };
 
 // Sub-components for cleaner code
-const FeatureSection = ({ title, description, link, icon: Icon, gradient, align, children }) => {
+const FeatureSection = ({ title, description, link, icon: Icon, gradient, align, children, isMobile }) => {
     const navigate = useNavigate();
     const { currentUser } = useAuth();
 
@@ -268,10 +280,10 @@ const FeatureSection = ({ title, description, link, icon: Icon, gradient, align,
             {/* Text Content */}
             <div className="flex-1 space-y-8">
                 <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: false, margin: "-50px" }}
-                    transition={{ duration: 0.5, ease: "easeOut" }}
+                    initial={isMobile ? false : { opacity: 0, y: 20 }}
+                    whileInView={isMobile ? undefined : { opacity: 1, y: 0 }}
+                    viewport={isMobile ? { once: true } : { once: false, margin: "-50px" }}
+                    transition={isMobile ? undefined : { duration: 0.5, ease: "easeOut" }}
                 >
                     <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${gradient} p-[1px]`}>
                         <div className="w-full h-full bg-[#0a0a0a] rounded-[15px] flex items-center justify-center">
@@ -281,10 +293,10 @@ const FeatureSection = ({ title, description, link, icon: Icon, gradient, align,
                 </motion.div>
 
                 <motion.div
-                    initial={{ opacity: 0, x: align === 'right' ? 50 : -50 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: false, margin: "-50px" }}
-                    transition={{ duration: 0.6, delay: 0.1, ease: "easeOut" }}
+                    initial={isMobile ? false : { opacity: 0, x: align === 'right' ? 50 : -50 }}
+                    whileInView={isMobile ? undefined : { opacity: 1, x: 0 }}
+                    viewport={isMobile ? { once: true } : { once: false, margin: "-50px" }}
+                    transition={isMobile ? undefined : { duration: 0.6, delay: 0.1, ease: "easeOut" }}
                 >
                     <h3 className="text-3xl font-bold text-white mb-4">{title}</h3>
                     <p className="text-gray-400 text-lg leading-relaxed">
@@ -293,10 +305,10 @@ const FeatureSection = ({ title, description, link, icon: Icon, gradient, align,
                 </motion.div>
 
                 <motion.div
-                    initial={{ opacity: 0, x: align === 'right' ? 40 : -40 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: false, margin: "-50px" }}
-                    transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
+                    initial={isMobile ? false : { opacity: 0, x: align === 'right' ? 40 : -40 }}
+                    whileInView={isMobile ? undefined : { opacity: 1, x: 0 }}
+                    viewport={isMobile ? { once: true } : { once: false, margin: "-50px" }}
+                    transition={isMobile ? undefined : { duration: 0.5, delay: 0.2, ease: "easeOut" }}
                     className="flex items-center gap-2 text-sm font-medium text-white/50 group cursor-pointer hover:text-white transition-colors"
                     onClick={handleLearnMore}
                 >
@@ -307,10 +319,10 @@ const FeatureSection = ({ title, description, link, icon: Icon, gradient, align,
 
             {/* Visual Content */}
             <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                whileInView={{ opacity: 1, scale: 1, y: 0 }}
-                viewport={{ once: false, margin: "-50px" }}
-                transition={{ duration: 0.8, delay: 0.2, type: "spring", bounce: 0.2 }}
+                initial={isMobile ? false : { opacity: 0, scale: 0.95, y: 20 }}
+                whileInView={isMobile ? undefined : { opacity: 1, scale: 1, y: 0 }}
+                viewport={isMobile ? { once: true } : { once: false, margin: "-50px" }}
+                transition={isMobile ? undefined : { duration: 0.8, delay: 0.2, type: "spring", bounce: 0.2 }}
                 className="flex-1 w-full"
             >
                 <div className="relative group perspective-1000">
@@ -328,7 +340,7 @@ const TopicCard = ({ name, count, color }) => (
     <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         whileInView={{ opacity: 1, scale: 1 }}
-        viewport={{ once: false, amount: 0.5 }}
+        viewport={{ once: true, amount: 0.5 }}
         transition={{ duration: 0.5 }}
         className="flex-1 bg-white/5 rounded-lg p-3 border border-white/5 hover:bg-white/10 transition-colors"
     >
@@ -344,7 +356,7 @@ const LeaderboardRow = ({ rank, name, score, country }) => (
     <motion.div
         initial={{ opacity: 0, x: -10 }}
         whileInView={{ opacity: 1, x: 0 }}
-        viewport={{ once: false, amount: 0.5 }}
+        viewport={{ once: true, amount: 0.5 }}
         transition={{ duration: 0.5, delay: rank * 0.1 }}
         className="flex items-center justify-between text-sm p-2 rounded hover:bg-white/5 transition-colors"
     >

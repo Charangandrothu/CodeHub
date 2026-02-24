@@ -22,10 +22,12 @@ import { Button } from '../components/ui/Button';
 import DailyQuote from '../components/dsa/DailyQuote';
 import AdBanner from '../components/AdBanner';
 import { API_URL } from '../config';
+import useIsMobile from '../hooks/useIsMobile';
 
 const Dashboard = () => {
     const { currentUser, userData } = useAuth();
     const navigate = useNavigate();
+    const isMobile = useIsMobile();
 
     const [weeklyLeaderboard, setWeeklyLeaderboard] = useState([]);
     const [myWeeklyStats, setMyWeeklyStats] = useState({ rank: null, count: 0 });
@@ -112,7 +114,7 @@ const Dashboard = () => {
         fetchData();
     }, [currentUser]);
 
-    const containerVariants = {
+    const containerVariants = isMobile ? undefined : {
         hidden: { opacity: 0 },
         visible: {
             opacity: 1,
@@ -122,7 +124,7 @@ const Dashboard = () => {
         }
     };
 
-    const itemVariants = {
+    const itemVariants = isMobile ? undefined : {
         hidden: { opacity: 0, y: 10 },
         visible: { opacity: 1, y: 0 }
     };
@@ -170,12 +172,12 @@ const Dashboard = () => {
 
 
     return (
-        <div className="min-h-screen bg-[#0a0a0a] pt-24 pb-12 px-4 sm:px-6 lg:px-8 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/10 via-[#0a0a0a] to-[#0a0a0a]">
+        <div className="dashboard-mobile min-h-screen bg-[#0a0a0a] pt-24 pb-12 px-4 sm:px-6 lg:px-8 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/10 via-[#0a0a0a] to-[#0a0a0a]">
             <motion.div
                 className="max-w-7xl mx-auto space-y-6"
                 variants={containerVariants}
-                initial="hidden"
-                animate="visible"
+                initial={isMobile ? false : "hidden"}
+                animate={isMobile ? undefined : "visible"}
             >
 
                 {/* Compact Welcome Section */}

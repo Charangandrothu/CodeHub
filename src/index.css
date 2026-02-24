@@ -104,3 +104,106 @@ body {
     height: 90px !important;
   }
 }
+/* Mobile-first performance and responsiveness (desktop remains unchanged) */
+@media (max-width: 768px) {
+  html,
+  body,
+  #root {
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  * {
+    max-width: 100%;
+  }
+
+  body {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  button,
+  a,
+  [role='button'] {
+    min-height: 44px;
+  }
+
+  img,
+  svg,
+  video,
+  canvas {
+    max-width: 100%;
+    height: auto;
+  }
+
+  .glass-card {
+    backdrop-filter: blur(6px);
+  }
+
+  .animate-\[shimmer\_1\.5s\_infinite\],
+  .animate-pulse {
+    animation-duration: 2.4s;
+  }
+}
+
+@media (max-width: 768px) and (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .dsa-layout {
+    padding-top: 0.5rem;
+  }
+
+  .dsa-mobile-topic-scroll {
+    scrollbar-width: none;
+  }
+
+  .dsa-mobile-topic-scroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  .dsa-content-area h1,
+  .dsa-content-area h2,
+  .dsa-content-area h3,
+  .dashboard-mobile h1,
+  .dashboard-mobile h2,
+  .roadmap-mobile h1,
+  .roadmap-mobile h2,
+  .roadmap-mobile h3 {
+    overflow-wrap: anywhere;
+  }
+
+  .dsa-problem-list a {
+    width: 100%;
+  }
+
+  .dashboard-mobile .backdrop-blur-xl,
+  .roadmap-mobile .backdrop-blur-xl,
+  .roadmap-mobile .backdrop-blur-2xl {
+    backdrop-filter: blur(8px);
+  }
+
+  .dashboard-mobile [class*='shadow-[0_0'],
+  .roadmap-mobile [class*='shadow-[0_0'] {
+    box-shadow: none;
+  }
+
+  .roadmap-mobile .custom-scrollbar {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .roadmap-content {
+    width: 100%;
+  }
+
+  .roadmap-mobile .grid.md\:grid-cols-3 {
+    grid-template-columns: 1fr;
+  }
+}

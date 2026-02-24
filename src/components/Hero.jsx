@@ -305,7 +305,7 @@ const Hero = () => {
                   animate={{ y: [0, -6, 0] }}
                   transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
                 >
-                  <img src={javaGlass} alt="Java" className="w-28 h-28 object-contain drop-shadow-md" />
+                  <img src={javaGlass} alt="Java" loading="lazy" decoding="async" className="w-28 h-28 object-contain drop-shadow-md" />
                 </motion.div>
               </motion.div>
 
@@ -326,7 +326,7 @@ const Hero = () => {
                   animate={{ y: [0, 6, 0] }}
                   transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
                 >
-                  <img src={pythonGlass} alt="Python" className="w-28 h-28 object-contain drop-shadow-md" />
+                  <img src={pythonGlass} alt="Python" loading="lazy" decoding="async" className="w-28 h-28 object-contain drop-shadow-md" />
                 </motion.div>
               </motion.div>
 

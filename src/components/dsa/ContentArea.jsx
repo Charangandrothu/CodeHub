@@ -69,7 +69,7 @@ export default function ContentArea() {
                     <div className="h-8 w-24 bg-white/5 rounded animate-pulse" />
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4 dsa-problem-list">
                     {[1, 2, 3, 4, 5].map((i) => (
                         <div key={i} className="h-20 w-full bg-white/5 rounded-xl animate-pulse border border-white/5" />
                     ))}
@@ -101,7 +101,7 @@ export default function ContentArea() {
     const progress = problems.length > 0 ? Math.round((solvedCount / problems.length) * 100) : 0;
 
     return (
-        <div className="flex-1 min-w-0 space-y-8">
+        <div className="flex-1 min-w-0 space-y-6 sm:space-y-8 dsa-content-area">
             {/* Premium Header Card */}
             <motion.div
                 initial={{ opacity: 0, y: -20 }}
@@ -173,7 +173,7 @@ export default function ContentArea() {
                         <div key={problem._id || problem.slug}>
                             <Link
                                 to={`/problem/${problem.slug}`}
-                                className="group relative flex flex-col sm:flex-row sm:items-center justify-between p-5 rounded-xl bg-[#0a0a0a]/60 hover:bg-[#0a0a0a] border border-white/5 hover:border-purple-500/20 hover:shadow-[0_0_20px_rgba(168,85,247,0.05)] transition-all duration-300"
+                                className="group relative flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-5 rounded-xl bg-[#0a0a0a]/60 hover:bg-[#0a0a0a] border border-white/5 hover:border-purple-500/20 hover:shadow-[0_0_20px_rgba(168,85,247,0.05)] transition-all duration-300 min-h-11"
                             >
                                 <div className="flex-1 min-w-0 mb-4 sm:mb-0">
                                     <div className="flex items-center gap-3 mb-2">
