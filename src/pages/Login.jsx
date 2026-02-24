@@ -209,7 +209,7 @@ const Login = () => {
               className="w-20 h-20 relative"
             >
               <div className="absolute inset-0 bg-white/5 rounded-2xl blur-xl" />
-              <img src={javaGlass} alt="Java" className="w-full h-full object-contain relative z-10 drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]" />
+              <img src={javaGlass} alt="Java" loading="lazy" decoding="async" className="w-full h-full object-contain relative z-10 drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]" />
             </motion.div>
           </motion.div>
 
@@ -223,7 +223,7 @@ const Login = () => {
               className="w-24 h-24 relative"
             >
               <div className="absolute inset-0 bg-white/5 rounded-2xl blur-xl" />
-              <img src={pythonGlass} alt="Python" className="w-full h-full object-contain relative z-10 drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]" />
+              <img src={pythonGlass} alt="Python" loading="lazy" decoding="async" className="w-full h-full object-contain relative z-10 drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]" />
             </motion.div>
           </motion.div>
 

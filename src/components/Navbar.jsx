@@ -2,13 +2,11 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 /* UI Components */
-import { Button } from './ui/Button';
-
 /* Context */
 import { useAuth } from '../context/AuthContext';
 
 /* Icons */
-import { LogOut, User, Settings, LayoutDashboard, ChevronDown, Crown, Sparkles, Shield } from 'lucide-react';
+import { LogOut, User, Settings, LayoutDashboard, ChevronDown, Crown, Sparkles, Shield, Menu, X } from 'lucide-react';
 
 /* Animations */
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from 'framer-motion';
@@ -25,57 +23,93 @@ const Navbar = () => {
   const { scrollY } = useScroll();
   const [hoveredIndex, setHoveredIndex] = useState(null);
   const [activeSection, setActiveSection] = useState('home');
+  const [isMobile, setIsMobile] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const menuRef = useRef(null);
+  const navbarRef = useRef(null);
 
   // Determine if user is Pro
   const isProUser = userData?.isPro === true;
 
   useEffect(() => {
-    const handleScrollSpy = () => {
-      if (location.pathname !== '/') return;
-
-      const sections = ['home', 'features', 'pricing'];
-      const scrollPosition = window.scrollY + 200; // Offset for better detection
-
-      for (const section of sections) {
-        const element = document.getElementById(section);
-        if (element) {
-          const offsetTop = element.offsetTop;
-          const offsetHeight = element.offsetHeight;
-          if (scrollPosition >= offsetTop && scrollPosition < offsetTop + offsetHeight) {
-            setActiveSection(section);
-          }
-        }
-      }
+    const mediaQuery = window.matchMedia('(max-width: 768px)');
+    const handleMediaChange = (event) => {
+      setIsMobile(event.matches);
     };
 
-    window.addEventListener('scroll', handleScrollSpy);
-    return () => window.removeEventListener('scroll', handleScrollSpy);
-  }, [location.pathname]);
+    setIsMobile(mediaQuery.matches);
+    mediaQuery.addEventListener('change', handleMediaChange);
+
+    return () => {
+      mediaQuery.removeEventListener('change', handleMediaChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isMobile) return;
+
+    let rafId = null;
+    const handleScrollSpy = () => {
+      if (rafId) return;
+      rafId = window.requestAnimationFrame(() => {
+        rafId = null;
+        if (location.pathname !== '/') return;
+
+        const sections = ['home', 'features', 'pricing'];
+        const scrollPosition = window.scrollY + 200;
+
+        for (const section of sections) {
+          const element = document.getElementById(section);
+          if (element) {
+            const offsetTop = element.offsetTop;
+            const offsetHeight = element.offsetHeight;
+            if (scrollPosition >= offsetTop && scrollPosition < offsetTop + offsetHeight) {
+              setActiveSection((prev) => (prev === section ? prev : section));
+              break;
+            }
+          }
+        }
+      });
+    };
+
+    window.addEventListener('scroll', handleScrollSpy, { passive: true });
+    handleScrollSpy();
+
+    return () => {
+      window.removeEventListener('scroll', handleScrollSpy);
+      if (rafId) {
+        window.cancelAnimationFrame(rafId);
+      }
+    };
+  }, [isMobile, location.pathname]);
 
   useMotionValueEvent(scrollY, "change", (latest) => {
+    if (isMobile) return;
     const previous = scrollY.getPrevious() || 0;
-    if (latest > previous && latest > 150) {
-      setHidden(true);
-    } else {
-      setHidden(false);
-    }
+    const nextHidden = latest > previous && latest > 150;
+    setHidden((prev) => (prev === nextHidden ? prev : nextHidden));
   });
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
+      if (navbarRef.current && !navbarRef.current.contains(event.target)) {
         setShowProfileMenu(false);
+        setShowMobileMenu(false);
       }
     };
 
-    if (showProfileMenu) {
+    if (showProfileMenu || showMobileMenu) {
       document.addEventListener('mousedown', handleClickOutside);
     }
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [showProfileMenu]);
+  }, [showProfileMenu, showMobileMenu]);
+
+  useEffect(() => {
+    setShowMobileMenu(false);
+    setShowProfileMenu(false);
+  }, [location.pathname]);
 
   const handleLogout = async () => {
     try {
@@ -101,43 +135,75 @@ const Navbar = () => {
     { name: 'Privacy', path: '/privacy-policy' },
   ];
 
+  const handleNavClick = (path) => {
+    setShowMobileMenu(false);
+    if (path === '/') {
+      if (location.pathname === '/') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        navigate(path);
+      }
+      return;
+    }
+
+    if (path.startsWith('/#')) {
+      const id = path.substring(2);
+      const element = document.getElementById(id);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      } else {
+        navigate('/');
+        setTimeout(() => {
+          const delayedElement = document.getElementById(id);
+          if (delayedElement) delayedElement.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      }
+      return;
+    }
+
+    navigate(path);
+  };
+
   return (
     <motion.nav
       variants={{
         visible: { y: 0 },
         hidden: { y: -100 },
       }}
-      initial="hidden"
-      animate={hidden ? "hidden" : "visible"}
+      initial={isMobile ? false : 'hidden'}
+      animate={isMobile ? 'visible' : hidden ? 'hidden' : 'visible'}
       exit="hidden"
       transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
       className={`fixed left-0 right-0 z-50 flex items-center justify-center px-4 sm:px-6 py-4 transition-[top] duration-300 ${location.pathname.startsWith('/problem/') ? 'hidden' : ''}`}
       style={{ top: 'var(--announcement-height, 0px)' }}
+      ref={navbarRef}
     >
       {/* Glassmorphism Container */}
-      <div className="relative w-full max-w-7xl mx-auto flex items-center justify-between px-6 py-3 rounded-2xl border border-white/10 bg-[#0a0a0a]/70 backdrop-blur-xl shadow-lg shadow-black/20 overflow-visible">
+      <div className="relative w-full max-w-7xl mx-auto flex items-center justify-between px-3 sm:px-6 py-2.5 sm:py-3 rounded-2xl border border-white/10 bg-[#0a0a0a]/70 backdrop-blur-xl shadow-lg shadow-black/20 overflow-visible">
 
         {/* Shimmer/Reflection Effect */}
-        <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden rounded-2xl">
-          <motion.div
-            animate={{
-              x: ['-100%', '200%'],
-            }}
-            transition={{
-              duration: 8,
-              repeat: Infinity,
-              ease: "linear",
-              delay: 2
-            }}
-            className="absolute inset-0 w-1/2 h-full bg-gradient-to-r from-transparent via-white/5 to-transparent skew-x-12"
-          />
-        </div>
+        {!isMobile && (
+          <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden rounded-2xl">
+            <motion.div
+              animate={{
+                x: ['-100%', '200%'],
+              }}
+              transition={{
+                duration: 8,
+                repeat: Infinity,
+                ease: "linear",
+                delay: 2
+              }}
+              className="absolute inset-0 w-1/2 h-full bg-gradient-to-r from-transparent via-white/5 to-transparent skew-x-12"
+            />
+          </div>
+        )}
 
         {/* Content */}
         <div className="relative z-10 flex items-center justify-between w-full">
           {/* Logo */}
           <div
-            className="flex items-center gap-3 cursor-pointer group"
+            className="flex items-center gap-2 sm:gap-3 cursor-pointer group"
             onClick={() => {
               // Hierarchical Navigation Logic
               if (location.pathname === '/dashboard') {
@@ -159,9 +225,11 @@ const Navbar = () => {
             <img
               src={logo_img}
               alt="CodeHubx Logo"
+              loading="eager"
+              decoding="async"
               className="w-9 h-9 rounded-xl shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform duration-300 object-cover"
             />
-            <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white via-gray-200 to-gray-400 tracking-tight">
+            <span className="text-lg sm:text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white via-gray-200 to-gray-400 tracking-tight">
               CodeHubx
             </span>
           </div>
@@ -194,27 +262,7 @@ const Navbar = () => {
                 <button
                   key={link.name}
                   onClick={() => {
-                    if (link.path === '/') {
-                      if (location.pathname === '/') {
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                      } else {
-                        navigate(link.path);
-                      }
-                    } else if (link.path.startsWith('/#')) {
-                      const id = link.path.substring(2);
-                      const element = document.getElementById(id);
-                      if (element) {
-                        element.scrollIntoView({ behavior: 'smooth' });
-                      } else {
-                        navigate('/');
-                        setTimeout(() => {
-                          const element = document.getElementById(id);
-                          if (element) element.scrollIntoView({ behavior: 'smooth' });
-                        }, 100);
-                      }
-                    } else {
-                      navigate(link.path);
-                    }
+                    handleNavClick(link.path);
                   }}
                   onMouseEnter={() => setHoveredIndex(index)}
                   className={`relative px-4 py-2 text-sm font-medium transition-all duration-300 ${isActive ? 'text-white' : 'text-gray-400 hover:text-white'}`}
@@ -253,7 +301,25 @@ const Navbar = () => {
           </div>
 
           {/* Right Actions */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
+
+            <div className="md:hidden flex items-center gap-2">
+              {currentUser && !isProUser && (
+                <button
+                  onClick={() => navigate('/pricing')}
+                  className="h-10 px-3 rounded-full text-xs font-semibold bg-amber-500/10 border border-amber-500/30 text-amber-300"
+                >
+                  Pro
+                </button>
+              )}
+              <button
+                aria-label={showMobileMenu ? 'Close menu' : 'Open menu'}
+                onClick={() => setShowMobileMenu((prev) => !prev)}
+                className="h-10 w-10 inline-flex items-center justify-center rounded-xl border border-white/15 bg-white/5 text-gray-100"
+              >
+                {showMobileMenu ? <X size={18} /> : <Menu size={18} />}
+              </button>
+            </div>
 
             {/* UPGRADE TO PRO BADGE */}
             {currentUser && !isProUser && (
@@ -288,7 +354,7 @@ const Navbar = () => {
             )}
 
             {currentUser ? (
-              <div className="relative" ref={menuRef}>
+              <div className="relative hidden md:block" ref={menuRef}>
                 <button
                   onClick={() => setShowProfileMenu(!showProfileMenu)}
                   className="flex items-center gap-2 p-1 pl-2 pr-3 rounded-full border border-white/10 hover:bg-white/5 hover:border-white/20 transition-all duration-300 group"
@@ -297,6 +363,8 @@ const Navbar = () => {
                     <img
                       src={userData?.photoURL || currentUser.photoURL || `https://api.dicebear.com/9.x/adventurer/svg?seed=${userData?.username || currentUser.email?.split('@')[0] || 'User'}`}
                       alt="Profile"
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-cover"
                       onError={(e) => {
                         e.target.onerror = null;
@@ -391,7 +459,7 @@ const Navbar = () => {
                 </AnimatePresence>
               </div>
             ) : (
-              <div className="flex items-center gap-3">
+              <div className="hidden md:flex items-center gap-3">
                 <div className="flex items-center gap-3">
                   <motion.button
                     onClick={() => navigate('/login')}
@@ -422,6 +490,78 @@ const Navbar = () => {
             )}
           </div>
         </div>
+
+        <AnimatePresence>
+          {showMobileMenu && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.18 }}
+              className="absolute top-[calc(100%+8px)] left-0 right-0 md:hidden rounded-2xl border border-white/10 bg-[#0a0a0a]/95 backdrop-blur-xl shadow-xl shadow-black/40 p-2"
+            >
+              <div className="space-y-1">
+                {navLinks.map((link) => {
+                  const isActive = currentUser
+                    ? location.pathname === link.path || (link.path !== '/' && location.pathname.startsWith(link.path))
+                    : location.pathname === link.path;
+
+                  return (
+                    <button
+                      key={link.name}
+                      onClick={() => handleNavClick(link.path)}
+                      className={`w-full text-left px-3 py-3 rounded-lg text-sm font-medium transition-colors ${isActive ? 'bg-white/10 text-white' : 'text-gray-300 hover:bg-white/5'}`}
+                    >
+                      {link.name}
+                    </button>
+                  );
+                })}
+
+                <div className="border-t border-white/10 my-1" />
+
+                {currentUser ? (
+                  <>
+                    <MenuLink
+                      icon={User}
+                      label="My Profile"
+                      onClick={() => {
+                        setShowMobileMenu(false);
+                        if (!userData?.username || !userData?.profileCompleted) {
+                          navigate('/complete-profile');
+                          return;
+                        }
+                        navigate(`/profile/${userData.username}`);
+                      }}
+                    />
+                    <MenuLink icon={LayoutDashboard} label="Dashboard" onClick={() => { setShowMobileMenu(false); navigate('/dashboard'); }} />
+                    <MenuLink icon={Settings} label="Settings" onClick={() => { setShowMobileMenu(false); navigate('/settings'); }} />
+                    {userData?.role === 'admin' && (
+                      <MenuLink icon={Shield} label="Admin Panel" onClick={() => { setShowMobileMenu(false); navigate('/admin'); }} />
+                    )}
+                    <button
+                      onClick={handleLogout}
+                      className="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-sm text-red-400 hover:bg-red-500/10 transition-colors"
+                    >
+                      <LogOut size={16} />
+                      Sign Out
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setShowMobileMenu(false);
+                      navigate('/login');
+                    }}
+                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-sm font-semibold bg-white/10 text-white"
+                  >
+                    Get Started
+                    <Sparkles size={14} className="text-blue-300" />
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </motion.nav>
   );
