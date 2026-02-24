@@ -104,3 +104,54 @@ body {
     height: 90px !important;
   }
 }
+/* Mobile-first performance and responsiveness (desktop remains unchanged) */
+@media (max-width: 768px) {
+  html,
+  body,
+  #root {
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  * {
+    max-width: 100%;
+  }
+
+  body {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  button,
+  a,
+  [role='button'] {
+    min-height: 44px;
+  }
+
+  img,
+  svg,
+  video,
+  canvas {
+    max-width: 100%;
+    height: auto;
+  }
+
+  .glass-card {
+    backdrop-filter: blur(6px);
+  }
+
+  .animate-\[shimmer\_1\.5s\_infinite\],
+  .animate-pulse {
+    animation-duration: 2.4s;
+  }
+}
+
+@media (max-width: 768px) and (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

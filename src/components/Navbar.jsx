@@ -1,14 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
-/* UI Components */
-import { Button } from './ui/Button';
-
 /* Context */
 import { useAuth } from '../context/AuthContext';
+import useIsMobile from '../hooks/useIsMobile';
 
 /* Icons */
-import { LogOut, User, Settings, LayoutDashboard, ChevronDown, Crown, Sparkles, Shield } from 'lucide-react';
+import { LogOut, User, Settings, LayoutDashboard, ChevronDown, Crown, Sparkles, Shield, Menu, X } from 'lucide-react';
 
 /* Animations */
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from 'framer-motion';
@@ -25,12 +23,16 @@ const Navbar = () => {
   const { scrollY } = useScroll();
   const [hoveredIndex, setHoveredIndex] = useState(null);
   const [activeSection, setActiveSection] = useState('home');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const menuRef = useRef(null);
+  const isMobile = useIsMobile();
 
   // Determine if user is Pro
   const isProUser = userData?.isPro === true;
 
   useEffect(() => {
+    let rafId;
+
     const handleScrollSpy = () => {
       if (location.pathname !== '/') return;
 
@@ -49,11 +51,27 @@ const Navbar = () => {
       }
     };
 
-    window.addEventListener('scroll', handleScrollSpy);
-    return () => window.removeEventListener('scroll', handleScrollSpy);
+    const optimizedScrollSpy = () => {
+      if (rafId) return;
+      rafId = requestAnimationFrame(() => {
+        handleScrollSpy();
+        rafId = null;
+      });
+    };
+
+    window.addEventListener('scroll', optimizedScrollSpy, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', optimizedScrollSpy);
+      if (rafId) cancelAnimationFrame(rafId);
+    };
   }, [location.pathname]);
 
   useMotionValueEvent(scrollY, "change", (latest) => {
+    if (isMobile) {
+      setHidden(false);
+      return;
+    }
+
     const previous = scrollY.getPrevious() || 0;
     if (latest > previous && latest > 150) {
       setHidden(true);
@@ -61,6 +79,10 @@ const Navbar = () => {
       setHidden(false);
     }
   });
+
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -159,6 +181,8 @@ const Navbar = () => {
             <img
               src={logo_img}
               alt="CodeHubx Logo"
+              loading="lazy"
+              decoding="async"
               className="w-9 h-9 rounded-xl shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform duration-300 object-cover"
             />
             <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white via-gray-200 to-gray-400 tracking-tight">
@@ -255,6 +279,15 @@ const Navbar = () => {
           {/* Right Actions */}
           <div className="flex items-center gap-4">
 
+            <button
+                onClick={() => setMobileMenuOpen((prev) => !prev)}
+                className="md:hidden w-11 h-11 rounded-xl border border-white/10 bg-white/[0.03] flex items-center justify-center text-gray-200 hover:text-white hover:bg-white/[0.06] transition-colors"
+                aria-label={mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+                aria-expanded={mobileMenuOpen}
+              >
+                {mobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
+              </button>
+
             {/* UPGRADE TO PRO BADGE */}
             {currentUser && !isProUser && (
               <motion.button
@@ -297,6 +330,8 @@ const Navbar = () => {
                     <img
                       src={userData?.photoURL || currentUser.photoURL || `https://api.dicebear.com/9.x/adventurer/svg?seed=${userData?.username || currentUser.email?.split('@')[0] || 'User'}`}
                       alt="Profile"
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-cover"
                       onError={(e) => {
                         e.target.onerror = null;
@@ -395,7 +430,7 @@ const Navbar = () => {
                 <div className="flex items-center gap-3">
                   <motion.button
                     onClick={() => navigate('/login')}
-                    className="relative inline-flex items-center justify-center gap-2 px-5 h-[42px] rounded-[18px] bg-white/[0.08] backdrop-blur-[18px] border-0 transition-all duration-300 group hover:bg-white/[0.12] hover:-translate-y-0.5 shadow-[0_4px_12px_rgba(0,0,0,0.1)] hover:shadow-[0_8px_16px_rgba(255,255,255,0.05)]"
+                    className="hidden md:inline-flex relative items-center justify-center gap-2 px-5 h-[42px] rounded-[18px] bg-white/[0.08] backdrop-blur-[18px] border-0 transition-all duration-300 group hover:bg-white/[0.12] hover:-translate-y-0.5 shadow-[0_4px_12px_rgba(0,0,0,0.1)] hover:shadow-[0_8px_16px_rgba(255,255,255,0.05)]"
                     whileTap={{ scale: 0.96 }}
                     transition={{ duration: 0.2 }}
                   >
@@ -422,6 +457,72 @@ const Navbar = () => {
             )}
           </div>
         </div>
+
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2 }}
+              className="md:hidden relative z-10 mt-3 rounded-xl border border-white/10 bg-black/80 backdrop-blur-xl p-2"
+            >
+              <div className="flex flex-col gap-1">
+                {navLinks.map((link) => (
+                  <button
+                    key={link.name}
+                    onClick={() => {
+                      if (link.path === '/') {
+                        if (location.pathname === '/') {
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        } else {
+                          navigate(link.path);
+                        }
+                      } else if (link.path.startsWith('/#')) {
+                        const id = link.path.substring(2);
+                        const element = document.getElementById(id);
+                        if (element) {
+                          element.scrollIntoView({ behavior: 'smooth' });
+                        } else {
+                          navigate('/');
+                          setTimeout(() => {
+                            const target = document.getElementById(id);
+                            if (target) target.scrollIntoView({ behavior: 'smooth' });
+                          }, 100);
+                        }
+                      } else {
+                        navigate(link.path);
+                      }
+                      setMobileMenuOpen(false);
+                    }}
+                    className="min-h-11 text-left px-4 py-2 rounded-lg text-sm font-medium text-gray-200 hover:text-white hover:bg-white/5 transition-colors"
+                  >
+                    {link.name}
+                  </button>
+                ))}
+                {!currentUser ? (
+                  <motion.button
+                    onClick={() => {
+                      navigate('/login');
+                      setMobileMenuOpen(false);
+                    }}
+                    className="mt-1 min-h-11 text-left px-4 py-2 rounded-lg text-sm font-medium text-white bg-white/10 hover:bg-white/15 transition-colors"
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    Get Started
+                  </motion.button>
+                ) : (
+                  <button
+                    onClick={handleLogout}
+                    className="mt-1 min-h-11 text-left px-4 py-2 rounded-lg text-sm font-medium text-red-400 bg-red-500/10 hover:bg-red-500/20 transition-colors"
+                  >
+                    Sign Out
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </motion.nav>
   );
