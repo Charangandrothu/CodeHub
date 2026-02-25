@@ -1,76 +1,283 @@
-# CodeHub 🚀
+🚀 CodeHubX — Structured Placement Preparation Platform
 
-**CodeHub** is a comprehensive, structured placement preparation platform designed to unify coding practice, aptitude training, and core computer science concepts into a single, cohesive ecosystem. It tracks consistency, measures progress, and provides a premium, test-driven environment for aspirants.
+CodeHubX is a unified, test-driven placement preparation ecosystem designed to streamline DSA, Aptitude, and Core CS learning into a single high-performance environment.
 
----
+It combines structured learning paths, real-time code execution, analytics, and premium mock simulations to help aspirants prepare efficiently and consistently.
 
-## ✨ Key Features
+Built for serious placement preparation.
 
-### 🔐 Authentication & User Management
-- **Secure Authentication**: Robust Login and Sign-up flows integrated with Firebase.
-- **Dynamic Routing**: Protected routes that redirect based on authentication status (Landing Page vs. User Dashboard).
-- **Persistent Sessions**: Seamless user experience with state retention.
+🌐 Live Vision
 
-### 💻 DSA & Coding Practice
-- **Interactive Code Editor**: Integrated Monaco Editor supporting multiple languages.
-- **Judge0 Integration**: Real-time code compilation and execution against test cases.
-- **Problem Repository**: Curated list of problems (Patterns, Sorting, etc.) with difficulty levels (Easy, Medium, Hard).
-- **Dynamic Feedback**: Instant success/failure verdicts and output display.
+CodeHubX aims to become a complete placement operating system —
+where learning, practicing, testing, analytics, and optimization exist in one seamless flow.
 
-### 📊 User Profile & Dashboard
-- **Personalized Dashboard**: Overview of user progress and daily targets.
-- **Profile Customization**: Choose from a set of trendy, auto-generated avatars.
-- **Detailed Statistics**: Track total solved problems, streaks, and category-wise breakdowns.
-- **Settings & Preferences**: Customize experience (Theme, Language, Daily Goals) with database persistence.
+✨ Core Features
+🔐 Authentication & Access Control
 
-### 💎 CodeHub Pro
-- **Premium Subscription**: Tiered access to advanced features.
-- **Razorpay Integration**: Secure payment processing for Pro upgrades.
-- **Exclusive Content**: Access to premium problems and mock tests.
+Secure authentication via Firebase Auth
 
-### 🎨 Modern UI/UX
-- **Responsive Design**: Mobile-first architecture using **Tailwind CSS v4**.
-- **Rich Animations**: Smooth transitions and interactive elements powered by **Framer Motion**.
-- **Dark Mode**: Sleek, developer-friendly dark theme throughout the application.
+Protected route architecture
 
----
+Session persistence & token validation
 
-## 🛠️ Tech Stack
+Role-based feature access (Free vs Pro)
 
-### Frontend
-- **Framework**: [React](https://react.dev/) (via [Vite](https://vitejs.dev/))
-- **Styling**: [Tailwind CSS v4](https://tailwindcss.com/)
-- **Animations**: [Framer Motion](https://www.framer.com/motion/)
-- **Routing**: [React Router DOM](https://reactrouter.com/)
-- **State Management**: React Context API
-- **Icons**: [Lucide React](https://lucide.dev/)
-- **Editor**: [@monaco-editor/react](https://github.com/suren-atoyan/monaco-react)
+💻 DSA & Coding Environment
 
-### Backend
-- **Runtime**: [Node.js](https://nodejs.org/)
-- **Framework**: [Express.js](https://expressjs.com/)
-- **Database**: [MongoDB](https://www.mongodb.com/) (with [Mongoose](https://mongoosejs.com/))
-- **Payments**: [Razorpay](https://razorpay.com/)
-- **Code Execution**: [Judge0 API](https://judge0.com/)
+Integrated Monaco Editor
 
-### Dev Tools & Deployment
-- **Docker**: Containerized deployment support.
-- **Vercel/Render**: Production hosting ready.
-- **ESLint**: Code quality and linting.
+Real-time execution using Judge0 API
 
----
+Multi-language support
 
-## 🚀 Getting Started
+Predefined test cases
 
-Follow these steps to set up the project locally.
+Dynamic verdict system (Accepted / Wrong Answer / Runtime Error)
 
-### Prerequisites
-- Node.js (v18 or higher)
-- MongoDB (Local or Atlas URL)
-- VS Code (Recommended)
-- Docker (Optional, for containerized run)
+Structured problem repository:
 
-### 1. Clone the Repository
-```bash
+Patterns
+
+Arrays
+
+Sorting
+
+Recursion
+
+And expanding...
+
+📊 Analytics & Progress Tracking
+
+Daily streak tracking
+
+Total solved problems
+
+Difficulty-wise breakdown
+
+Category analytics
+
+Personalized dashboard overview
+
+Goal tracking system
+
+💎 CodeHubX Pro
+
+Premium problem sets
+
+Advanced mock tests
+
+Performance comparison metrics
+
+Razorpay integration for subscription
+
+Tier-based content access
+
+🎨 UI/UX System
+
+Mobile-first architecture
+
+Built with Tailwind CSS v4
+
+Smooth animations using Framer Motion
+
+Developer-focused Dark Mode
+
+Clean, distraction-free coding interface
+
+🛠️ Tech Stack
+Frontend
+
+React (Vite)
+
+React Router DOM
+
+Tailwind CSS v4
+
+Framer Motion
+
+Lucide React Icons
+
+React Context API
+
+Monaco Editor
+
+Backend
+
+Node.js
+
+Express.js
+
+MongoDB + Mongoose
+
+Razorpay
+
+Judge0 API
+
+DevOps
+
+Dockerized setup
+
+Vercel / Render deployment ready
+
+ESLint configuration
+
+Environment-based configuration system
+
+🏗️ Architecture Overview
+Client (React)
+     ↓
+Express API Server
+     ↓
+MongoDB Database
+     ↓
+Judge0 API (Code Execution)
+     ↓
+Razorpay (Payments)
+
+Modular backend structure:
+
+/controllers
+/routes
+/models
+/middleware
+/config
+🚀 Getting Started
+Prerequisites
+
+Node.js v18+
+
+MongoDB (Local / Atlas)
+
+VS Code
+
+Docker (Optional)
+
+1️⃣ Clone Repository
 git clone https://github.com/Charangandrothu/CodeHub.git
-cd codehub
+cd CodeHub
+2️⃣ Setup Backend
+cd server
+npm install
+
+Create .env file:
+
+PORT=5000
+MONGO_URI=your_mongodb_url
+RAZORPAY_KEY_ID=your_key
+RAZORPAY_SECRET=your_secret
+JUDGE0_API_KEY=your_key
+
+Run backend:
+
+npm run dev
+3️⃣ Setup Frontend
+cd client
+npm install
+npm run dev
+4️⃣ Docker Setup (Optional)
+docker-compose up --build
+🔒 Environment Variables
+Variable	Description
+MONGO_URI	MongoDB connection string
+JUDGE0_API_KEY	Code execution API key
+RAZORPAY_KEY_ID	Payment public key
+RAZORPAY_SECRET	Payment secret key
+FIREBASE_CONFIG	Firebase credentials
+📂 Project Structure
+CodeHubX/
+ ├── client/
+ ├── server/
+ ├── docker-compose.yml
+ ├── README.md
+📈 Upcoming Roadmap
+Phase 1 — Placement Expansion
+
+Aptitude section (Quant, Logical, Verbal)
+
+Core CS subjects:
+
+Operating Systems
+
+DBMS
+
+Computer Networks
+
+OOPS
+
+Topic-wise learning roadmap
+
+Phase 2 — Advanced Evaluation
+
+AI-powered solution analysis
+
+Code complexity evaluation (Time & Space)
+
+Optimization suggestions
+
+Plagiarism detection
+
+Phase 3 — Mock Test System
+
+Full-length placement mock exams
+
+Company-specific test patterns
+
+Timed coding rounds
+
+Performance percentile ranking
+
+Phase 4 — Competitive Edge
+
+Global leaderboard
+
+Campus leaderboard
+
+Resume strength score
+
+Interview readiness index
+
+Phase 5 — Scale & Monetization
+
+Institutional dashboards for colleges
+
+Admin analytics panel
+
+API monetization
+
+Enterprise subscription plans
+
+🎯 Long-Term Vision
+
+CodeHubX is not just a practice platform.
+
+It aims to become:
+
+A structured placement engine
+
+A performance analytics system
+
+A competitive benchmarking tool
+
+A monetizable SaaS ecosystem
+
+🤝 Contributing
+
+Currently in active development.
+
+If you're interested in contributing:
+
+Fork the repository
+
+Create a feature branch
+
+Submit a pull request
+
+📜 License
+
+MIT License
+
+👨‍💻 Author
+
+Charan Gandrothu
+Full Stack Developer | Placement-focused Product Builder
+Building CodeHubX 🚀
