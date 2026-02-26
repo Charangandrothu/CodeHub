@@ -36,23 +36,113 @@ router.post('/sync', async (req, res) => {
         }
 
         if (!user) {
-            user = new User({
+            const sanitizeUsername = (value) => {
+                const sanitized = (value || '').toLowerCase().replace(/[^a-z0-9]/g, '').trim();
+                return sanitized || 'user';
+            };
+
+            const generateRandomFourDigits = () => Math.floor(1000 + Math.random() * 9000).toString();
+
+            const baseUsername = sanitizeUsername(displayName || email.split('@')[0]);
+            let candidateUsername = baseUsername;
+
+            const usernameExists = await User.exists({ username: candidateUsername });
+            if (usernameExists) {
+                candidateUsername = `${baseUsername}${generateRandomFourDigits()}`;
+                let randomCandidateExists = await User.exists({ username: candidateUsername });
+                let attempts = 0;
+
+                while (randomCandidateExists && attempts < 5) {
+                    candidateUsername = `${baseUsername}${generateRandomFourDigits()}`;
+                    randomCandidateExists = await User.exists({ username: candidateUsername });
+                    attempts += 1;
+                }
+
+                if (randomCandidateExists) {
+                    candidateUsername = `${baseUsername}${Date.now()}`;
+                }
+            }
+
+            const userPayload = {
                 uid,
                 email,
-                username: (displayName || email.split('@')[0]).toLowerCase().replace(/[^a-z0-9]/g, ''), // Default username sanitized
-                displayName: displayName || "", // Save displayName
-                photoURL: photoURL || "https://api.dicebear.com/9.x/adventurer/svg?seed=Emery&backgroundColor=d1d4f9",
+                username: candidateUsername,
+                displayName: displayName || '',
+                photoURL: photoURL || 'https://api.dicebear.com/9.x/adventurer/svg?seed=Emery&backgroundColor=d1d4f9',
                 isPro: false,
                 stats: {
                     streak: 0,
                     solvedProblems: 0,
                     solvedProblemIds: [],
                     totalProblems: 150,
-                    timeSpent: "0h 0m",
+                    timeSpent: '0h 0m',
                     globalRank: 0
                 }
-            });
-            await user.save();
+            };
+
+            const isDuplicateKeyError = (err) => err && err.code === 11000;
+
+            const getDuplicateFields = (err) => {
+                if (!err) return [];
+                const keyPatternFields = Object.keys(err.keyPattern || {});
+                if (keyPatternFields.length > 0) return keyPatternFields;
+
+                const keyValueFields = Object.keys(err.keyValue || {});
+                if (keyValueFields.length > 0) return keyValueFields;
+
+                const message = String(err.message || '');
+                const indexMatch = message.match(/index:\s*([a-zA-Z0-9_]+)_1/);
+                if (!indexMatch || !indexMatch[1]) return [];
+
+                const possibleField = indexMatch[1].split('_')[0];
+                return possibleField ? [possibleField] : [];
+            };
+
+            const findExistingByUidOrEmail = async () => {
+                return await User.findOne({
+                    $or: [{ uid }, { email }]
+                });
+            };
+
+            try {
+                user = new User(userPayload);
+                await user.save();
+            } catch (saveError) {
+                if (!isDuplicateKeyError(saveError)) {
+                    throw saveError;
+                }
+
+                const existingUser = await findExistingByUidOrEmail();
+                if (existingUser) {
+                    user = existingUser;
+                } else {
+                    const duplicateFields = getDuplicateFields(saveError);
+                    const isUsernameDuplicate = duplicateFields.length === 0 || duplicateFields.includes('username');
+
+                    if (!isUsernameDuplicate) {
+                        throw saveError;
+                    }
+
+                    try {
+                        user = new User({
+                            ...userPayload,
+                            username: `${baseUsername}${Date.now()}${Math.floor(1000 + Math.random() * 9000)}`
+                        });
+                        await user.save();
+                    } catch (retryError) {
+                        if (isDuplicateKeyError(retryError)) {
+                            const existingAfterRetry = await findExistingByUidOrEmail();
+                            if (existingAfterRetry) {
+                                user = existingAfterRetry;
+                            } else {
+                                throw retryError;
+                            }
+                        } else {
+                            throw retryError;
+                        }
+                    }
+                }
+            }
         } else {
             // Update displayName and photoURL on sync if provided
             if (displayName || photoURL) {
@@ -72,7 +162,8 @@ router.post('/sync', async (req, res) => {
 
         res.json(user);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error("User sync error:", error);
+        res.status(500).json({ error: "Failed to sync user" });
     }
 });
 

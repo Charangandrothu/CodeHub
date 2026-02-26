@@ -354,6 +354,74 @@ const Pricing = () => {
 
 // --- Sub-Components ---
 
+const AnimatedPrice = ({ price, currencySymbol, gradientClass, normalClass, className }) => {
+    const chars = String(price).split('');
+    const [startAnim, setStartAnim] = useState(false);
+    const [isFinished, setIsFinished] = useState(false);
+
+    useEffect(() => {
+        setStartAnim(false);
+        setIsFinished(false);
+        const t = setTimeout(() => setStartAnim(true), 50);
+        const maxDuration = (1.2 + ((chars.length - 1) * 0.4)) * 1000;
+        const finishT = setTimeout(() => setIsFinished(true), 50 + maxDuration);
+        return () => { clearTimeout(t); clearTimeout(finishT); };
+    }, [price]);
+
+    return (
+        <motion.div
+            className={`flex items-baseline gap-[1px] ${className}`}
+            animate={isFinished ? { scale: [1, 1.05, 0.98, 1] } : { scale: 1 }}
+            transition={isFinished ? { duration: 0.5, ease: "easeOut" } : { duration: 0 }}
+        >
+            <span className={`mr-1 ${gradientClass || normalClass}`}>{currencySymbol}</span>
+            {chars.map((char, index) => (
+                <AnimatedDigit
+                    key={`${index}-${char}`}
+                    targetChar={char}
+                    index={index}
+                    startAnim={startAnim}
+                    textClass={gradientClass || normalClass}
+                />
+            ))}
+        </motion.div>
+    );
+};
+
+const AnimatedDigit = ({ targetChar, index, startAnim, textClass }) => {
+    const numericTarget = parseInt(targetChar, 10);
+    if (isNaN(numericTarget)) {
+        return <span className={textClass}>{targetChar}</span>;
+    }
+
+    const numbers = React.useMemo(() => {
+        const nums = [numericTarget];
+        for (let j = numericTarget - 1; j >= 0; j--) nums.push(j);
+        const sequences = 2 + index;
+        for (let i = 0; i < sequences; i++) {
+            for (let j = 9; j >= 0; j--) nums.push(j);
+        }
+        return nums;
+    }, [numericTarget, index]);
+
+    return (
+        <span className="relative inline-flex overflow-hidden align-middle tracking-normal" style={{ height: "1.1em", lineHeight: "1.1em" }}>
+            <span className="invisible inline-flex items-center tracking-normal font-bold">{targetChar}</span>
+            <motion.span
+                initial={{ y: `-${((numbers.length - 1) / numbers.length) * 100}%` }}
+                animate={{ y: startAnim ? "0%" : `-${((numbers.length - 1) / numbers.length) * 100}%` }}
+                transition={{ duration: 1.2 + (index * 0.4), ease: [0.15, 1, 0.3, 1] }}
+                className="absolute top-0 left-0 flex flex-col w-full font-bold"
+                style={{ height: `${numbers.length * 100}%` }}
+            >
+                {numbers.map((num, i) => (
+                    <span key={i} className={`flex items-center justify-center font-bold pb-[0.05em] ${textClass}`} style={{ height: `${100 / numbers.length}%` }}>{num}</span>
+                ))}
+            </motion.span>
+        </span>
+    );
+};
+
 const PricingCard = ({
     id, isSelected, onSelect, title, subtitle, price, period, originalPrice, saveText, subPriceLabel,
     features, lockedFeatures, buttonText, buttonVariant, badge, delay, onClick, isProcessing, className, cardStyle, featureIcons, currencySymbol = "₹"
@@ -431,7 +499,13 @@ const PricingCard = ({
             {/* Pricing Section */}
             <div className="mb-7 relative z-10">
                 <div className="flex items-baseline gap-1">
-                    <span className={`text-4xl lg:text-5xl font-bold tracking-tight ${isActive && isPro ? 'text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400' : isActive && isElite ? 'text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400' : 'text-white'}`}>{price === '0' ? '' : currencySymbol}{price}</span>
+                    <AnimatedPrice
+                        price={price}
+                        currencySymbol={price === '0' ? '' : currencySymbol}
+                        className="text-4xl lg:text-5xl font-bold tracking-tight"
+                        gradientClass={isActive && isPro ? 'text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400' : isActive && isElite ? 'text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400' : ''}
+                        normalClass="text-white"
+                    />
                     {period && <span className="text-gray-500 text-sm font-medium">/{period}</span>}
                 </div>
 
