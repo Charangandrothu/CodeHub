@@ -23,7 +23,7 @@ const Features = () => {
         <section id="features" className="relative min-h-screen bg-[#0a0a0a] overflow-hidden py-12 sm:py-16">
 
             {/* Ambient Background */}
-            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            <div className="absolute inset-0 pointer-events-none overflow-hidden hidden md:block">
                 <div className="absolute top-[10%] left-[-10%] w-[600px] h-[600px] bg-blue-900/10 rounded-full blur-[120px]" />
                 <div className="absolute bottom-[20%] right-[-5%] w-[500px] h-[500px] bg-purple-900/10 rounded-full blur-[120px]" />
                 <div className="absolute top-[40%] left-[20%] w-[300px] h-[300px] bg-emerald-900/5 rounded-full blur-[80px]" />
@@ -45,7 +45,7 @@ const Features = () => {
                     <span className="inline-block px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-sm font-semibold tracking-wide mb-6">
                         PLATFORM FEATURES
                     </span>
-                    <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white tracking-tight mb-6">
+                    <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white tracking-tight mb-6">
                         Everything You Need for <br />
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-emerald-400">
                             Placement Success

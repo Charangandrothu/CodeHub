@@ -120,7 +120,7 @@ const Hero = () => {
     <section id="home" className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[#0a0a0a] px-4 sm:px-6 lg:px-8">
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <video
-          className="absolute inset-0 h-full w-full object-cover scale-105 opacity-45 blur-[2px]"
+          className="absolute inset-0 h-full w-full object-cover scale-105 opacity-45 blur-none md:blur-[2px]"
           autoPlay
           loop
           muted
@@ -134,7 +134,7 @@ const Hero = () => {
       </div>
 
       {/* Ambient Background */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none hidden md:block">
         <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-purple-900/10 rounded-full blur-[120px]" />
         <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-blue-900/5 rounded-full blur-[100px]" />
       </div>
@@ -162,7 +162,7 @@ const Hero = () => {
             initial={{ opacity: 0, y: 30, filter: "blur(10px)" }}
             animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
             transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
-            className="text-5xl sm:text-6xl lg:text-7xl font-bold text-white tracking-tight leading-[1.1] mb-6"
+            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white tracking-tight leading-[1.1] mb-6"
           >
             Structured <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-500">

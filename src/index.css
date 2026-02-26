@@ -136,6 +136,17 @@ body {
     touch-action: manipulation;
   }
 
+  /* Hide heavy ambient blurs on mobile to prevent lag */
+  .blur-\[120px\],
+  .blur-\[100px\],
+  .blur-\[80px\],
+  .blur-\[128px\],
+  .blur-\[60px\],
+  .blur-3xl,
+  .blur-2xl {
+    display: none !important;
+  }
+
   .adsbygoogle {
     width: min(100%, 320px) !important;
     height: 50px !important;

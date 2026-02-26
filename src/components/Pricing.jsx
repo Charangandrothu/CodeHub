@@ -167,7 +167,7 @@ const Pricing = () => {
             </div> */}
 
                 {/* Background Ambient Effects */}
-                <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                <div className="absolute inset-0 pointer-events-none overflow-hidden hidden md:block">
                     <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-purple-900/10 rounded-full blur-[120px] opacity-60" />
                     <div className="absolute bottom-0 right-0 w-[800px] h-[800px] bg-emerald-900/5 rounded-full blur-[120px] opacity-40" />
                     {/* Grid Pattern Overlay */}
@@ -182,7 +182,7 @@ const Pricing = () => {
                             initial={{ opacity: 0, y: 20 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.6 }}
-                            className="text-4xl md:text-5xl font-bold tracking-tight text-white drop-shadow-lg"
+                            className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-white drop-shadow-lg"
                         >
                             Choose Your Growth Plan
                         </motion.h2>
