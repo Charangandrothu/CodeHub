@@ -73,6 +73,17 @@ export const AuthProvider = ({ children }) => {
 
                     if (res.ok) {
                         fetchedData = await res.json();
+                    } else {
+                        let syncError = `User sync failed with status ${res.status}`;
+                        try {
+                            const errorBody = await res.json();
+                            if (errorBody?.error) {
+                                syncError = `${syncError}: ${errorBody.error}`;
+                            }
+                        } catch (_) {
+                            // ignore body parse errors, preserve status-based message
+                        }
+                        console.error(syncError);
                     }
                 } catch (err) {
                     console.error("Failed to sync/fetch MongoDB user data:", err);

@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Search, UserCheck, UserX, Shield, Trash2, Crown, X, Lock, KeyRound } from 'lucide-react';
+import React, { useEffect, useState, useCallback } from 'react';
+import { Search, UserCheck, UserX, Shield, Trash2, Crown, X, Lock, KeyRound, RefreshCw } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 import { API_URL } from '../../config';
@@ -20,11 +20,8 @@ const UsersManagement = () => {
         verifying: false
     });
 
-    useEffect(() => {
-        if (currentUser) fetchUsers();
-    }, [currentUser]);
-
-    const fetchUsers = async () => {
+    // Wrap fetchUsers in useCallback so it can be used as a dependency
+    const fetchUsers = useCallback(async () => {
         setLoading(true);
         try {
             const res = await fetch(`${API_URL}/api/admin/users`, {
@@ -42,7 +39,22 @@ const UsersManagement = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [currentUser]);
+
+    useEffect(() => {
+        if (currentUser) fetchUsers();
+    }, [currentUser, fetchUsers]);
+
+    // Auto-refresh every 30 seconds to catch newly registered users
+    useEffect(() => {
+        if (!currentUser) return;
+        const interval = setInterval(() => {
+            fetchUsers();
+        }, 30000);
+        return () => clearInterval(interval);
+    }, [currentUser, fetchUsers]);
+
+
 
     // Open promotion code modal
     const openPromotionModal = (userId, targetRole) => {
@@ -146,16 +158,30 @@ const UsersManagement = () => {
     const filteredUsers = users.filter(user => {
         const matchesSearch = (user.displayName || user.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
             user.email?.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesFilter = filter === 'all' || user.role === filter || (filter === 'pro' && user.isPro);
+        // Treat 'Student' (legacy default) and 'user' both as normal users for filter comparison
+        const effectiveRole = (user.role === 'Student' || !user.role) ? 'user' : user.role;
+        const matchesFilter = filter === 'all' || effectiveRole === filter || (filter === 'pro' && user.isPro);
         return matchesSearch && matchesFilter;
     });
 
     return (
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <h1 className="text-2xl font-bold text-white">Users Management</h1>
+                <div className="flex items-center gap-3">
+                    <h1 className="text-2xl font-bold text-white">Users Management</h1>
+                    <span className="text-xs text-gray-500 bg-gray-800 px-2 py-0.5 rounded-full">{users.length} users</span>
+                </div>
 
                 <div className="flex gap-2">
+                    <button
+                        onClick={fetchUsers}
+                        disabled={loading}
+                        title="Refresh user list"
+                        className="flex items-center gap-1.5 px-3 py-2 bg-[#1a1a1a] border border-gray-800 rounded-lg text-sm text-gray-400 hover:text-white hover:border-gray-600 transition-colors disabled:opacity-50"
+                    >
+                        <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                        <span className="hidden sm:inline">Refresh</span>
+                    </button>
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
                         <input

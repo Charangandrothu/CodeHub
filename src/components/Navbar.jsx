@@ -179,7 +179,7 @@ const Navbar = () => {
       ref={navbarRef}
     >
       {/* Glassmorphism Container */}
-      <div className="relative w-full max-w-7xl mx-auto flex items-center justify-between px-3 sm:px-6 py-2.5 sm:py-3 rounded-2xl border border-white/10 bg-[#0a0a0a]/70 backdrop-blur-xl shadow-lg shadow-black/20 overflow-visible">
+      <div className="relative w-full max-w-7xl mx-auto flex items-center justify-between px-3 sm:px-6 py-2.5 sm:py-3 rounded-2xl border border-white/10 bg-[#0a0a0a] sm:bg-[#0a0a0a]/70 backdrop-blur-xl shadow-lg shadow-black/20 overflow-visible">
 
         {/* Shimmer/Reflection Effect */}
         {!isMobile && (
