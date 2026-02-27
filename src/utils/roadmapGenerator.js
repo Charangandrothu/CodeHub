@@ -13,7 +13,7 @@ export const TOPICS = [
     { name: "Dynamic Programming", slug: "dynamic-programming", full: 35, inter: 20, quick: 9, expert: 37 }
 ];
 
-export const generateRoadmap = (daysSelected) => {
+export const generateRoadmap = (daysSelected, dbProblems = []) => {
     let mode = "Beginner Full Mastery";
     let levelKey = "full";
     let levelLabel = "Beginner"; // For UI color matching if needed
@@ -35,20 +35,74 @@ export const generateRoadmap = (daysSelected) => {
 
     let generatedTotal = 0;
 
+    const getMatcher = (id) => {
+        switch (id) {
+            case 'patterns': return /pattern/i;
+            case 'beginner': return /beginner/i;
+            case 'sorting': return /sort/i;
+            case 'arrays': return /array/i;
+            case 'strings': return /string/i;
+            case 'hashing': return /hash/i;
+            case 'binary-search': return /binary\s*search/i;
+            case 'linked-list': return /linked\s*list/i;
+            case 'stack-queue': return /stack|queue/i;
+            case 'recursion-backtracking':
+            case 'recursion': return /recursion|backtracking/i;
+            case 'greedy': return /greedy/i;
+            case 'heaps': return /heap|priority\s*queue/i;
+            case 'trees': return /tree/i;
+            case 'graphs': return /graph/i;
+            case 'dynamic-programming': return /dynamic\s*programming|dp/i;
+            default: return new RegExp(id.replace('-', '.*'), 'i');
+        }
+    };
+
+    const shuffle = (array) => {
+        let sorted = [...array];
+        for (let i = sorted.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [sorted[i], sorted[j]] = [sorted[j], sorted[i]];
+        }
+        return sorted;
+    };
+
     // 1. Calculate Problem Counts per Topic
     const sections = TOPICS.map((topic) => {
-        const count = topic[levelKey] !== undefined ? topic[levelKey] : topic.full;
+        const matcher = getMatcher(topic.slug);
+        let topicProbs = dbProblems.filter(p => p.topic && matcher.test(p.topic));
+
+        const targetCount = topic[levelKey] !== undefined ? topic[levelKey] : topic.full;
+
+        let assignedProblems = [];
+        if (topicProbs.length > 0) {
+            let easy = shuffle(topicProbs.filter(p => !p.difficulty || p.difficulty.toLowerCase() === 'easy'));
+            let medium = shuffle(topicProbs.filter(p => p.difficulty && p.difficulty.toLowerCase() === 'medium'));
+            let hard = shuffle(topicProbs.filter(p => p.difficulty && p.difficulty.toLowerCase() === 'hard'));
+
+            let allShuffled = [];
+            if (mode === "Quick Revision") {
+                allShuffled = [...hard, ...medium, ...easy];
+            } else if (mode === "Expert Mastery") {
+                allShuffled = [...medium, ...hard, ...easy];
+            } else {
+                allShuffled = [...easy, ...medium, ...hard];
+            }
+
+            assignedProblems = allShuffled.slice(0, targetCount);
+        }
+
+        const count = assignedProblems.length > 0 ? assignedProblems.length : targetCount;
         generatedTotal += count;
+
         return {
             ...topic,
             problemCount: count,
+            assignedProblems,
             allocatedDays: 0
         };
     });
 
     // 2. Distribute Days
-    // We distribute days proportionally to the problem count relative to total problems.
-    // We ensure every topic gets at least 1 day.
     let remainingDays = daysSelected;
     let currentStartDay = 1;
 
@@ -73,84 +127,89 @@ export const generateRoadmap = (daysSelected) => {
 
         // 3. Generate Daily Tasks
         const tasks = [];
-        // Safe against 0 days div by zero though we handled min 1 above
         const daysDivisor = days < 1 ? 1 : days;
         const problemsPerDay = Math.ceil(section.problemCount / daysDivisor);
+
+        let problemIdx = 0;
 
         for (let d = 0; d < days; d++) {
             const dayNum = start + d;
             const tasksForDay = [];
 
-            // Calculate exact remaining needed to be distributed
             const problemsDistributed = d * problemsPerDay;
             const needed = section.problemCount - problemsDistributed;
-
-            // On the last day, take whatever is left; else take the calc chunk
-            // Or simpler: Math.min(problemsPerDay, needed)
             let dailyCount = Math.min(problemsPerDay, Math.max(0, needed));
 
             if (dailyCount > 0) {
-                // Distribute difficulty based on mode
-                let easyCount = 0;
-                let mediumCount = 0;
-                let hardCount = 0;
-
-                if (mode === "Quick Revision") {
-                    // Focus on Medium/Hard, less Easy
-                    mediumCount = Math.ceil(dailyCount * 0.7);
-                    hardCount = dailyCount - mediumCount;
-                } else if (mode === "Intermediate") {
-                    easyCount = Math.floor(dailyCount * 0.3);
-                    mediumCount = dailyCount - easyCount;
-                } else if (mode === "Expert Mastery") {
-                    // Heavily weighted towards Medium/Hard but with volume
-                    easyCount = Math.floor(dailyCount * 0.2);
-                    mediumCount = Math.floor(dailyCount * 0.5);
-                    hardCount = dailyCount - easyCount - mediumCount;
+                if (section.assignedProblems && section.assignedProblems.length > 0) {
+                    for (let i = 0; i < dailyCount; i++) {
+                        if (problemIdx < section.assignedProblems.length) {
+                            const prob = section.assignedProblems[problemIdx++];
+                            tasksForDay.push({
+                                id: prob.slug,
+                                text: prob.title,
+                                link: `/problem/${prob.slug}`,
+                                difficulty: prob.difficulty || "Easy",
+                                completed: false
+                            });
+                        }
+                    }
                 } else {
-                    // Beginner: More easy foundations
-                    easyCount = Math.ceil(dailyCount * 0.5);
-                    mediumCount = dailyCount - easyCount;
-                }
+                    let easyCount = 0;
+                    let mediumCount = 0;
+                    let hardCount = 0;
 
-                // Sanity check to ensure counts aren't negative if logic drifts
-                if (easyCount < 0) easyCount = 0;
-                if (mediumCount < 0) mediumCount = 0;
-                if (hardCount < 0) hardCount = 0;
+                    if (mode === "Quick Revision") {
+                        mediumCount = Math.ceil(dailyCount * 0.7);
+                        hardCount = dailyCount - mediumCount;
+                    } else if (mode === "Intermediate") {
+                        easyCount = Math.floor(dailyCount * 0.3);
+                        mediumCount = dailyCount - easyCount;
+                    } else if (mode === "Expert Mastery") {
+                        easyCount = Math.floor(dailyCount * 0.2);
+                        mediumCount = Math.floor(dailyCount * 0.5);
+                        hardCount = dailyCount - easyCount - mediumCount;
+                    } else {
+                        easyCount = Math.ceil(dailyCount * 0.5);
+                        mediumCount = dailyCount - easyCount;
+                    }
 
-                // Final balance check
-                const diff = (easyCount + mediumCount + hardCount) - dailyCount;
-                if (diff !== 0) {
-                    // If we have rounding errors, adjust medium
-                    mediumCount -= diff;
-                }
+                    if (easyCount < 0) easyCount = 0;
+                    if (mediumCount < 0) mediumCount = 0;
+                    if (hardCount < 0) hardCount = 0;
 
-                if (easyCount > 0) {
-                    tasksForDay.push({
-                        id: `${section.slug}-d${dayNum}-easy`,
-                        text: `${easyCount} Easy ${section.name} Problems`,
-                        link: `/dsa?topic=${section.slug}&difficulty=easy`,
-                        difficulty: "Easy",
-                        completed: false
-                    });
-                }
-                if (mediumCount > 0) {
-                    tasksForDay.push({
-                        id: `${section.slug}-d${dayNum}-med`,
-                        text: `${mediumCount} Medium ${section.name} Problems`,
-                        link: `/dsa?topic=${section.slug}&difficulty=medium`,
-                        difficulty: "Medium",
-                        completed: false
-                    });
-                }
-                if (hardCount > 0) {
-                    tasksForDay.push({
-                        id: `${section.slug}-d${dayNum}-hard`,
-                        text: `${hardCount} Hard ${section.name} Problems`,
-                        link: `/dsa?topic=${section.slug}&difficulty=hard`,
-                        difficulty: "Hard",
-                        completed: false
-                    });
+                    const diff = (easyCount + mediumCount + hardCount) - dailyCount;
+                    if (diff !== 0) {
+                        mediumCount -= diff;
+                    }
+
+                    if (easyCount > 0) {
+                        tasksForDay.push({
+                            id: `${section.slug}-d${dayNum}-easy`,
+                            text: `${easyCount} Easy ${section.name} Problems`,
+                            link: `/dsa?topic=${section.slug}&difficulty=easy`,
+                            difficulty: "Easy",
+                            completed: false
+                        });
+                    }
+                    if (mediumCount > 0) {
+                        tasksForDay.push({
+                            id: `${section.slug}-d${dayNum}-med`,
+                            text: `${mediumCount} Medium ${section.name} Problems`,
+                            link: `/dsa?topic=${section.slug}&difficulty=medium`,
+                            difficulty: "Medium",
+                            completed: false
+                        });
+                    }
+                    if (hardCount > 0) {
+                        tasksForDay.push({
+                            id: `${section.slug}-d${dayNum}-hard`,
+                            text: `${hardCount} Hard ${section.name} Problems`,
+                            link: `/dsa?topic=${section.slug}&difficulty=hard`,
+                            difficulty: "Hard",
+                            completed: false
+                        });
+                    }
                 }
             }
 
