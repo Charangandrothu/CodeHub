@@ -926,10 +926,20 @@ const DSARoadmap = ({ onBack }) => {
         return () => clearTimeout(timer);
     }, [days]);
 
-    const handleGenerate = (selectedDays, mergeProgress = false) => {
+    const handleGenerate = async (selectedDays, mergeProgress = false) => {
         setIsGenerating(true);
-        setTimeout(() => {
-            const baseRoadmap = generateRoadmap(selectedDays);
+        try {
+            let dbProblems = [];
+            try {
+                const res = await fetch(`${API_URL}/api/problems?limit=1000`);
+                if (res.ok) {
+                    dbProblems = await res.json();
+                }
+            } catch (err) {
+                console.error("Failed to fetch problems for roadmap generation:", err);
+            }
+
+            const baseRoadmap = generateRoadmap(selectedDays, dbProblems);
             const newRoadmap = { ...baseRoadmap, daysSelected: selectedDays, isLocked: roadmap?.isLocked || false };
 
             if (mergeProgress && roadmap) {
@@ -955,8 +965,12 @@ const DSARoadmap = ({ onBack }) => {
             }
 
             saveRoadmap(newRoadmap);
-            setIsGenerating(false);
-        }, 800);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            // Artificial delay for better UX
+            setTimeout(() => setIsGenerating(false), 500);
+        }
     };
 
     const toggleTask = (sectionSlug, dayIdx, itemIdx) => {
