@@ -5,12 +5,68 @@ import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import CodeEditor from '../components/dsa/CodeEditor';
 import TestCasesPanel from '../components/dsa/TestCasesPanel';
 import SubmissionResultPanel from '../components/dsa/SubmissionResultPanel';
+import SubmissionsTab from '../components/dsa/SubmissionsTab';
 import { useAuth } from '../context/AuthContext';
 import logo_img from '../assets/logo_img.png';
 import { API_URL } from '../config';
 import { sendAIMessage, fetchAIUsage, AI_PROVIDERS, fetchAvailableProviders } from '../services/aiService';
 import AdBanner from '../components/AdBanner';
 import Editor from '@monaco-editor/react';
+
+// Boilerplate templates for each language
+const BOILERPLATES = {
+    python:
+`class Solution:
+    def solve(self, input):
+        pass
+
+if __name__ == "__main__":
+    data = input()
+    print(Solution().solve(data))`,
+    javascript:
+`function solve(input) {
+    
+}
+
+process.stdin.resume();
+process.stdin.setEncoding("utf-8");
+let inputString = "";
+process.stdin.on("data", function (inputStdin) {
+    inputString += inputStdin;
+});
+process.stdin.on("end", function () {
+    console.log(solve(inputString.trim()));
+});`,
+    cpp:
+`#include <bits/stdc++.h>
+using namespace std;
+
+class Solution {
+public:
+    string solve(string input) {
+        
+    }
+};
+
+int main() {
+    string input;
+    getline(cin, input);
+    Solution obj;
+    cout << obj.solve(input);
+    return 0;
+}`,
+    java:
+`import java.util.*;
+
+class Solution {
+    public int solve(int input) {
+        // write your solution here
+        return 0;
+    }
+}`
+};
+
+const getBoilerplate = (lang) => BOILERPLATES[lang] || '';
 
 // Editorial Code Viewer sub-component
 function EditorialCodeViewer({ solutionCode, defaultLang = 'javascript' }) {
@@ -135,6 +191,8 @@ export default function QuestionPage() {
     const { slug } = useParams();
     const navigate = useNavigate();
     const { currentUser, userData, refreshUserData } = useAuth(); // userData contains isPro status
+    // Both 'pro' and 'elite' plan holders are treated as Pro users
+    const isProUser = userData?.isPro || userData?.plan === 'pro' || userData?.plan === 'elite';
     const [problem, setProblem] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -167,6 +225,7 @@ export default function QuestionPage() {
     const providerDropdownRef = useRef(null);
     const [isEditorFocused, setIsEditorFocused] = useState(false);
     const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
+    const [editorialApproach, setEditorialApproach] = useState('optimal'); // 'brute' | 'optimal'
 
     // Refs for interval and status
     const pollIntervalRef = useRef(null);
@@ -247,10 +306,10 @@ export default function QuestionPage() {
             const savedCode = localStorage.getItem(`codehub-code-${slug}-${newLang}`);
             if (savedCode) {
                 setCode(savedCode);
-            } else if (problem && problem.starterCode) {
-                setCode(problem.starterCode[newLang] || problem.starterCode.javascript || '');
+            } else if (problem && problem.starterCode && problem.starterCode[newLang]) {
+                setCode(problem.starterCode[newLang]);
             } else {
-                setCode('');
+                setCode(getBoilerplate(newLang));
             }
         }
     };
@@ -501,14 +560,14 @@ export default function QuestionPage() {
         setActiveTab("submissions");
         setSubmissionResult({
             verdict: "Queued",
-            details: "Submission queued for processing...",
+            details: "Running test cases...",
             type: 'submit',
             submittedAt: new Date().toISOString()
         });
 
         try {
             // Optimistic Check
-            if (currentUser && userData && !userData.isPro && (userData.stats?.submissionCredits <= 0)) {
+            if (currentUser && userData && !isProUser && (userData.stats?.submissionCredits <= 0)) {
                 setLimitModal({
                     show: true,
                     type: 'submit',
@@ -519,7 +578,6 @@ export default function QuestionPage() {
                 return;
             }
 
-            // 1. Trigger Submission (Queued)
             const res = await fetch(`${API_URL}/api/execute/submit`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -534,7 +592,6 @@ export default function QuestionPage() {
             const data = await res.json();
 
             if (!res.ok) {
-                // Handle Pro Restriction (403) or Limit Exceeded
                 if (res.status === 403) {
                     if (data.isLimitError) {
                         setLimitModal({
@@ -546,9 +603,8 @@ export default function QuestionPage() {
                         setRunStatus("idle");
                         return;
                     }
-
                     setSubmissionResult({
-                        verdict: "Restricted", // Custom verdict for UI
+                        verdict: "Restricted",
                         details: data.details || data.error,
                         type: 'submit'
                     });
@@ -559,59 +615,24 @@ export default function QuestionPage() {
                 return;
             }
 
-            // 2. Poll for Result
-            // Use a ref for the interval so we can clear it reliably
-            const intervalId = setInterval(async () => {
-                try {
-                    // Check if we're still mounted/running (optional safety)
-                    if (runStatusRef.current !== 'submitting') {
-                        clearInterval(intervalId);
-                        return;
-                    }
+            // Direct result from server — no polling needed
+            if (refreshUserData) {
+                refreshUserData().catch(e => console.warn("Failed to refresh user data", e));
+            }
 
-                    const pollRes = await fetch(`${API_URL}/api/execute/submission/${problem._id}?userId=${currentUser.uid}`);
-                    if (pollRes.ok) {
-                        const submissionData = await pollRes.json();
-
-                        if (submissionData) {
-                            clearInterval(intervalId);
-
-                            // Safely refresh user data
-                            if (refreshUserData) {
-                                refreshUserData().catch(e => console.warn("Failed to refresh user data", e));
-                            }
-
-                            setSubmissionResult({
-                                verdict: submissionData.verdict,
-                                details: submissionData.stderr || "",
-                                failedTestCase: submissionData.failedTestCase || null,
-                                time: submissionData.runtime ? (parseFloat(submissionData.runtime) * 1000).toFixed(2) : "N/A",
-                                memory: submissionData.memory ? (parseFloat(submissionData.memory) / 1024).toFixed(2) : "N/A",
-                                passedTestCases: submissionData.passedTestCases || 0,
-                                totalTestCases: submissionData.totalTestCases || 0,
-                                type: 'submit',
-                                submittedAt: submissionData.submittedAt
-                            });
-                            setRunStatus("idle");
-                        }
-                    }
-                } catch (pollErr) {
-                    console.error("Polling error:", pollErr);
-                }
-            }, 2000);
-
-            // Save interval ID to ref for cleanup on unmount
-            pollIntervalRef.current = intervalId;
-
-            // Timeout after 30 seconds
-            setTimeout(() => {
-                clearInterval(intervalId);
-                // Check latest runStatus via ref
-                if (runStatusRef.current === "submitting") {
-                    setRunStatus("idle");
-                    setSubmissionResult(prev => prev || { verdict: "Error", details: "Submission timed out", type: 'submit' });
-                }
-            }, 30000);
+            setSubmissionResult({
+                verdict: data.verdict,
+                details: data.stderr || "",
+                failedTestCase: data.failedTestCase || null,
+                time: data.runtime ? (parseFloat(data.runtime) * 1000).toFixed(2) : "N/A",
+                memory: data.memory ? (parseFloat(data.memory) / 1024).toFixed(2) : "N/A",
+                passedTestCases: data.passedTestCases || 0,
+                totalTestCases: data.totalTestCases || 0,
+                type: 'submit',
+                submittedAt: data.submittedAt,
+                code: code  // capture the submitted code for history view
+            });
+            setRunStatus("idle");
 
         } catch (err) {
             setSubmissionResult({ verdict: "Error", details: err.message, type: 'submit' });
@@ -637,7 +658,9 @@ export default function QuestionPage() {
                     if (savedCode) {
                         setCode(savedCode);
                     } else if (problem.starterCode) {
-                        setCode(problem.starterCode[language] || problem.starterCode.javascript || '');
+                        setCode(problem.starterCode[language] || getBoilerplate(language));
+                    } else {
+                        setCode(getBoilerplate(language));
                     }
                     return;
                 }
@@ -657,7 +680,9 @@ export default function QuestionPage() {
                 if (savedCode) {
                     setCode(savedCode);
                 } else if (data.starterCode) {
-                    setCode(data.starterCode[language] || data.starterCode.javascript || '');
+                    setCode(data.starterCode[language] || getBoilerplate(language));
+                } else {
+                    setCode(getBoilerplate(language));
                 }
             } catch (err) {
                 setError(err.message);
@@ -1034,9 +1059,9 @@ export default function QuestionPage() {
 
                 {/* Left Panel: Problem Description */}
                 <motion.div
-                    initial={{ opacity: 0, x: -20 }}
+                    initial={{ opacity: 0, x: -24 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.5, ease: "easeOut" }}
+                    transition={{ duration: 0.32, ease: [0.25, 0.46, 0.45, 0.94] }}
                     style={{ width: leftWidth, flexShrink: 0 }}
                     className="flex flex-col bg-[#1e1e1e] rounded-2xl border border-white/10 shadow-2xl relative overflow-hidden"
                 >
@@ -1091,6 +1116,7 @@ export default function QuestionPage() {
                                     </span>
                                 ))}
                             </div>
+
                         </div>
                     )}
 
@@ -1151,15 +1177,55 @@ export default function QuestionPage() {
                                 )}
 
                                 {/* Ad placement — below problem description, safe location */}
-                                {!userData?.isPro && (
+                                {!isProUser && (
                                     <div className="mt-8 pt-4 border-t border-[#262626]">
                                         <AdBanner adSlot="2786354821" className="py-1" />
+                                    </div>
+                                )}
+
+                                {/* Companies - asked at */}
+                                {problem.companies && problem.companies.length > 0 && (
+                                    <div className="mt-8 pt-4 border-t border-[#262626]">
+                                        <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-2">Asked at</p>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {problem.companies.map(company => (
+                                                <span
+                                                    key={company}
+                                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium bg-blue-500/[0.08] border border-blue-500/20 text-blue-300 hover:bg-blue-500/[0.14] transition-colors"
+                                                >
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-blue-400/60 inline-block" />
+                                                    {company}
+                                                </span>
+                                            ))}
+                                        </div>
                                     </div>
                                 )}
                             </div>
                         )}
 
-                        {activeTab === 'editorial' && (
+                        {activeTab === 'editorial' && (() => {
+                            const hasBrute = !!(problem.theory?.bruteForce?.explanation || problem.theory?.bruteForce?.solutionCode?.javascript || problem.theory?.bruteForce?.solutionCode?.python);
+                            const hasOptimal = !!(problem.theory?.optimal?.explanation || problem.theory?.optimal?.solutionCode?.javascript || problem.theory?.optimal?.solutionCode?.python);
+                            const hasApproaches = hasBrute || hasOptimal;
+                            // Legacy: flat theory fields (no bruteForce/optimal)
+                            const hasLegacy = !hasApproaches && problem.theory && (
+                                problem.theory.videoUrl || problem.theory.explanation ||
+                                problem.theory.timeComplexity?.value || problem.theory.spaceComplexity?.value ||
+                                problem.theory.solutionCode?.javascript || problem.theory.solutionCode?.python
+                            );
+                            const hasAnyContent = hasApproaches || hasLegacy;
+
+                            // Which approach data to show
+                            const safeApproach = hasApproaches
+                                ? (editorialApproach === 'brute' && hasBrute ? 'brute' : hasOptimal ? 'optimal' : 'brute')
+                                : null;
+                            const approachData = safeApproach === 'brute'
+                                ? problem.theory?.bruteForce
+                                : safeApproach === 'optimal'
+                                    ? problem.theory?.optimal
+                                    : null;
+
+                            return (
                             <motion.div
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
@@ -1167,7 +1233,7 @@ export default function QuestionPage() {
                                 className="space-y-5"
                             >
                                 {/* No editorial content fallback */}
-                                {(!problem.theory || (!problem.theory.videoUrl && !problem.theory.explanation && !problem.theory.timeComplexity?.value && !problem.theory.spaceComplexity?.value && !problem.theory.solutionCode?.javascript && !problem.theory.solutionCode?.python)) ? (
+                                {!hasAnyContent ? (
                                     <motion.div
                                         initial={{ opacity: 0, scale: 0.95 }}
                                         animate={{ opacity: 1, scale: 1 }}
@@ -1184,8 +1250,39 @@ export default function QuestionPage() {
                                     </motion.div>
                                 ) : (
                                     <div className="relative w-full">
-                                        <div className={`space-y-5 ${!userData?.isPro ? "blur-sm opacity-50 pointer-events-none select-none filter transition-all duration-700" : ""}`}>
-                                            {/* Video Section — Premium YouTube Card */}
+                                        <div className={`space-y-5 ${!isProUser ? "blur-sm opacity-50 pointer-events-none select-none filter transition-all duration-700" : ""}`}>
+
+                                            {/* ── Brute / Optimal tab switcher ── */}
+                                            {hasApproaches && (
+                                                <div className="flex items-center gap-1 bg-[#141414] border border-[#262626] rounded-xl p-1 w-fit">
+                                                    {hasBrute && (
+                                                        <button
+                                                            onClick={() => setEditorialApproach('brute')}
+                                                            className={`relative px-4 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-widest transition-all duration-200 ${
+                                                                safeApproach === 'brute'
+                                                                    ? 'bg-[#1e1e1e] text-white shadow-sm border border-white/10'
+                                                                    : 'text-zinc-500 hover:text-zinc-300'
+                                                            }`}
+                                                        >
+                                                            Brute
+                                                        </button>
+                                                    )}
+                                                    {hasOptimal && (
+                                                        <button
+                                                            onClick={() => setEditorialApproach('optimal')}
+                                                            className={`relative px-4 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-widest transition-all duration-200 ${
+                                                                safeApproach === 'optimal'
+                                                                    ? 'bg-[#1e1e1e] text-white shadow-sm border border-white/10'
+                                                                    : 'text-zinc-500 hover:text-zinc-300'
+                                                            }`}
+                                                        >
+                                                            Optimal
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            )}
+
+                                            {/* ── Video (only shown when no approach override, i.e. legacy or always) ── */}
                                             {problem.theory?.videoUrl && (
                                                 <motion.div
                                                     initial={{ opacity: 0, y: 8 }}
@@ -1198,23 +1295,15 @@ export default function QuestionPage() {
                                                         rel="noopener noreferrer"
                                                         className="block group relative rounded-2xl overflow-hidden border border-[#262626] hover:border-red-500/30 transition-all duration-500"
                                                     >
-                                                        {/* Background gradient */}
                                                         <div className="absolute inset-0 bg-gradient-to-br from-red-950/30 via-[#141414] to-[#141414] group-hover:from-red-950/50 transition-all duration-500" />
-
-                                                        {/* Subtle glow */}
                                                         <div className="absolute -top-10 -left-10 w-40 h-40 bg-red-500/5 rounded-full blur-3xl group-hover:bg-red-500/10 transition-all duration-700 pointer-events-none" />
-
                                                         <div className="relative p-5 flex items-center gap-5">
-                                                            {/* Play Button */}
                                                             <div className="relative shrink-0">
                                                                 <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center shadow-xl shadow-red-500/20 group-hover:shadow-red-500/40 group-hover:scale-105 transition-all duration-300">
                                                                     <Play size={26} className="text-white ml-1 fill-white" />
                                                                 </div>
-                                                                {/* Pulse ring */}
                                                                 <div className="absolute inset-0 rounded-2xl border-2 border-red-500/30 animate-ping opacity-0 group-hover:opacity-100 transition-opacity" style={{ animationDuration: '2s' }} />
                                                             </div>
-
-                                                            {/* Text */}
                                                             <div className="flex-1 min-w-0">
                                                                 <div className="flex items-center gap-2 mb-1.5">
                                                                     <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-red-500 shrink-0">
@@ -1229,8 +1318,6 @@ export default function QuestionPage() {
                                                                     youtube.com • Opens in new tab
                                                                 </p>
                                                             </div>
-
-                                                            {/* Arrow */}
                                                             <div className="hidden sm:flex items-center justify-center w-10 h-10 rounded-xl bg-white/5 text-zinc-600 group-hover:bg-red-500/10 group-hover:text-red-400 transition-all duration-300 shrink-0">
                                                                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                                                     <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
@@ -1243,15 +1330,15 @@ export default function QuestionPage() {
                                                 </motion.div>
                                             )}
 
-                                            {/* Explanation Section — Rich Text */}
-                                            {problem.theory?.explanation && (
+                                            {/* ── Explanation ── */}
+                                            {((approachData?.explanation) || (!hasApproaches && problem.theory?.explanation)) && (
                                                 <motion.div
+                                                    key={safeApproach + '-explanation'}
                                                     initial={{ opacity: 0, y: 8 }}
                                                     animate={{ opacity: 1, y: 0 }}
-                                                    transition={{ delay: 0.15 }}
+                                                    transition={{ delay: 0.05 }}
                                                     className="rounded-2xl border border-[#262626] overflow-hidden relative"
                                                 >
-                                                    {/* Header with accent */}
                                                     <div className="relative bg-gradient-to-r from-[#141420] to-[#141414] px-5 py-3.5 border-b border-[#262626]">
                                                         <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-gradient-to-b from-blue-500 to-cyan-500 rounded-r" />
                                                         <div className="flex items-center gap-3">
@@ -1259,75 +1346,86 @@ export default function QuestionPage() {
                                                                 <Brain size={16} className="text-blue-400" />
                                                             </div>
                                                             <div>
-                                                                <span className="text-[13px] font-bold text-white tracking-tight">Approach & Explanation</span>
+                                                                <span className="text-[13px] font-bold text-white tracking-tight">
+                                                                    {safeApproach === 'brute' ? 'Brute Force Approach' : safeApproach === 'optimal' ? 'Optimal Approach' : 'Approach & Explanation'}
+                                                                </span>
                                                             </div>
                                                         </div>
                                                     </div>
-
-                                                    {/* Content */}
                                                     <div className="p-5 bg-[#111]/60">
                                                         <div className="text-[13px] leading-[1.85] text-[#c4c4c4] whitespace-pre-wrap font-sans selection:bg-blue-500/20">
-                                                            {problem.theory.explanation}
+                                                            {approachData?.explanation || problem.theory?.explanation}
                                                         </div>
                                                     </div>
                                                 </motion.div>
                                             )}
 
-                                            {/* Solution Code Section */}
-                                            {problem.theory?.solutionCode && (
-                                                <EditorialCodeViewer solutionCode={problem.theory.solutionCode} defaultLang={language} />
+                                            {/* ── Solution Code ── */}
+                                            {((approachData?.solutionCode && Object.values(approachData.solutionCode).some(v => v?.trim())) ||
+                                              (!hasApproaches && problem.theory?.solutionCode)) && (
+                                                <EditorialCodeViewer
+                                                    key={safeApproach + '-code'}
+                                                    solutionCode={approachData?.solutionCode || problem.theory?.solutionCode || {}}
+                                                    defaultLang={language}
+                                                />
                                             )}
 
-                                            {/* Complexity Badges */}
-                                            {(problem.theory?.timeComplexity?.value || problem.theory?.spaceComplexity?.value) && (
-                                                <motion.div
-                                                    initial={{ opacity: 0, y: 8 }}
-                                                    animate={{ opacity: 1, y: 0 }}
-                                                    transition={{ delay: 0.2 }}
-                                                    className="grid grid-cols-2 gap-3"
-                                                >
-                                                    {problem.theory.timeComplexity?.value && (
-                                                        <div className="relative rounded-2xl border border-[#262626] overflow-hidden group hover:border-emerald-500/20 transition-colors duration-300">
-                                                            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                                                            <div className="relative p-4">
-                                                                <div className="flex items-center gap-3.5 mb-2">
-                                                                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500/15 to-emerald-600/5 border border-emerald-500/15 flex items-center justify-center shrink-0">
-                                                                        <Clock size={18} className="text-emerald-400" />
+                                            {/* ── Complexity Badges ── */}
+                                            {(() => {
+                                                const tc = approachData?.timeComplexity || (!hasApproaches ? problem.theory?.timeComplexity : null);
+                                                const sc = approachData?.spaceComplexity || (!hasApproaches ? problem.theory?.spaceComplexity : null);
+                                                if (!tc?.value && !sc?.value) return null;
+                                                return (
+                                                    <motion.div
+                                                        key={safeApproach + '-complexity'}
+                                                        initial={{ opacity: 0, y: 8 }}
+                                                        animate={{ opacity: 1, y: 0 }}
+                                                        transition={{ delay: 0.1 }}
+                                                        className="grid grid-cols-2 gap-3"
+                                                    >
+                                                        {tc?.value && (
+                                                            <div className="relative rounded-2xl border border-[#262626] overflow-hidden group hover:border-emerald-500/20 transition-colors duration-300">
+                                                                <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                                                                <div className="relative p-4">
+                                                                    <div className="flex items-center gap-3.5 mb-2">
+                                                                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500/15 to-emerald-600/5 border border-emerald-500/15 flex items-center justify-center shrink-0">
+                                                                            <Clock size={18} className="text-emerald-400" />
+                                                                        </div>
+                                                                        <div className="min-w-0">
+                                                                            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-0.5">Time</p>
+                                                                            <p className="text-[15px] font-bold text-emerald-400 font-mono tracking-tight truncate">{tc.value}</p>
+                                                                        </div>
                                                                     </div>
-                                                                    <div className="min-w-0">
-                                                                        <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-0.5">Time</p>
-                                                                        <p className="text-[15px] font-bold text-emerald-400 font-mono tracking-tight truncate">{problem.theory.timeComplexity.value}</p>
-                                                                    </div>
+                                                                    {tc.explanation && (
+                                                                        <p className="text-[11px] leading-relaxed text-zinc-500 mt-2 pl-[3.375rem]">{tc.explanation}</p>
+                                                                    )}
                                                                 </div>
-                                                                {problem.theory.timeComplexity.explanation && (
-                                                                    <p className="text-[11px] leading-relaxed text-zinc-500 mt-2 pl-[3.375rem]">{problem.theory.timeComplexity.explanation}</p>
-                                                                )}
                                                             </div>
-                                                        </div>
-                                                    )}
-                                                    {problem.theory.spaceComplexity?.value && (
-                                                        <div className="relative rounded-2xl border border-[#262626] overflow-hidden group hover:border-violet-500/20 transition-colors duration-300">
-                                                            <div className="absolute inset-0 bg-gradient-to-br from-violet-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                                                            <div className="relative p-4">
-                                                                <div className="flex items-center gap-3.5 mb-2">
-                                                                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500/15 to-violet-600/5 border border-violet-500/15 flex items-center justify-center shrink-0">
-                                                                        <Database size={18} className="text-violet-400" />
+                                                        )}
+                                                        {sc?.value && (
+                                                            <div className="relative rounded-2xl border border-[#262626] overflow-hidden group hover:border-violet-500/20 transition-colors duration-300">
+                                                                <div className="absolute inset-0 bg-gradient-to-br from-violet-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                                                                <div className="relative p-4">
+                                                                    <div className="flex items-center gap-3.5 mb-2">
+                                                                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500/15 to-violet-600/5 border border-violet-500/15 flex items-center justify-center shrink-0">
+                                                                            <Database size={18} className="text-violet-400" />
+                                                                        </div>
+                                                                        <div className="min-w-0">
+                                                                            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-0.5">Space</p>
+                                                                            <p className="text-[15px] font-bold text-violet-400 font-mono tracking-tight truncate">{sc.value}</p>
+                                                                        </div>
                                                                     </div>
-                                                                    <div className="min-w-0">
-                                                                        <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-0.5">Space</p>
-                                                                        <p className="text-[15px] font-bold text-violet-400 font-mono tracking-tight truncate">{problem.theory.spaceComplexity.value}</p>
-                                                                    </div>
+                                                                    {sc.explanation && (
+                                                                        <p className="text-[11px] leading-relaxed text-zinc-500 mt-2 pl-[3.375rem]">{sc.explanation}</p>
+                                                                    )}
                                                                 </div>
-                                                                {problem.theory.spaceComplexity.explanation && (
-                                                                    <p className="text-[11px] leading-relaxed text-zinc-500 mt-2 pl-[3.375rem]">{problem.theory.spaceComplexity.explanation}</p>
-                                                                )}
                                                             </div>
-                                                        </div>
-                                                    )}
-                                                </motion.div>
-                                            )}
+                                                        )}
+                                                    </motion.div>
+                                                );
+                                            })()}
                                         </div>
-                                        {!userData?.isPro && (
+                                        {!isProUser && (
                                             <div className="absolute inset-0 z-20 flex flex-col items-center justify-center p-6">
                                                 <motion.div
                                                     initial={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -1399,8 +1497,21 @@ export default function QuestionPage() {
                                     </div>
                                 )}
                             </motion.div>
-                        )}
+                            );
+                        })()}
                         {activeTab === 'submissions' && (
+                            <SubmissionsTab
+                                submissionResult={submissionResult}
+                                runStatus={runStatus}
+                                userData={userData}
+                                language={language}
+                                onLoadCode={setCode}
+                            />
+                        )}
+
+                        {/* Legacy submissions UI — kept for reference, never rendered */}
+                        {/* eslint-disable-next-line no-constant-binary-expression */}
+                        {(false) && activeTab === 'submissions_legacy' && (
                             <div className="h-full flex flex-col">
                                 {runStatus === 'submitting' ? (
                                     <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
@@ -1692,10 +1803,10 @@ export default function QuestionPage() {
                 {/* Right Panel: Code Editor */}
                 <motion.div
                     ref={rightPanelRef}
-                    initial={{ opacity: 0, x: 20 }}
+                    initial={{ opacity: 0, x: 24 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.5, ease: "easeOut", delay: 0.1 }}
-                    className={`relative flex-1 flex flex-col bg-[#181b21]/90 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl overflow-hidden min-w-0 transition-all duration-500 ${isEditorFocused ? 'ring-1 ring-emerald-500/30 shadow-[0_0_30px_rgba(16,185,129,0.1)] z-40' : 'hover:border-white/20'
+                    transition={{ duration: 0.32, ease: [0.25, 0.46, 0.45, 0.94], delay: 0.06 }}
+                    className={`relative flex-1 flex flex-col bg-[#181b21] rounded-2xl border border-white/10 shadow-2xl overflow-hidden min-w-0 transition-[box-shadow,border-color,ring] duration-300 ${isEditorFocused ? 'ring-1 ring-emerald-500/30 shadow-[0_0_30px_rgba(16,185,129,0.1)] z-40' : 'hover:border-white/20'
                         }`}
                 >
                     {/* Top Section: Editor (Flexible Percent Height) */}
@@ -1774,8 +1885,10 @@ export default function QuestionPage() {
                                     title="Reset Code"
                                     onClick={() => {
                                         if (window.confirm("Reset code to default starter?")) {
-                                            if (problem && problem.starterCode) {
-                                                setCode(problem.starterCode[language] || problem.starterCode.javascript || '');
+                                            if (problem && problem.starterCode && problem.starterCode[language]) {
+                                                setCode(problem.starterCode[language]);
+                                            } else {
+                                                setCode(getBoilerplate(language));
                                             }
                                         }
                                     }}
