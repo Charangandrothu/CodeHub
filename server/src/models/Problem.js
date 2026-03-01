@@ -16,12 +16,15 @@ const problemSchema = new mongoose.Schema(
     category: { type: String }, // General category if needed
     visibility: { type: String, default: 'public', enum: ['public', 'hidden'] },
     tags: [String],
+    companies: [String],
     description: String,
     examples: [exampleSchema],
     constraints: [String],
     starterCode: {
       javascript: String,
       python: String,
+      cpp: String,
+      java: String,
     },
     testCases: {
       visible: [{ input: String, output: String }],
@@ -45,6 +48,42 @@ const problemSchema = new mongoose.Schema(
         python: { type: String, default: '' },
         java: { type: String, default: '' },
         cpp: { type: String, default: '' },
+      },
+      // Brute Force approach
+      bruteForce: {
+        explanation: { type: String, default: '' },
+        timeComplexity: {
+          value: { type: String, default: '' },
+          explanation: { type: String, default: '' },
+        },
+        spaceComplexity: {
+          value: { type: String, default: '' },
+          explanation: { type: String, default: '' },
+        },
+        solutionCode: {
+          javascript: { type: String, default: '' },
+          python: { type: String, default: '' },
+          java: { type: String, default: '' },
+          cpp: { type: String, default: '' },
+        }
+      },
+      // Optimal approach
+      optimal: {
+        explanation: { type: String, default: '' },
+        timeComplexity: {
+          value: { type: String, default: '' },
+          explanation: { type: String, default: '' },
+        },
+        spaceComplexity: {
+          value: { type: String, default: '' },
+          explanation: { type: String, default: '' },
+        },
+        solutionCode: {
+          javascript: { type: String, default: '' },
+          python: { type: String, default: '' },
+          java: { type: String, default: '' },
+          cpp: { type: String, default: '' },
+        }
       }
     },
   },
