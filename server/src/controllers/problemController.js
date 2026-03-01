@@ -78,29 +78,23 @@ exports.getProblemBySlug = async (req, res) => {
       }
     }
 
-    // Sanitize theory for non-pro users
+    // Sanitize theory for non-pro users — hide content but expose enough structure
+    // so the frontend can show the blurred lock overlay (not "Coming Soon")
     if (!isPro && problem.theory) {
-      // Keep structure but hide actual content
-      problem.theory = {
-        videoUrl: problem.theory.videoUrl ? "LOCKED" : null,
-        videoTitle: problem.theory.videoTitle, // Keep title for UI
-        explanation: problem.theory.explanation ? "This content is locked for free users. Upgrade to Pro to view the full explanation." : null,
-        solutionCode: problem.theory.solutionCode ? { javascript: "// Locked", python: "# Locked", java: "// Locked", cpp: "// Locked" } : null,
-        timeComplexity: problem.theory.timeComplexity ? { value: problem.theory.timeComplexity.value, explanation: "Locked" } : null, // Keep value for teaser? Or hide executing
-        spaceComplexity: problem.theory.spaceComplexity ? { value: problem.theory.spaceComplexity.value, explanation: "Locked" } : null
-      };
+      const hasBrute = !!(problem.theory.bruteForce?.explanation || problem.theory.bruteForce?.solutionCode?.javascript);
+      const hasOptimal = !!(problem.theory.optimal?.explanation || problem.theory.optimal?.solutionCode?.javascript);
+      const hasLegacy = !!(problem.theory.videoUrl || problem.theory.explanation);
 
-      // Actually, user requested to HIDE everything from network
-      // If we send "Locked", the network tab shows "Locked". User wants "hide from network also console tabs".
-      // But frontend expects SOME structure to render the blurred UI.
-      // If I return NULL, the frontend shows "Coming Soon".
-      // I will return a minimal structure that triggers the "Blurred" UI but contains NO real data.
-
-      if (problem.theory.videoUrl || problem.theory.explanation) {
+      if (hasBrute || hasOptimal || hasLegacy) {
+        // Return minimal stub so IIFE detects content and shows lock overlay
         problem.theory = {
-          videoUrl: "LOCKED",
-          explanation: "LOCKED",
-          solutionCode: { javascript: "// LOCKED" }
+          videoUrl: problem.theory.videoUrl ? "LOCKED" : null,
+          videoTitle: problem.theory.videoTitle || null,
+          bruteForce: hasBrute ? { explanation: "LOCKED", solutionCode: { javascript: "// LOCKED" } } : null,
+          optimal: hasOptimal ? { explanation: "LOCKED", solutionCode: { javascript: "// LOCKED" } } : null,
+          // Legacy flat fields
+          explanation: hasLegacy ? "LOCKED" : null,
+          solutionCode: hasLegacy ? { javascript: "// LOCKED" } : null,
         };
       } else {
         problem.theory = null;
@@ -149,6 +143,18 @@ exports.deleteProblem = async (req, res) => {
   }
 };
 
+// GET /api/problems/admin-edit/:id  — full data, no sanitization, no cache (admin panel use only)
+exports.getFullProblemForAdmin = async (req, res) => {
+  try {
+    const problem = await Problem.findById(req.params.id).select('-__v').lean();
+    if (!problem) return res.status(404).json({ message: "Problem not found" });
+    res.json(problem);
+  } catch (error) {
+    console.error("Error fetching full problem for admin:", error);
+    res.status(500).json({ message: "Server Error" });
+  }
+};
+
 // PUT /api/problems/:id
 exports.updateProblem = async (req, res) => {
   try {
@@ -158,10 +164,13 @@ exports.updateProblem = async (req, res) => {
     delete updates.slug;
     delete updates._id;
     delete updates.createdAt;
+    delete updates.__v;
 
+    // Use explicit $set so nested subdocuments (theory.bruteForce, theory.optimal etc.)
+    // are saved correctly regardless of Mongoose strict mode behaviour
     const problem = await Problem.findByIdAndUpdate(
       req.params.id,
-      updates,
+      { $set: updates },
       { new: true, runValidators: true }
     );
 

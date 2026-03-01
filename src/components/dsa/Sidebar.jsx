@@ -29,6 +29,14 @@ export default function Sidebar({ isMobileOpen = false, onCloseMobile = () => { 
     const location = useLocation();
     const { currentUser, userData, logout } = useAuth();
     const [topicStats, setTopicStats] = useState({});
+    const [isDesktop, setIsDesktop] = useState(() => window.innerWidth >= 1024);
+
+    useEffect(() => {
+        const mq = window.matchMedia('(min-width: 1024px)');
+        const handler = (e) => setIsDesktop(e.matches);
+        mq.addEventListener('change', handler);
+        return () => mq.removeEventListener('change', handler);
+    }, []);
 
     const isActive = (id) => location.pathname.includes(id) || (location.pathname === '/dsa' && id === 'beginner');
 
@@ -66,10 +74,13 @@ export default function Sidebar({ isMobileOpen = false, onCloseMobile = () => { 
             />
 
             <motion.aside
-                initial={{ x: -280, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                className={`w-72 h-screen fixed top-0 left-0 flex flex-col bg-[#0a0a0a] border-r border-white/5 z-[55] lg:z-50 p-4 sm:p-6 lg:p-6 transform transition-transform duration-300 lg:translate-x-0 ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}`}
+                initial={{ x: -288, opacity: 0 }}
+                animate={{
+                    x: isDesktop ? 0 : (isMobileOpen ? 0 : -288),
+                    opacity: isDesktop ? 1 : (isMobileOpen ? 1 : 0)
+                }}
+                transition={{ type: "spring", stiffness: 260, damping: 28 }}
+                className="w-72 h-screen fixed top-0 left-0 flex flex-col bg-[#0a0a0a] border-r border-white/5 z-[55] lg:z-50 p-4 sm:p-6 lg:p-6"
             >
                 <div className="lg:hidden flex justify-end mb-2">
                     <button

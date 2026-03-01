@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Menu, X } from 'lucide-react';
+import { motion } from 'framer-motion';
 import Sidebar from '../components/dsa/Sidebar';
 import ContentArea from '../components/dsa/ContentArea';
 import RightPanel from '../components/dsa/RightPanel';
@@ -21,8 +22,21 @@ export default function DSA() {
 
             <Sidebar isMobileOpen={mobileSidebarOpen} onCloseMobile={() => setMobileSidebarOpen(false)} />
             <div className="lg:ml-72 p-6 lg:p-8 flex gap-8 max-w-[1920px] max-lg:flex-col max-lg:gap-4 max-lg:p-4 sm:max-lg:p-6">
-                <ContentArea />
-                <RightPanel />
+                <motion.div
+                    className="flex-1 min-w-0"
+                    initial={{ opacity: 0, x: 32 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94], delay: 0.12 }}
+                >
+                    <ContentArea />
+                </motion.div>
+                <motion.div
+                    initial={{ opacity: 0, x: 48 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94], delay: 0.22 }}
+                >
+                    <RightPanel />
+                </motion.div>
             </div>
         </div>
     );

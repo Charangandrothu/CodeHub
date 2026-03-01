@@ -4,6 +4,7 @@ const router = express.Router();
 const {
   getAllProblems,
   getProblemBySlug,
+  getFullProblemForAdmin,
   createProblem,
   updateProblem,
   deleteProblem
@@ -13,6 +14,9 @@ const cacheMiddleware = require("../middleware/cache");
 
 // Cache the list of problems for 60 seconds
 router.get("/", cacheMiddleware(60), getAllProblems);
+
+// Admin-only: fetch full problem (all theory fields, no sanitization, no cache)
+router.get("/admin-edit/:id", getFullProblemForAdmin);
 
 router.post("/", createProblem);
 router.put("/:id", updateProblem);

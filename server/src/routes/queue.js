@@ -3,7 +3,7 @@ const Problem = require("../models/Problem");
 const User = require("../models/User");
 const Submission = require("../models/Submission");
 const redis = require("../config/redis");
-const { generateDriverCode, executeWithPolling, normalizeOutput, languageIds } = require("../utils/judgeHelpers");
+const { generateDriverCode, executeWithPolling, normalizeOutput, languageIds, timeLimits } = require("../utils/judgeHelpers");
 
 // Create Queue
 const submissionQueue = new Queue('submission-queue', process.env.REDIS_URL || 'redis://127.0.0.1:6379');
@@ -45,12 +45,14 @@ submissionQueue.process(async (job) => {
             const testCase = hiddenCases[i];
             const finalSourceCode = generateDriverCode(code, language, testCase.input);
             const shouldUseStdin = (finalSourceCode === code);
+            const cpuTimeLimit = timeLimits[language] || 2;
 
             try {
                 const result = await executeWithPolling(
                     finalSourceCode,
                     languageIds[language],
-                    shouldUseStdin ? testCase.input : ""
+                    shouldUseStdin ? testCase.input : "",
+                    cpuTimeLimit
                 );
 
                 // Track Max Time/Memory

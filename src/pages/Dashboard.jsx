@@ -288,9 +288,7 @@ const Dashboard = () => {
                                         </div>
                                     </div>
 
-                                    <Button
-                                        className={`w-full sm:w-auto shrink-0 ${dashboardState.isNewUser ? 'bg-white text-black hover:bg-gray-100' : ''}`}
-                                        icon={ArrowRight}
+                                    <button
                                         onClick={() => {
                                             if (dashboardState.isNewUser) {
                                                 navigate('/dsa');
@@ -300,9 +298,25 @@ const Dashboard = () => {
                                                 navigate('/dsa');
                                             }
                                         }}
+                                        className="group/cta relative w-full sm:w-auto shrink-0 overflow-hidden rounded-xl px-6 py-3 text-sm font-semibold cursor-pointer focus:outline-none hover:-translate-y-px active:scale-[0.97] transition-transform duration-150"
+                                        style={{
+                                            background: 'linear-gradient(135deg, #0b0b14 0%, #0f0f1c 100%)',
+                                            border: '1px solid rgba(255,255,255,0.11)',
+                                            boxShadow: '0 6px 24px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.07)',
+                                        }}
                                     >
-                                        {nextTask?.progress >= 80 ? "Finish It 💪" : "Continue Practice"}
-                                    </Button>
+                                        {/* Hover colour wash */}
+                                        <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-blue-500/[0.10] via-transparent to-purple-500/[0.08] opacity-0 group-hover/cta:opacity-100 transition-opacity duration-200 pointer-events-none" />
+                                        {/* Top edge highlight */}
+                                        <div className="absolute top-0 left-5 right-5 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+                                        {/* Content */}
+                                        <span className="relative z-10 flex items-center justify-center gap-2">
+                                            <span className="bg-clip-text text-transparent bg-gradient-to-r from-white via-gray-100 to-gray-400">
+                                                {nextTask?.progress >= 80 ? "Finish It 💪" : "Continue Practice"}
+                                            </span>
+                                            <ArrowRight size={15} className="text-blue-400 group-hover/cta:translate-x-1 transition-transform duration-150" />
+                                        </span>
+                                    </button>
                                 </div>
                             </div>
                         </motion.div>

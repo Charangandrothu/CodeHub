@@ -2,7 +2,7 @@ const express = require("express");
 const axios = require("axios");
 const redis = require("../config/redis");
 const { addJob } = require("./queue");
-const { generateDriverCode, executeWithPolling, languageIds } = require("../utils/judgeHelpers");
+const { generateDriverCode, buildJavaDriver, executeWithPolling, normalizeOutput, languageIds, timeLimits, buildBatchDriver, buildBatchCombinedStdin } = require("../utils/judgeHelpers");
 
 const router = express.Router();
 
@@ -26,6 +26,20 @@ const getLocalFunctionSignature = (code, language) => {
 
 // Helper to generate driver code locally for /run
 const generateLocalDriverCode = (userCode, language, testCaseInput) => {
+    // C++ passes through as-is
+    if (language === 'cpp') return userCode;
+
+    // Java: build a Main wrapper around the user's class
+    if (language === 'java') {
+        const normalizedInput = testCaseInput.replace(/,\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*=/g, '\n$1 =');
+        const inputLines = normalizedInput.split('\n').filter(line => line.trim());
+        const inputValues = inputLines.map(line => {
+            const match = line.match(/^\s*[a-zA-Z_][a-zA-Z0-9_]*\s*=\s*(.*)/);
+            return match ? match[1] : line.trim();
+        });
+        return buildJavaDriver(userCode, inputValues) || userCode;
+    }
+
     const signature = getLocalFunctionSignature(userCode, language);
     if (!signature) return userCode;
 
@@ -136,12 +150,14 @@ router.post("/run", async (req, res) => {
         // Use local logic or helper if available
         const finalSourceCode = generateLocalDriverCode(code, language, stdin || "");
         const effectiveStdin = (finalSourceCode !== code) ? "" : (stdin || "");
+        const cpuTimeLimit = timeLimits[language] || 2;
 
         // Execute with polling
         const result = await executeWithPolling(
             finalSourceCode,
             languageIds[language],
-            effectiveStdin
+            effectiveStdin,
+            cpuTimeLimit
         );
 
         if (user && !user.isPro) {
@@ -167,7 +183,7 @@ router.post("/run", async (req, res) => {
 });
 
 
-// SUBMIT Route - Queues execution
+// SUBMIT Route - Inline execution (no queue, instant result)
 router.post("/submit", async (req, res) => {
     const { code, language, problemId, userId } = req.body;
 
@@ -176,49 +192,244 @@ router.post("/submit", async (req, res) => {
     }
 
     try {
-        // Check Pro Status & Submission Credits
+        // 1. Check user & credits
         const user = await User.findOne({ uid: userId });
 
-        // Ensure stats exist
-        if (user && !user.stats) {
-            user.stats = {
-                runCredits: 3,
-                submissionCredits: 3,
-                dailyTarget: 3
-            };
+        if (!user) return res.status(404).json({ error: "User not found" });
+
+        if (!user.stats) {
+            user.stats = { runCredits: 3, submissionCredits: 3, dailyTarget: 3 };
             await user.save();
         }
 
-        if (!user) {
-            return res.status(404).json({ error: "User not found" });
+        const isProUser = user.isPro || user.plan === 'pro' || user.plan === 'elite';
+
+        if (!isProUser && user.stats.submissionCredits <= 0) {
+            return res.status(403).json({
+                error: "Submission Limit Exceeded",
+                verdict: "Limit Exceeded",
+                details: "You have used all your free submissions. Upgrade to Pro for unlimited submissions.",
+                isLimitError: true
+            });
         }
 
-        if (!user.isPro) {
-            // Check submission credits for free users
-            if (user.stats.submissionCredits <= 0) {
-                return res.status(403).json({
-                    error: "Submission Limit Exceeded",
-                    verdict: "Limit Exceeded",
-                    details: "You have used all your free submissions. Upgrade to Pro for unlimited submissions.",
-                    isLimitError: true
-                });
+        // 2. Fetch problem + hidden test cases
+        const problem = await Problem.findById(problemId);
+        if (!problem) return res.status(404).json({ error: "Problem not found" });
+
+        const hiddenCases = problem.testCases?.hidden;
+        if (!hiddenCases || hiddenCases.length === 0) {
+            return res.status(400).json({ error: "No hidden test cases defined" });
+        }
+
+        // 3. Execute all test cases — single batch submission when possible, parallel fallback for C++
+        const cpuTimeLimit = timeLimits[language] || 2;
+
+        let finalVerdict = "Accepted";
+        let finalError   = "";
+        let failedTestCase = null;
+        let passedCount  = 0;
+        let maxTime      = 0;
+        let maxMemory    = 0;
+
+        const batchDriver = buildBatchDriver(code, language);
+
+        if (batchDriver) {
+            // ── SINGLE EXECUTION PATH (JS / Python / Java) ──────────────────
+            // cpu_time_limit is generous: per-case limit × num cases, capped at 15 s
+            const batchCpuLimit = Math.min(cpuTimeLimit * hiddenCases.length, 15);
+            const combinedStdin = buildBatchCombinedStdin(hiddenCases);
+
+            const result = await executeWithPolling(
+                batchDriver,
+                languageIds[language],
+                combinedStdin,
+                batchCpuLimit
+            );
+
+            maxTime   = parseFloat(result.time)   || 0;
+            maxMemory = parseFloat(result.memory) || 0;
+
+            const statusId = result.status?.id;
+
+            if (statusId === 6 || result.compile_output) {
+                finalVerdict = "Compilation Error";
+                finalError   = result.compile_output || result.stderr || "";
+            } else if (statusId === 5) {
+                finalVerdict = "Time Limit Exceeded";
+                finalError   = "Time limit exceeded";
+                failedTestCase = { input: hiddenCases[0]?.input, expected: hiddenCases[0]?.output, actual: "TLE" };
+            } else if (result.stderr || (statusId >= 7 && statusId <= 12)) {
+                finalVerdict = "Runtime Error";
+                finalError   = result.stderr || result.status?.description || "";
+            } else {
+                // Compare output block-by-block.
+                // Each test case may produce multiple lines (e.g. grid/pattern problems),
+                // so consume exactly as many lines as the expected output has.
+                const outputLines = (result.stdout || "").split("\n");
+                let outIdx = 0;
+                for (let i = 0; i < hiddenCases.length; i++) {
+                    const expectedNorm       = normalizeOutput(hiddenCases[i].output);
+                    const expectedLineCount  = expectedNorm ? expectedNorm.split("\n").length : 1;
+
+                    // Skip any leading blank separator lines
+                    while (outIdx < outputLines.length && outputLines[outIdx].trim() === '' &&
+                           outputLines.length - outIdx > (hiddenCases.length - i) * expectedLineCount) {
+                        outIdx++;
+                    }
+
+                    // Consume the expected number of lines as one block
+                    const actualBlock = outputLines.slice(outIdx, outIdx + expectedLineCount).join("\n");
+                    outIdx += expectedLineCount;
+
+                    const actual   = normalizeOutput(actualBlock).trim();
+                    const expected = expectedNorm.trim();
+
+                    if (actual !== expected) {
+                        finalVerdict   = "Wrong Answer";
+                        failedTestCase = { input: hiddenCases[i].input, expected: hiddenCases[i].output, actual: actualBlock };
+                        break;
+                    }
+                    passedCount++;
+                }
+            }
+        } else {
+            // ── PARALLEL FALLBACK (C++ or unrecognised signature) ────────────
+            const settled = await Promise.allSettled(
+                hiddenCases.map(tc => {
+                    const src      = generateLocalDriverCode(code, language, tc.input);
+                    const useStdin = (src === code);
+                    return executeWithPolling(src, languageIds[language], useStdin ? tc.input : "", cpuTimeLimit);
+                })
+            );
+
+            for (let i = 0; i < hiddenCases.length; i++) {
+                const s        = settled[i];
+                const testCase = hiddenCases[i];
+
+                if (s.status === 'rejected') {
+                    finalVerdict = "Runtime Error";
+                    finalError   = "System Error: " + s.reason?.message;
+                    failedTestCase = { input: testCase.input, expected: testCase.output, actual: "Runtime Error" };
+                    break;
+                }
+
+                const result   = s.value;
+                const t        = parseFloat(result.time)   || 0;
+                const mem      = parseFloat(result.memory) || 0;
+                if (t   > maxTime)   maxTime   = t;
+                if (mem > maxMemory) maxMemory = mem;
+
+                const statusId = result.status?.id;
+                if (statusId === 6 || result.compile_output) {
+                    finalVerdict = "Compilation Error";
+                    finalError   = result.compile_output || result.stderr;
+                    break;
+                }
+                if (statusId === 5) {
+                    finalVerdict = "Time Limit Exceeded";
+                    finalError   = "Time limit exceeded";
+                    failedTestCase = { input: testCase.input, expected: testCase.output, actual: "TLE" };
+                    break;
+                }
+                if (result.stderr || (statusId >= 7 && statusId <= 12)) {
+                    finalVerdict = "Runtime Error";
+                    finalError   = result.stderr || result.status?.description;
+                    failedTestCase = { input: testCase.input, expected: testCase.output, actual: "Runtime Error" };
+                    break;
+                }
+
+                const actual   = normalizeOutput(result.stdout);
+                const expected = normalizeOutput(testCase.output);
+                if (actual !== expected) {
+                    finalVerdict   = "Wrong Answer";
+                    failedTestCase = { input: testCase.input, expected: testCase.output, actual };
+                    break;
+                }
+                passedCount++;
             }
         }
 
-        await addJob({
-            code,
-            language,
-            userId,
-            problemId
-        });
+        // 4. Save submission record
+        const now = new Date();
+        const submission = await Submission.findOneAndUpdate(
+            { userId, problemId },
+            {
+                code,
+                language,
+                verdict: finalVerdict,
+                runtime: maxTime,
+                memory: maxMemory,
+                submittedAt: now,
+                passedTestCases: passedCount,
+                totalTestCases: hiddenCases.length,
+                stderr: finalError,
+                failedTestCase: failedTestCase || null
+            },
+            { upsert: true, new: true }
+        );
 
-        res.json({ message: "Submission queued" });
+        // 5. Update user stats
+        const userUpdate = await User.findOne({ uid: userId });
+        if (userUpdate) {
+            if (!userUpdate.stats) userUpdate.stats = {};
+            if (!userUpdate.stats.solvedProblemIds) userUpdate.stats.solvedProblemIds = [];
+
+            userUpdate.submissionHistory = userUpdate.submissionHistory || [];
+            userUpdate.submissionHistory.push({
+                problemId,
+                problemTitle: problem.title || "Unknown Problem",
+                verdict: finalVerdict,
+                submittedAt: now
+            });
+            if (userUpdate.submissionHistory.length > 2000) {
+                userUpdate.submissionHistory = userUpdate.submissionHistory.slice(-2000);
+            }
+
+            if (finalVerdict === "Accepted" && !userUpdate.stats.solvedProblemIds.includes(problemId)) {
+                userUpdate.stats.solvedProblemIds.push(problemId);
+                userUpdate.stats.solvedProblems = userUpdate.stats.solvedProblemIds.length;
+
+                const todayMid = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                const lastDate = userUpdate.stats.lastSolvedDate ? new Date(userUpdate.stats.lastSolvedDate) : null;
+                const lastMid = lastDate ? new Date(lastDate.getFullYear(), lastDate.getMonth(), lastDate.getDate()) : null;
+                if (!lastMid) {
+                    userUpdate.stats.streak = 1;
+                } else {
+                    const diffDays = Math.ceil(Math.abs(todayMid - lastMid) / (1000 * 60 * 60 * 24));
+                    userUpdate.stats.streak = diffDays === 1 ? (userUpdate.stats.streak || 0) + 1 : 1;
+                }
+                userUpdate.stats.lastSolvedDate = now;
+            }
+
+            await userUpdate.save();
+            await redis.del(`cache:/api/users/${userId}`);
+            if (userUpdate.username) await redis.del(`cache:/api/users/handle/${userUpdate.username}`);
+        }
+
+        // 6. Deduct credit for free users
+        if (!isProUser) {
+            await User.findOneAndUpdate(
+                { uid: userId, "stats.submissionCredits": { $gt: 0 } },
+                { $inc: { "stats.submissionCredits": -1 } }
+            );
+        }
+
+        // 7. Return result directly
+        return res.json({
+            verdict: finalVerdict,
+            stderr: finalError,
+            failedTestCase: failedTestCase || null,
+            runtime: maxTime,
+            memory: maxMemory,
+            passedTestCases: passedCount,
+            totalTestCases: hiddenCases.length,
+            submittedAt: now
+        });
 
     } catch (error) {
-        res.status(500).json({
-            error: "Failed to queue submission",
-            details: error.message
-        });
+        console.error("Submit error:", error);
+        res.status(500).json({ error: "Submission failed", details: error.message });
     }
 });
 
