@@ -148,8 +148,17 @@ router.post("/run", async (req, res) => {
         }
 
         // Use local logic or helper if available
-        const finalSourceCode = generateLocalDriverCode(code, language, stdin || "");
-        const effectiveStdin = (finalSourceCode !== code) ? "" : (stdin || "");
+        let finalSourceCode = generateLocalDriverCode(code, language, stdin || "");
+        let effectiveStdin = (finalSourceCode !== code) ? "" : (stdin || "");
+
+        if (language === 'cpp' && !code.includes('main')) {
+            const batchDriver = buildBatchDriver(code, language);
+            if (batchDriver) {
+                finalSourceCode = batchDriver;
+                effectiveStdin = "1\n" + (stdin || "");
+            }
+        }
+
         const cpuTimeLimit = timeLimits[language] || 2;
 
         // Execute with polling
@@ -167,8 +176,14 @@ router.post("/run", async (req, res) => {
             );
         }
 
+        // If it's a batch execution generated strictly for local testcases, remove the batch separator from console
+        let cleanStdout = result.stdout;
+        if (cleanStdout) {
+            cleanStdout = cleanStdout.split(/\n?~---~\n?/)[0];
+        }
+
         res.json({
-            stdout: result.stdout,
+            stdout: cleanStdout,
             stderr: result.stderr,
             status: result.status?.description,
             compile_output: result.compile_output
@@ -226,11 +241,11 @@ router.post("/submit", async (req, res) => {
         const cpuTimeLimit = timeLimits[language] || 2;
 
         let finalVerdict = "Accepted";
-        let finalError   = "";
+        let finalError = "";
         let failedTestCase = null;
-        let passedCount  = 0;
-        let maxTime      = 0;
-        let maxMemory    = 0;
+        let passedCount = 0;
+        let maxTime = 0;
+        let maxMemory = 0;
 
         const batchDriver = buildBatchDriver(code, language);
 
@@ -247,47 +262,34 @@ router.post("/submit", async (req, res) => {
                 batchCpuLimit
             );
 
-            maxTime   = parseFloat(result.time)   || 0;
+            maxTime = parseFloat(result.time) || 0;
             maxMemory = parseFloat(result.memory) || 0;
 
             const statusId = result.status?.id;
 
             if (statusId === 6 || result.compile_output) {
                 finalVerdict = "Compilation Error";
-                finalError   = result.compile_output || result.stderr || "";
+                finalError = result.compile_output || result.stderr || "";
             } else if (statusId === 5) {
                 finalVerdict = "Time Limit Exceeded";
-                finalError   = "Time limit exceeded";
+                finalError = "Time limit exceeded";
                 failedTestCase = { input: hiddenCases[0]?.input, expected: hiddenCases[0]?.output, actual: "TLE" };
             } else if (result.stderr || (statusId >= 7 && statusId <= 12)) {
                 finalVerdict = "Runtime Error";
-                finalError   = result.stderr || result.status?.description || "";
+                finalError = result.stderr || result.status?.description || "";
             } else {
-                // Compare output block-by-block.
-                // Each test case may produce multiple lines (e.g. grid/pattern problems),
-                // so consume exactly as many lines as the expected output has.
-                const outputLines = (result.stdout || "").split("\n");
-                let outIdx = 0;
+                const rawOutputs = (result.stdout || "").split(/\n?~---~\n?/);
+
                 for (let i = 0; i < hiddenCases.length; i++) {
-                    const expectedNorm       = normalizeOutput(hiddenCases[i].output);
-                    const expectedLineCount  = expectedNorm ? expectedNorm.split("\n").length : 1;
+                    const expectedNorm = normalizeOutput(hiddenCases[i].output);
+                    let actualRaw = rawOutputs[i] || "";
 
-                    // Skip any leading blank separator lines
-                    while (outIdx < outputLines.length && outputLines[outIdx].trim() === '' &&
-                           outputLines.length - outIdx > (hiddenCases.length - i) * expectedLineCount) {
-                        outIdx++;
-                    }
-
-                    // Consume the expected number of lines as one block
-                    const actualBlock = outputLines.slice(outIdx, outIdx + expectedLineCount).join("\n");
-                    outIdx += expectedLineCount;
-
-                    const actual   = normalizeOutput(actualBlock).trim();
-                    const expected = expectedNorm.trim();
+                    const actual = normalizeOutput(actualRaw);
+                    const expected = expectedNorm;
 
                     if (actual !== expected) {
-                        finalVerdict   = "Wrong Answer";
-                        failedTestCase = { input: hiddenCases[i].input, expected: hiddenCases[i].output, actual: actualBlock };
+                        finalVerdict = "Wrong Answer";
+                        failedTestCase = { input: hiddenCases[i].input, expected: hiddenCases[i].output, actual: actualRaw.trim() };
                         break;
                     }
                     passedCount++;
@@ -297,52 +299,52 @@ router.post("/submit", async (req, res) => {
             // ── PARALLEL FALLBACK (C++ or unrecognised signature) ────────────
             const settled = await Promise.allSettled(
                 hiddenCases.map(tc => {
-                    const src      = generateLocalDriverCode(code, language, tc.input);
+                    const src = generateLocalDriverCode(code, language, tc.input);
                     const useStdin = (src === code);
                     return executeWithPolling(src, languageIds[language], useStdin ? tc.input : "", cpuTimeLimit);
                 })
             );
 
             for (let i = 0; i < hiddenCases.length; i++) {
-                const s        = settled[i];
+                const s = settled[i];
                 const testCase = hiddenCases[i];
 
                 if (s.status === 'rejected') {
                     finalVerdict = "Runtime Error";
-                    finalError   = "System Error: " + s.reason?.message;
+                    finalError = "System Error: " + s.reason?.message;
                     failedTestCase = { input: testCase.input, expected: testCase.output, actual: "Runtime Error" };
                     break;
                 }
 
-                const result   = s.value;
-                const t        = parseFloat(result.time)   || 0;
-                const mem      = parseFloat(result.memory) || 0;
-                if (t   > maxTime)   maxTime   = t;
+                const result = s.value;
+                const t = parseFloat(result.time) || 0;
+                const mem = parseFloat(result.memory) || 0;
+                if (t > maxTime) maxTime = t;
                 if (mem > maxMemory) maxMemory = mem;
 
                 const statusId = result.status?.id;
                 if (statusId === 6 || result.compile_output) {
                     finalVerdict = "Compilation Error";
-                    finalError   = result.compile_output || result.stderr;
+                    finalError = result.compile_output || result.stderr;
                     break;
                 }
                 if (statusId === 5) {
                     finalVerdict = "Time Limit Exceeded";
-                    finalError   = "Time limit exceeded";
+                    finalError = "Time limit exceeded";
                     failedTestCase = { input: testCase.input, expected: testCase.output, actual: "TLE" };
                     break;
                 }
                 if (result.stderr || (statusId >= 7 && statusId <= 12)) {
                     finalVerdict = "Runtime Error";
-                    finalError   = result.stderr || result.status?.description;
+                    finalError = result.stderr || result.status?.description;
                     failedTestCase = { input: testCase.input, expected: testCase.output, actual: "Runtime Error" };
                     break;
                 }
 
-                const actual   = normalizeOutput(result.stdout);
+                const actual = normalizeOutput(result.stdout);
                 const expected = normalizeOutput(testCase.output);
                 if (actual !== expected) {
-                    finalVerdict   = "Wrong Answer";
+                    finalVerdict = "Wrong Answer";
                     failedTestCase = { input: testCase.input, expected: testCase.output, actual };
                     break;
                 }
