@@ -20,7 +20,11 @@ const timeLimits = {
 // Helper to normalized output
 const normalizeOutput = (str) => {
     if (!str) return "";
-    return str.trim().replace(/\r\n/g, "\n");
+    return str.replace(/\r\n/g, "\n")
+        .split('\n')
+        .map(line => line.replace(/\s+$/, ''))
+        .join('\n')
+        .replace(/\n+$/, '');
 };
 
 // Helper to extract signature
@@ -58,22 +62,22 @@ const getFunctionSignature = (code, language) => {
 const javaParseValue = (type, varName, rawVal) => {
     const t = type.replace(/\s+/g, '');
     const escaped = rawVal.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    if (t === 'int' || t === 'Integer')    return `int ${varName} = ${rawVal};`;
-    if (t === 'long' || t === 'Long')      return `long ${varName} = ${rawVal}L;`;
-    if (t === 'double' || t === 'Double')  return `double ${varName} = ${rawVal};`;
+    if (t === 'int' || t === 'Integer') return `int ${varName} = ${rawVal};`;
+    if (t === 'long' || t === 'Long') return `long ${varName} = ${rawVal}L;`;
+    if (t === 'double' || t === 'Double') return `double ${varName} = ${rawVal};`;
     if (t === 'boolean' || t === 'Boolean') return `boolean ${varName} = ${rawVal};`;
     if (t === 'String') {
         if (rawVal.startsWith('"') || rawVal.startsWith("'"))
             return `String ${varName} = ${rawVal.replace(/'/g, '"')};`;
         return `String ${varName} = "${rawVal}";`;
     }
-    if (t === 'int[]')      return `int[] ${varName} = parseIntArray("${escaped}");`;
-    if (t === 'long[]')     return `long[] ${varName} = parseLongArray("${escaped}");`;
-    if (t === 'double[]')   return `double[] ${varName} = parseDoubleArray("${escaped}");`;
-    if (t === 'String[]')   return `String[] ${varName} = parseStringArray("${escaped}");`;
-    if (t === 'int[][]')    return `int[][] ${varName} = parse2DIntArray("${escaped}");`;
+    if (t === 'int[]') return `int[] ${varName} = parseIntArray("${escaped}");`;
+    if (t === 'long[]') return `long[] ${varName} = parseLongArray("${escaped}");`;
+    if (t === 'double[]') return `double[] ${varName} = parseDoubleArray("${escaped}");`;
+    if (t === 'String[]') return `String[] ${varName} = parseStringArray("${escaped}");`;
+    if (t === 'int[][]') return `int[][] ${varName} = parse2DIntArray("${escaped}");`;
     if (t === 'List<Integer>' || t === 'ArrayList<Integer>') return `List<Integer> ${varName} = parseIntList("${escaped}");`;
-    if (t === 'List<String>'  || t === 'ArrayList<String>')  return `List<String> ${varName} = parseStringList("${escaped}");`;
+    if (t === 'List<String>' || t === 'ArrayList<String>') return `List<String> ${varName} = parseStringList("${escaped}");`;
     // fallback — will likely cause compile error but at least gives raw value
     return `// unsupported type ${type} for ${varName} (raw: ${rawVal})`;
 };
@@ -163,7 +167,7 @@ const buildJavaDriver = (userCode, inputValues) => {
 
     const returnType = methodMatch[1].trim();
     const methodName = methodMatch[2];
-    const paramStr   = methodMatch[3];
+    const paramStr = methodMatch[3];
 
     // Parse parameter list
     const params = paramStr.split(',').map(p => {
@@ -347,18 +351,18 @@ const executeWithPolling = async (source_code, language_id, stdin, cpu_time_limi
  */
 const javaRuntimeParseFromVar = (type, varName, stringVar) => {
     const t = type.replace(/\s+/g, '');
-    if (t === 'int'   || t === 'Integer')  return `int ${varName} = Integer.parseInt(${stringVar}.trim());`;
-    if (t === 'long'  || t === 'Long')     return `long ${varName} = Long.parseLong(${stringVar}.trim());`;
-    if (t === 'double'|| t === 'Double')   return `double ${varName} = Double.parseDouble(${stringVar}.trim());`;
-    if (t === 'boolean'||t === 'Boolean')  return `boolean ${varName} = Boolean.parseBoolean(${stringVar}.trim());`;
-    if (t === 'String')                    return `String ${varName} = ${stringVar}.trim().replaceAll("^\\"|\\"$", "").replaceAll("^'|'$", "");`;
-    if (t === 'int[]')     return `int[] ${varName} = parseIntArray(${stringVar});`;
-    if (t === 'long[]')    return `long[] ${varName} = parseLongArray(${stringVar});`;
-    if (t === 'double[]')  return `double[] ${varName} = parseDoubleArray(${stringVar});`;
-    if (t === 'String[]')  return `String[] ${varName} = parseStringArray(${stringVar});`;
-    if (t === 'int[][]')   return `int[][] ${varName} = parse2DIntArray(${stringVar});`;
+    if (t === 'int' || t === 'Integer') return `int ${varName} = Integer.parseInt(${stringVar}.trim());`;
+    if (t === 'long' || t === 'Long') return `long ${varName} = Long.parseLong(${stringVar}.trim());`;
+    if (t === 'double' || t === 'Double') return `double ${varName} = Double.parseDouble(${stringVar}.trim());`;
+    if (t === 'boolean' || t === 'Boolean') return `boolean ${varName} = Boolean.parseBoolean(${stringVar}.trim());`;
+    if (t === 'String') return `String ${varName} = ${stringVar}.trim().replaceAll("^\\"|\\"$", "").replaceAll("^'|'$", "");`;
+    if (t === 'int[]') return `int[] ${varName} = parseIntArray(${stringVar});`;
+    if (t === 'long[]') return `long[] ${varName} = parseLongArray(${stringVar});`;
+    if (t === 'double[]') return `double[] ${varName} = parseDoubleArray(${stringVar});`;
+    if (t === 'String[]') return `String[] ${varName} = parseStringArray(${stringVar});`;
+    if (t === 'int[][]') return `int[][] ${varName} = parse2DIntArray(${stringVar});`;
     if (t === 'List<Integer>' || t === 'ArrayList<Integer>') return `List<Integer> ${varName} = parseIntList(${stringVar});`;
-    if (t === 'List<String>'  || t === 'ArrayList<String>')  return `List<String> ${varName} = parseStringList(${stringVar});`;
+    if (t === 'List<String>' || t === 'ArrayList<String>') return `List<String> ${varName} = parseStringList(${stringVar});`;
     return `// unsupported type ${type} for ${varName}`;
 };
 
@@ -374,9 +378,9 @@ const buildBatchDriverJava = (userCode) => {
     }
     if (!methodMatch) return null;
 
-    const returnType  = methodMatch[1].trim();
-    const methodName  = methodMatch[2];
-    const paramStr    = methodMatch[3];
+    const returnType = methodMatch[1].trim();
+    const methodName = methodMatch[2];
+    const paramStr = methodMatch[3];
     const params = paramStr.split(',').map(p => {
         p = p.trim(); if (!p) return null;
         const i = p.lastIndexOf(' '); if (i < 0) return null;
@@ -384,8 +388,8 @@ const buildBatchDriverJava = (userCode) => {
     }).filter(Boolean);
 
     const classNameMatch = userCode.match(/class\s+(\w+)/);
-    const userClassName  = classNameMatch ? classNameMatch[1] : 'Solution';
-    const isStatic       = methodMatch[0].includes('static');
+    const userClassName = classNameMatch ? classNameMatch[1] : 'Solution';
+    const isStatic = methodMatch[0].includes('static');
 
     // One readLine + type-parse per param
     const parseLines = params.map((p, i) => {
@@ -393,7 +397,7 @@ const buildBatchDriverJava = (userCode) => {
         return `String ${rawVar} = _ev(sc.nextLine());\n            ${javaRuntimeParseFromVar(p.type, p.name, rawVar)}`;
     });
 
-    const callExpr  = isStatic
+    const callExpr = isStatic
         ? `${userClassName}.${methodName}(${params.map(p => p.name).join(', ')})`
         : `new ${userClassName}().${methodName}(${params.map(p => p.name).join(', ')})`;
     const printLine = javaFormatPrint(returnType, callExpr);
@@ -413,6 +417,7 @@ class Main {
         for (int _t = 0; _t < _T; _t++) {
             ${parseLines.join('\n            ')}
             ${printLine}
+            System.out.println("~---~");
         }
     }
 ${JAVA_HELPERS}
@@ -447,6 +452,7 @@ const buildBatchDriverJS = (userCode, signature) => {
             else if (typeof _res === 'object' && _res !== null) { console.log(JSON.stringify(_res)); }
             else { console.log(_res); }
         }
+        console.log('~---~');
         } catch(e) { process.stderr.write(String(e.message || e)); process.exit(1); }
     }
 })();`;
@@ -483,7 +489,131 @@ if __name__ == "__main__":
             elif isinstance(_res, bool): print('true' if _res else 'false')
             elif isinstance(_res, str): print(_res)
             else: print(json.dumps(_res))
+            print('~---~')
         except Exception as e: sys.stderr.write(str(e)); sys.exit(1)
+`;
+};
+
+/** Build a C++ batch driver wrapping the user function. */
+const cppRuntimeParseFromVar = (type, varName, stringVar) => {
+    const t = type.replace(/\s+/g, '').replace(/&$/, '');
+    if (t === 'int') return `int ${varName} = stoi(${stringVar});`;
+    if (t === 'long' || t === 'longlong') return `long long ${varName} = stoll(${stringVar});`;
+    if (t === 'double') return `double ${varName} = stod(${stringVar});`;
+    if (t === 'float') return `float ${varName} = stof(${stringVar});`;
+    if (t === 'bool') return `bool ${varName} = (${stringVar}=="true"||${stringVar}=="1");`;
+    if (t === 'string' || t === 'String') return `string ${varName} = ${stringVar};`;
+    if (t === 'vector<int>') return `vector<int> ${varName} = _pvi(${stringVar});`;
+    if (t === 'vector<long>' || t === 'vector<longlong>') return `vector<long long> ${varName} = _pvl(${stringVar});`;
+    if (t === 'vector<string>') return `vector<string> ${varName} = _pvs(${stringVar});`;
+    return `// unsupported c++ type ${type} for ${varName}`;
+};
+
+const cppFormatPrint = (returnType, callExpr) => {
+    const t = returnType.replace(/\s+/g, '');
+    if (t === 'void') return `${callExpr};`;
+    if (t === 'vector<int>' || t === 'vector<longlong>' || t === 'vector<long>')
+        return `auto _res = ${callExpr}; cout << "["; for(size_t i=0;i<_res.size();i++) { cout << _res[i] << (i+1==_res.size()?"":","); } cout << "]";`;
+    if (t === 'bool')
+        return `cout << (${callExpr} ? "true" : "false");`;
+    return `cout << ${callExpr};`;
+};
+
+const buildBatchDriverCpp = (userCode) => {
+    const methodRe = /(?:inline\s+|static\s+|virtual\s+|constexpr\s+)*([\w<>\s:&*]+)\s+([a-zA-Z_]\w*)\s*\(([^)]*)\)\s*\{/g;
+    let methodMatch = null, m;
+    while ((m = methodRe.exec(userCode)) !== null) {
+        if (m[2] === 'main') continue;
+        methodMatch = m; break;
+    }
+    if (!methodMatch) return null;
+
+    const returnType = methodMatch[1].trim();
+    const methodName = methodMatch[2];
+    const paramStr = methodMatch[3];
+    const params = paramStr.split(',').map(p => {
+        p = p.trim(); if (!p) return null;
+        let lastSpace = p.lastIndexOf(' '); if (lastSpace < 0) return null;
+        return { type: p.substring(0, lastSpace).trim(), name: p.substring(lastSpace + 1).trim().replace(/^&|\*|&$/g, '') };
+    }).filter(Boolean);
+
+    const parseLines = params.map((p, i) => {
+        const rawVar = `_r${i}`;
+        return `string ${rawVar}; getline(cin, ${rawVar}); ${rawVar} = _ev(${rawVar});\n        ${cppRuntimeParseFromVar(p.type, p.name, rawVar)}`;
+    });
+
+    const callExpr = `${methodName}(${params.map(p => p.name).join(', ')})`;
+    const printLine = cppFormatPrint(returnType, callExpr);
+
+    return `${userCode}
+
+// === AUTO-GENERATED BATCH RUNNER ===
+#include <iostream>
+#include <vector>
+#include <string>
+#include <sstream>
+#include <algorithm>
+
+using namespace std;
+
+string _tr(string s) {
+    size_t start = s.find_first_not_of(" \\t\\r\\n");
+    if (start == string::npos) return "";
+    size_t end = s.find_last_not_of(" \\t\\r\\n");
+    return s.substr(start, end - start + 1);
+}
+string _ev(string line) {
+    size_t eq = line.find('=');
+    return eq != string::npos ? _tr(line.substr(eq + 1)) : _tr(line);
+}
+vector<int> _pvi(string s) {
+    vector<int> res; s = _tr(s);
+    if(s.empty() || s=="[]") return res;
+    s.erase(remove(s.begin(), s.end(), '['), s.end());
+    s.erase(remove(s.begin(), s.end(), ']'), s.end());
+    s.erase(remove(s.begin(), s.end(), ' '), s.end());
+    stringstream ss(s); string item;
+    while(getline(ss, item, ',')) { if(item.empty()) continue; res.push_back(stoi(item)); }
+    return res;
+}
+vector<long long> _pvl(string s) {
+    vector<long long> res; s = _tr(s);
+    if(s.empty() || s=="[]") return res;
+    s.erase(remove(s.begin(), s.end(), '['), s.end());
+    s.erase(remove(s.begin(), s.end(), ']'), s.end());
+    s.erase(remove(s.begin(), s.end(), ' '), s.end());
+    stringstream ss(s); string item;
+    while(getline(ss, item, ',')) res.push_back(stoll(item));
+    return res;
+}
+vector<string> _pvs(string s) {
+    vector<string> res; s = _tr(s);
+    if(s.empty() || s=="[]") return res;
+    s = s.substr(1, s.length()-2);
+    stringstream ss(s); string item;
+    while(getline(ss, item, ',')) {
+        item = _tr(item);
+        if(item.front()=='"' || item.front()=='\\'') item = item.substr(1, item.length()-2);
+        res.push_back(item);
+    }
+    return res;
+}
+
+#ifndef NO_MAIN
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    string t_str;
+    if(!getline(cin, t_str)) return 0;
+    int _T = stoi(_tr(t_str));
+    for (int _t = 0; _t < _T; _t++) {
+        ${parseLines.join('\n        ')}
+        ${printLine}
+        cout << "\\n~---~\\n";
+    }
+    return 0;
+}
+#endif
 `;
 };
 
@@ -505,7 +635,10 @@ const buildBatchDriver = (userCode, language) => {
     if (language === 'java') {
         return buildBatchDriverJava(userCode); // null if signature not found
     }
-    return null; // C++ — caller uses parallel
+    if (language === 'cpp') {
+        return buildBatchDriverCpp(userCode);
+    }
+    return null; // caller uses parallel fallback if needed
 };
 
 /**
@@ -514,7 +647,7 @@ const buildBatchDriver = (userCode, language) => {
  */
 const buildBatchCombinedStdin = (hiddenCases) => {
     const blocks = hiddenCases.map(tc => tc.input.trim()).join('\n');
-    return `${hiddenCases.length}\n${blocks}\n`;
+    return `${hiddenCases.length} \n${blocks} \n`;
 };
 
 module.exports = {
