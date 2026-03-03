@@ -1,282 +1,160 @@
 import React from 'react';
-import { motion } from 'framer-motion';
-import { Target, Sparkles, Rocket, Eye, Brain, BarChart3, Map, Zap, BookOpen, Calculator, FlaskConical, ExternalLink } from 'lucide-react';
+import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
+import { Target, Shield, Brain, Zap, Users, ArrowRight, Github, Twitter, Linkedin, Activity, ChevronRight, Code2, Globe, Sparkles, Terminal } from 'lucide-react';
 import Footer from '../components/Footer';
-import AdBanner from '../components/AdBanner';
 
 const fadeUp = {
-    hidden: { opacity: 0, y: 30 },
-    visible: (i) => ({
+    hidden: { opacity: 0, y: 40 },
+    visible: (i = 0) => ({
         opacity: 1,
         y: 0,
-        transition: { delay: i * 0.12, duration: 0.6, ease: [0.22, 1, 0.36, 1] }
+        transition: { delay: i * 0.1, duration: 0.8, ease: [0.22, 1, 0.36, 1] }
     })
 };
 
-const GlassCard = ({ children, className = '', index = 0 }) => (
-    <motion.div
-        custom={index}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "-50px" }}
-        variants={fadeUp}
-        className={`relative group ${className}`}
-    >
-        <div className="relative p-6 sm:p-8 rounded-2xl bg-white/[0.03] border border-white/[0.06] backdrop-blur-sm hover:bg-white/[0.05] hover:border-emerald-500/20 transition-all duration-500 h-full">
-            <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-emerald-500/5 to-teal-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            <div className="relative z-10">{children}</div>
-        </div>
-    </motion.div>
-);
-
-const DifferentiatorCard = ({ icon: Icon, title, description, index }) => (
-    <GlassCard index={index}>
-        <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 mb-4">
-            <Icon size={22} className="text-emerald-400" />
-        </div>
-        <h3 className="text-lg font-bold text-white mb-2">{title}</h3>
-        <p className="text-gray-400 text-sm leading-relaxed">{description}</p>
-    </GlassCard>
-);
-
-const UpcomingCard = ({ icon: Icon, title, description, index }) => (
-    <GlassCard index={index}>
-        <div className="flex items-center gap-3 mb-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-teal-500/10 border border-teal-500/20">
-                <Icon size={18} className="text-teal-400" />
-            </div>
-            <div>
-                <h3 className="text-base font-bold text-white">{title}</h3>
-                <span className="text-[10px] font-medium text-teal-400 bg-teal-400/10 px-2 py-0.5 rounded-full">Coming Soon</span>
-            </div>
-        </div>
-        <p className="text-gray-400 text-sm leading-relaxed">{description}</p>
-    </GlassCard>
-);
-
-const SocialLink = ({ href, label, children }) => (
-    <motion.a
-        href={href}
-        target="_blank"
-        rel="noopener noreferrer"
-        whileHover={{ scale: 1.05, y: -2 }}
-        whileTap={{ scale: 0.95 }}
-        className="group relative flex items-center gap-3 px-6 py-4 rounded-2xl bg-white/[0.03] border border-white/[0.06] backdrop-blur-sm hover:bg-white/[0.05] hover:border-emerald-500/30 transition-all duration-300"
-    >
-        {/* Hover glow */}
-        <div className="absolute inset-0 rounded-2xl bg-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl" />
-        <div className="relative z-10 flex items-center gap-3">
-            {children}
-            <span className="text-sm font-medium text-gray-300 group-hover:text-white transition-colors">{label}</span>
-            <ExternalLink size={14} className="text-gray-500 group-hover:text-emerald-400 transition-colors" />
-        </div>
-    </motion.a>
-);
-
 const About = () => {
+    const { scrollYProgress } = useScroll();
+    const yTransform = useTransform(scrollYProgress, [0, 1], [0, -100]);
+    const opacityTransform = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
+
+    const stats = [
+        { label: "Development", value: "Active", icon: Activity, desc: "Building the core execution engine." },
+        { label: "Architecture", value: "Secure", icon: Shield, desc: "Docker-based container isolation." },
+        { label: "Platform Readiness", value: "Pre-Launch", icon: Sparkles, desc: "Final load-testing and infrastructure optimizations." },
+        { label: "Target Tiers", value: "Free & Pro", icon: Target, desc: "Structuring plans for public release." }
+    ];
+
+    const timeline = [
+        { year: "2023", title: "Concept", desc: "Idea formed around secure technical assessment and execution." },
+        { year: "2024", title: "Architecture Design", desc: "Execution engine prototyping and infrastructure setup." },
+        { year: "2025", title: "Private Build Phase", desc: "Container isolation, analytics foundation, and tier structuring." },
+        { year: "2026", title: "Public Launch (Planned)", desc: "Opening platform for Free, Pro, and Elite tiers." }
+    ];
+
+    const coreValues = [
+        { icon: Shield, title: "Security First", desc: "We prioritize isolated execution and the safe handling of user code." },
+        { icon: Zap, title: "Performance Focused", desc: "We aim for efficient execution pipelines and minimal overhead." },
+        { icon: Terminal, title: "Developer Experience", desc: "Clear workflows. No unnecessary friction in the testing loop." },
+        { icon: Globe, title: "Transparent Growth", desc: "We build in public and evolve based on real engineering feedback." },
+        { icon: Code2, title: "Continuous Improvement", desc: "Iterative releases and structured feature refinement." }
+    ];
+
     return (
-        <div className="relative min-h-screen bg-[#0a0a0a] pt-28 pb-20 overflow-hidden">
-            {/* Background Effects */}
-            <div className="absolute inset-0 pointer-events-none">
-                <div className="absolute top-0 left-1/3 w-[800px] h-[500px] bg-emerald-900/15 rounded-full blur-[120px] opacity-60" />
-                <div className="absolute bottom-1/4 right-0 w-[600px] h-[600px] bg-teal-900/10 rounded-full blur-[120px] opacity-40" />
-                <div className="absolute top-1/2 left-0 w-[400px] h-[400px] bg-cyan-900/10 rounded-full blur-[100px] opacity-30" />
-                <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.015)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.015)_1px,transparent_1px)] bg-[size:50px_50px] [mask-image:radial-gradient(ellipse_60%_60%_at_50%_50%,#000_70%,transparent_100%)]" />
+        <div className="relative min-h-screen bg-[#03040B] selection:bg-indigo-500/30 font-sans text-gray-200 overflow-hidden">
+
+            {/* Ambient Background Glows */}
+            <div className="fixed inset-0 pointer-events-none z-0">
+                <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-indigo-900/10 rounded-full blur-[150px] animate-[pulse_10s_ease-in-out_infinite]" />
+                <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-violet-900/10 rounded-full blur-[150px] animate-[pulse_12s_ease-in-out_infinite_reverse]" />
+                {/* SVG Noise */}
+                <div className="absolute inset-0 opacity-[0.015] mix-blend-overlay" style={{ backgroundImage: "url('data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PScwIDAgMjAwIDIwMCcgeG1sbnM9J2h0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnJz48ZmlsdGVyIGlkPSdub2lzZUZpbHRlcic+PGZlVHVyYnVsZW5jZSB0eXBlPSdmcmFjdGFsTm9pc2UnIGJhc2VGcmVxdWVuY3k9JzAuOCcgbnVtT2N0YXZlcz0nNCcgc3RpdGNoVGlsZXM9J3N0aXRjaCcvPjwvZmlsdGVyPjxyZWN0IHdpZHRoPScxMDAlJyBoZWlnaHQ9JzEwMCUnIGZpbHRlcj0ndXJsKCNub2lzZUZpbHRlciknLz48L3N2Zz4=')" }} />
             </div>
 
-            <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6">
-                {/* Hero Section */}
+            <div className="max-w-7xl mx-auto px-6 pt-32 pb-24 relative z-10">
+
+                {/* 1. Hero Glass Panel */}
                 <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.7 }}
-                    className="text-center mb-20"
+                    initial="hidden" animate="visible" variants={fadeUp}
+                    className="relative text-center max-w-4xl mx-auto mb-32"
                 >
-                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 mb-6">
-                        <Sparkles size={14} className="text-emerald-400" />
-                        <span className="text-xs font-medium text-emerald-300">Placement Preparation Platform</span>
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500 text-sm font-bold tracking-wide mb-8">
+                        <Activity size={14} className="animate-pulse" />
+                        Currently in Active Development
                     </div>
-                    <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6">
-                        <span className="bg-clip-text text-transparent bg-gradient-to-r from-white via-emerald-100 to-emerald-300">
-                            About CodeHubX
-                        </span>
+                    <h1 className="text-5xl md:text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-br from-white via-indigo-100 to-indigo-400 mb-8 tracking-tight">
+                        Engineering Simplicity <br className="hidden md:block" /> at Scale.
                     </h1>
-                    <p className="text-gray-400 text-base sm:text-lg max-w-3xl mx-auto leading-relaxed">
-                        CodeHubX is a structured placement preparation platform focused on helping students improve
-                        problem-solving skills through curated DSA problems, AI-powered solution analysis, performance
-                        analytics, and structured learning paths.
+                    <p className="text-lg md:text-xl text-gray-400 leading-[1.7] max-w-2xl mx-auto font-medium">
+                        We are building a secure execution environment for developer assessments. Designed with Docker-based isolation, powered by modern cloud infrastructure (Vercel & DigitalOcean), and focused on a frictionless core experience.
                     </p>
+                    <div className="mt-8 flex justify-center">
+                        <div className="w-24 h-1 rounded-full bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent" />
+                    </div>
                 </motion.div>
 
-                {/* Our Mission */}
+                {/* 2. Development Roadmap / Status Section */}
                 <motion.div
-                    initial={{ opacity: 0, y: 30 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.7 }}
-                    className="mb-20"
+                    custom={1} initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={fadeUp}
+                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-32"
                 >
-                    <div className="relative p-8 sm:p-12 rounded-3xl bg-gradient-to-br from-emerald-500/[0.07] to-teal-500/[0.03] border border-emerald-500/[0.12] backdrop-blur-sm">
-                        <div className="absolute top-6 right-8 opacity-10">
-                            <Target size={80} className="text-emerald-400" />
-                        </div>
-                        <div className="relative z-10">
-                            <div className="flex items-center gap-3 mb-4">
-                                <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-emerald-500/15 border border-emerald-500/25">
-                                    <Target size={24} className="text-emerald-400" />
-                                </div>
-                                <h2 className="text-2xl sm:text-3xl font-bold text-white">Our Mission</h2>
-                            </div>
-                            <p className="text-gray-300 text-base sm:text-lg leading-relaxed max-w-3xl">
-                                To provide structured, measurable, and optimization-driven placement preparation — empowering
-                                every student to build confidence, track their progress, and crack their dream placements
-                                with data-backed insights and AI-powered guidance.
+                    {stats.map((stat, idx) => (
+                        <div key={idx} className="group relative p-8 rounded-3xl bg-white/[0.02] border border-white/[0.06] backdrop-blur-[20px] hover:border-indigo-500/30 hover:bg-white/[0.04] transition-all duration-500 overflow-hidden">
+                            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                            <stat.icon size={24} className="text-indigo-400 mb-6 relative z-10" />
+                            <h3 className="text-2xl font-bold text-white mb-2 relative z-10">
+                                {stat.value}
+                            </h3>
+                            <p className="text-xs font-bold text-indigo-300 uppercase tracking-wider relative z-10 mb-3 block">
+                                {stat.label}
+                            </p>
+                            <p className="text-sm font-medium text-gray-400 relative z-10">
+                                {stat.desc}
                             </p>
                         </div>
+                    ))}
+                </motion.div>
+
+                {/* 3. Company Journey Timeline */}
+                <motion.div
+                    custom={2} initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={fadeUp}
+                    className="mb-32"
+                >
+                    <h2 className="text-3xl font-bold text-white mb-12 text-center tracking-tight">The Journey</h2>
+
+                    <div className="relative">
+                        {/* Connecting Line */}
+                        <div className="absolute top-1/2 -translate-y-1/2 left-0 w-full h-px bg-white/10 hidden md:block" />
+
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 relative z-10">
+                            {timeline.map((item, idx) => (
+                                <motion.div
+                                    key={idx}
+                                    whileHover={{ y: -5 }}
+                                    className="relative p-6 rounded-2xl bg-[#080B14] border border-white/[0.08] backdrop-blur-md shadow-2xl group"
+                                >
+                                    <div className="absolute -top-3 left-6 px-3 py-1 bg-indigo-500/20 border border-indigo-500/30 rounded-full text-xs font-bold text-indigo-200 backdrop-blur-md">
+                                        {item.year}
+                                    </div>
+                                    <h4 className="text-lg font-bold text-white mt-4 mb-2">{item.title}</h4>
+                                    <p className="text-sm text-gray-400 leading-relaxed font-medium">{item.desc}</p>
+                                    <div className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/0 group-hover:ring-indigo-500/50 transition-all duration-300" />
+                                </motion.div>
+                            ))}
+                        </div>
                     </div>
                 </motion.div>
 
-                {/* What Makes Us Different */}
-                <div className="mb-20">
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.6 }}
-                        className="text-center mb-10"
-                    >
-                        <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">What Makes Us Different</h2>
-                        <p className="text-gray-500 text-sm max-w-xl mx-auto">Empowering your preparation with cutting-edge technology</p>
-                    </motion.div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                        <DifferentiatorCard
-                            icon={Brain}
-                            title="AI-Powered Complexity Insights"
-                            description="Get real-time analysis of your solution's time and space complexity with detailed explanations, powered by multiple AI providers."
-                            index={0}
-                        />
-                        <DifferentiatorCard
-                            icon={BarChart3}
-                            title="Performance Analytics"
-                            description="Track your progress with comprehensive analytics — submission heatmaps, accuracy trends, topic-wise performance, and coding streak metrics."
-                            index={1}
-                        />
-                        <DifferentiatorCard
-                            icon={Map}
-                            title="Structured Learning Roadmap"
-                            description="Follow a curated, topic-wise learning path designed to systematically build your problem-solving skills from beginner to advanced."
-                            index={2}
-                        />
-                        <DifferentiatorCard
-                            icon={Zap}
-                            title="Premium Optimization Guidance"
-                            description="Pro users get advanced hints, optimal solution breakdowns, and detailed performance optimization suggestions tailored to their skill level."
-                            index={3}
-                        />
-                    </div>
-                </div>
-
-                {/* Upcoming Features */}
-                <div className="mb-20">
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.6 }}
-                        className="text-center mb-10"
-                    >
-                        <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">Upcoming Features</h2>
-                        <p className="text-gray-500 text-sm max-w-xl mx-auto">Building the complete placement ecosystem</p>
-                    </motion.div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-                        <UpcomingCard
-                            icon={BookOpen}
-                            title="Mock Tests"
-                            description="Company-specific mock tests simulating real placement exam patterns with timed assessments."
-                            index={0}
-                        />
-                        <UpcomingCard
-                            icon={FlaskConical}
-                            title="SQL Practice"
-                            description="Interactive SQL query challenges with real-time evaluation and performance scoring."
-                            index={1}
-                        />
-                        <UpcomingCard
-                            icon={Calculator}
-                            title="Aptitude Prep"
-                            description="Comprehensive aptitude preparation covering quantitative, logical reasoning, and verbal ability."
-                            index={2}
-                        />
-                    </div>
-                </div>
-
-                {/* Non-intrusive ad in section gap */}
-                <div className="mb-20 max-w-3xl mx-auto">
-                    <AdBanner adSlot="9351763178" />
-                </div>
-
-                {/* Vision for the Future */}
+                {/* 4. Core Values Section */}
                 <motion.div
-                    initial={{ opacity: 0, y: 30 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.7 }}
-                    className="mb-20"
+                    custom={3} initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={fadeUp}
+                    className="mb-32"
                 >
-                    <div className="relative p-8 sm:p-12 rounded-3xl bg-gradient-to-br from-teal-500/[0.05] to-cyan-500/[0.03] border border-teal-500/[0.1] backdrop-blur-sm">
-                        <div className="absolute bottom-6 right-8 opacity-10">
-                            <Eye size={80} className="text-teal-400" />
-                        </div>
-                        <div className="relative z-10">
-                            <div className="flex items-center gap-3 mb-4">
-                                <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-teal-500/15 border border-teal-500/25">
-                                    <Eye size={24} className="text-teal-400" />
+                    <div className="text-center mb-16">
+                        <h2 className="text-3xl md:text-4xl font-bold text-white mb-6 tracking-tight">Core Values</h2>
+                        <p className="text-gray-400 max-w-2xl mx-auto leading-relaxed font-medium">The principles that dictate our engineering decisions and product philosophy.</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 justify-center">
+                        {coreValues.map((val, idx) => (
+                            <div key={idx} className={`group relative p-8 rounded-3xl bg-white/[0.02] border border-white/[0.08] backdrop-blur-xl hover:-translate-y-1 transition-all duration-300 ${idx === 4 ? "lg:col-span-1 lg:col-start-2" : ""}`}>
+                                {/* Hover Glow Light */}
+                                <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-violet-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl" />
+
+                                <div className="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mb-6 relative z-10 group-hover:scale-110 transition-transform duration-300">
+                                    <val.icon size={22} className="text-indigo-400" />
                                 </div>
-                                <h2 className="text-2xl sm:text-3xl font-bold text-white">Vision for the Future</h2>
+                                <h3 className="text-xl font-bold text-white mb-3 relative z-10">{val.title}</h3>
+                                <p className="text-gray-400 text-sm leading-[1.7] relative z-10 font-medium">
+                                    {val.desc}
+                                </p>
                             </div>
-                            <p className="text-gray-300 text-base sm:text-lg leading-relaxed max-w-3xl">
-                                Our vision is to become a complete placement ecosystem — combining coding practice, aptitude
-                                preparation, advanced analytics, AI mentorship, and company-specific mock tests into a single,
-                                unified platform that guides students from day one to their dream placement offer.
-                            </p>
-                        </div>
+                        ))}
                     </div>
                 </motion.div>
 
-                {/* Connect With Us */}
-                <motion.div
-                    initial={{ opacity: 0, y: 30 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.7 }}
-                    className="text-center"
-                >
-                    <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">Connect With Us</h2>
-                    <p className="text-gray-500 text-sm mb-8">Follow us for updates, tips, and community highlights</p>
 
-                    <div className="flex flex-wrap items-center justify-center gap-4">
-                        <SocialLink href="https://x.com/CodeHubx" label="Follow on X (Twitter)">
-                            {/* X/Twitter Icon */}
-                            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-white/5 border border-white/10 group-hover:bg-emerald-500/10 group-hover:border-emerald-500/20 transition-all duration-300">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="text-gray-400 group-hover:text-emerald-400 transition-colors">
-                                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                                </svg>
-                            </div>
-                        </SocialLink>
-
-                        <SocialLink href="https://www.linkedin.com/company/111519342/" label="Follow on LinkedIn">
-                            {/* LinkedIn Icon */}
-                            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-white/5 border border-white/10 group-hover:bg-emerald-500/10 group-hover:border-emerald-500/20 transition-all duration-300">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="text-gray-400 group-hover:text-emerald-400 transition-colors">
-                                    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
-                                </svg>
-                            </div>
-                        </SocialLink>
-                    </div>
-                </motion.div>
             </div>
+
             <Footer />
         </div>
     );

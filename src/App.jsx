@@ -25,6 +25,11 @@ import Unauthorized from './pages/Unauthorized'
 import NotFound from './pages/NotFound'
 import About from './pages/About'
 import PrivacyPolicy from './pages/PrivacyPolicy'
+import TermsAndConditions from './pages/TermsAndConditions'
+import Disclaimer from './pages/Disclaimer'
+import Contact from './pages/Contact'
+import Articles from './pages/Articles'
+import ArticleView from './pages/ArticleView'
 import Maintenance from './pages/Maintenance'
 
 // Admin Imports
@@ -80,6 +85,11 @@ function AppRoutes() {
       <Route path="/pricing" element={<Pricing />} />
       <Route path="/about" element={<About />} />
       <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+      <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
+      <Route path="/disclaimer" element={<Disclaimer />} />
+      <Route path="/contact" element={<Contact />} />
+      <Route path="/articles" element={<Articles />} />
+      <Route path="/articles/:slug" element={<ArticleView />} />
 
       {/* Protected Routes - Only for authenticated users */}
       <Route path="/dashboard" element={

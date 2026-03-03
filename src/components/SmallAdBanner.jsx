@@ -1,14 +1,40 @@
 import React, { useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useLocation } from 'react-router-dom';
+
+const contentRoutes = [
+    "/problem",
+    "/blog",
+    "/roadmap",
+    "/learn",
+    "/articles",
+    "/dsa",
+    "/interview-experience"
+];
 
 const SmallAdBanner = ({ adSlot, className = '' }) => {
     const { userData } = useAuth();
+    const location = useLocation();
     const isPro = userData?.isPro === true;
     const adRef = useRef(null);
     const pushed = useRef(false);
 
+    const showAds = contentRoutes.some(route => location.pathname.startsWith(route));
+
     useEffect(() => {
-        if (!isPro && typeof window !== 'undefined' && !pushed.current && adRef.current) {
+        if (isPro || !showAds) return;
+        if (typeof window === 'undefined') return;
+
+        if (!document.getElementById('adsense-script')) {
+            const script = document.createElement('script');
+            script.id = 'adsense-script';
+            script.async = true;
+            script.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6907980845698047";
+            script.crossOrigin = "anonymous";
+            document.head.appendChild(script);
+        }
+
+        if (!pushed.current && adRef.current) {
             try {
                 (window.adsbygoogle = window.adsbygoogle || []).push({});
                 pushed.current = true;
@@ -16,43 +42,27 @@ const SmallAdBanner = ({ adSlot, className = '' }) => {
                 console.error("AdSense error:", err);
             }
         }
-    }, [isPro]);
+    }, [isPro, showAds, location.pathname]);
 
-    if (isPro) return null;
+    if (isPro || !showAds) return null;
 
     return (
-        <div className={`flex justify-center items-center my-4 ${className}`}>
+        <div className={`flex justify-center items-center overflow-hidden h-fit my-4 ${className}`}>
             <ins
                 ref={adRef}
                 className="adsbygoogle"
                 style={{
-                    display: 'inline-block',
+                    display: 'block',
                     width: '100%',
-                    maxWidth: '728px',
-                    height: '90px'
+                    maxWidth: '100%',
+                    maxHeight: '100px',
+                    minHeight: '50px'
                 }}
                 data-ad-client="ca-pub-6907980845698047"
                 data-ad-slot={adSlot}
-            >
-                {/* Mobile Fallback Style via CSS if needed, but style prop handles the main sizing. 
-                    For strict 320x50 on mobile, we can use media queries on the wrapper or override styles.
-                    Here we set 100% width/90px height, which AdSense will fill responsively.
-                */}
-            </ins>
-            <style jsx>{`
-                @media (max-width: 768px) {
-                    .adsbygoogle {
-                        width: 320px !important;
-                        height: 50px !important;
-                    }
-                }
-                @media (min-width: 769px) {
-                    .adsbygoogle {
-                        width: 728px !important;
-                        height: 90px !important;
-                    }
-                }
-            `}</style>
+                data-ad-format="horizontal"
+                data-full-width-responsive="true"
+            />
         </div>
     );
 };
