@@ -109,27 +109,17 @@ class MockRedis extends EventEmitter {
 
 if (process.env.REDIS_URL) {
     redis = new Redis(process.env.REDIS_URL);
-} else if (process.env.NODE_ENV === 'production') {
-    console.warn("REDIS_URL not set in production. Using mock Redis (no caching).");
-    redis = new MockRedis();
-} else {
-    // Dev: Try localhost, fallback to mock
-    redis = new Redis("redis://localhost:6379", {
-        maxRetriesPerRequest: 1,
-        retryStrategy: (times) => {
-            if (times > 3) {
-                console.warn("Redis connection failed. Switched to mock mode.");
-                return null;
-            }
-            return Math.min(times * 100, 2000);
-        }
+    redis.on('error', (err) => {
+        console.error("Redis error:", err.message);
     });
-
-    redis.on('error', () => { });
+} else {
+    // No REDIS_URL set — use in-memory mock (works in both dev and production)
+    console.warn("REDIS_URL not set. Using mock Redis (no caching/rate-limiting persistence).");
+    redis = new MockRedis();
 }
 
 redis.on("connect", () => {
-    if (process.env.REDIS_URL || (process.env.NODE_ENV !== 'production' && redis instanceof Redis)) {
+    if (process.env.REDIS_URL) {
         console.log("Redis connected successfully.");
     }
 });
