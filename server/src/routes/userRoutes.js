@@ -153,17 +153,24 @@ router.post('/sync', async (req, res) => {
         }
 
         if (user) {
-            // Invalidate cache
-            await redis.del(`cache:/api/users/${uid}`);
-            if (user.username) {
-                await redis.del(`cache:/api/users/handle/${user.username}`);
+            // Invalidate cache — wrapped separately so Redis failures don't break sync
+            try {
+                await redis.del(`cache:/api/users/${uid}`);
+                if (user.username) {
+                    await redis.del(`cache:/api/users/handle/${user.username}`);
+                }
+            } catch (redisErr) {
+                console.warn("Redis cache invalidation failed (non-fatal):", redisErr.message);
             }
         }
 
         res.json(user);
     } catch (error) {
         console.error("User sync error:", error);
-        res.status(500).json({ error: "Failed to sync user" });
+        res.status(500).json({
+            error: "Failed to sync user",
+            detail: process.env.NODE_ENV !== 'production' ? error.message : undefined
+        });
     }
 });
 

@@ -80,6 +80,9 @@ export const AuthProvider = ({ children }) => {
                             if (errorBody?.error) {
                                 syncError = `${syncError}: ${errorBody.error}`;
                             }
+                            if (errorBody?.detail) {
+                                syncError = `${syncError} — ${errorBody.detail}`;
+                            }
                         } catch (_) {
                             // ignore body parse errors, preserve status-based message
                         }
