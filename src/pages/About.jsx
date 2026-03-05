@@ -59,7 +59,7 @@ const About = () => {
                 >
                     <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500 text-sm font-bold tracking-wide mb-8">
                         <Activity size={14} className="animate-pulse" />
-                        Currently in Active Development
+                        Currently in Active Development (Launcheds)
                     </div>
                     <h1 className="text-5xl md:text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-br from-white via-indigo-100 to-indigo-400 mb-8 tracking-tight">
                         Engineering Simplicity <br className="hidden md:block" /> at Scale.
