@@ -272,9 +272,7 @@ Create a feature branch
 
 Submit a pull request
 
-📜 License
 
-MIT License
 
 👨‍💻 Author
 
