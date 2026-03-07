@@ -6,7 +6,7 @@ It combines structured learning paths, real-time code execution, analytics, and 
 
 Built for serious placement preparation.
 
-🌐 Live Vision
+🌐 Vision
 
 CodeHubX aims to become a complete placement operating system —
 where learning, practicing, testing, analytics, and optimization exist in one seamless flow.
