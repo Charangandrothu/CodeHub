@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Navigate } from 'react-router-dom';
+import ProfileSkeleton from '../components/skeletons/ProfileSkeleton';
 import ProfileSidebar from '../components/profile/ProfileSidebar';
 import SubmissionHeatmap from '../components/profile/SubmissionHeatmap';
 import { useAuth } from '../context/AuthContext';
@@ -15,6 +16,7 @@ const Profile = () => {
     const navigate = useNavigate();
     const [fetchedUser, setFetchedUser] = useState(null);
     const [notFound, setNotFound] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
 
     // Fetch user if username param exists
     useEffect(() => {
@@ -31,10 +33,14 @@ const Profile = () => {
                 .catch(err => {
                     console.error(err);
                     setNotFound(true);
+                })
+                .finally(() => {
+                    setIsLoading(false);
                 });
         } else {
             setFetchedUser(null);
             setNotFound(false);
+            setIsLoading(false);
         }
     }, [username]);
 
@@ -190,6 +196,10 @@ const Profile = () => {
         { label: "Weekly Rank", value: weeklyRank ? `#${weeklyRank}` : "Unranked", icon: Trophy, color: "text-yellow-500", bg: "bg-yellow-500/10" },
         { label: "Problems Solved", value: userData?.stats?.solvedProblems || 0, icon: Calendar, color: "text-blue-500", bg: "bg-blue-500/10" },
     ];
+
+    if (isLoading || (!username && !userData)) {
+        return <ProfileSkeleton />;
+    }
 
     if (notFound) {
         if (currentUser && (!authUser?.profileCompleted)) {
