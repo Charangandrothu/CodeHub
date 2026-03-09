@@ -2,29 +2,38 @@ const Problem = require("../models/Problem");
 const mongoose = require("mongoose");
 const redis = require("../config/redis");
 
-const clearCache = async (pattern) => {
-  try {
-    const stream = redis.scanStream({
-      match: pattern,
-      count: 100
-    });
+const clearCache = (pattern) => {
+  return new Promise((resolve, reject) => {
+    try {
+      const stream = redis.scanStream({
+        match: pattern,
+        count: 100
+      });
 
-    stream.on("data", (keys) => {
-      if (keys.length) {
-        const pipeline = redis.pipeline();
-        keys.forEach((key) => {
-          pipeline.del(key);
-        });
-        pipeline.exec();
-      }
-    });
+      stream.on("data", (keys) => {
+        if (keys.length) {
+          const pipeline = redis.pipeline();
+          keys.forEach((key) => {
+            pipeline.del(key);
+          });
+          pipeline.exec();
+        }
+      });
 
-    stream.on("end", () => {
-      console.log(`Cache cleared for pattern: ${pattern}`);
-    });
-  } catch (err) {
-    console.error("Cache clear error:", err);
-  }
+      stream.on("end", () => {
+        console.log(`Cache cleared for pattern: ${pattern}`);
+        resolve();
+      });
+
+      stream.on("error", (err) => {
+        console.error("Cache scan stream error:", err);
+        resolve(); // resolve anyway to not block
+      });
+    } catch (err) {
+      console.error("Cache clear error:", err);
+      resolve();
+    }
+  });
 };
 
 // GET /api/problems

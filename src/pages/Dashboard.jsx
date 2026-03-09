@@ -31,6 +31,7 @@ const Dashboard = () => {
     const [myWeeklyStats, setMyWeeklyStats] = useState({ rank: null, count: 0 });
     const [nextTask, setNextTask] = useState(null);
     const [isGeneratingCert, setIsGeneratingCert] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
 
     // Certificate Modal State
     const [showCertModal, setShowCertModal] = useState(false);
@@ -84,7 +85,10 @@ const Dashboard = () => {
 
     useEffect(() => {
         const fetchData = async () => {
-            if (!currentUser) return;
+            if (!currentUser) {
+                setIsLoading(false);
+                return;
+            }
 
             try {
                 // Fetch Leaderboard
@@ -107,6 +111,8 @@ const Dashboard = () => {
                 }
             } catch (err) {
                 console.error("Failed to fetch dashboard data", err);
+            } finally {
+                setIsLoading(false);
             }
         };
         fetchData();
@@ -167,7 +173,6 @@ const Dashboard = () => {
             buttonText: "Continue Practice"
         };
     }, [userData]);
-
 
     return (
         <div className="min-h-screen bg-[#0a0a0a] pt-24 pb-12 px-4 sm:px-6 lg:px-8 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/10 via-[#0a0a0a] to-[#0a0a0a]">
@@ -264,6 +269,13 @@ const Dashboard = () => {
                                                         ))}
                                                     </div>
                                                 </>
+                                            ) : isLoading ? (
+                                                <div className="space-y-3">
+                                                    <div className="w-24 h-4 rounded-md bg-white/10 animate-pulse" />
+                                                    <div className="w-48 h-6 rounded-md bg-white/10 animate-pulse" />
+                                                    <div className="w-32 h-4 rounded-md bg-white/10 animate-pulse" />
+                                                    <div className="w-full max-w-[240px] h-1.5 bg-white/10 rounded-full animate-pulse mt-2" />
+                                                </div>
                                             ) : (
                                                 <>
                                                     <p className="text-xs text-blue-400 font-medium uppercase tracking-wider mb-1">
@@ -298,7 +310,8 @@ const Dashboard = () => {
                                                 navigate('/dsa');
                                             }
                                         }}
-                                        className="group/cta relative w-full sm:w-auto shrink-0 overflow-hidden rounded-xl px-6 py-3 text-sm font-semibold cursor-pointer focus:outline-none hover:-translate-y-px active:scale-[0.97] transition-transform duration-150"
+                                        disabled={isLoading}
+                                        className="group/cta relative w-full sm:w-auto shrink-0 overflow-hidden rounded-xl px-6 py-3 text-sm font-semibold cursor-pointer focus:outline-none hover:-translate-y-px active:scale-[0.97] transition-transform duration-150 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
                                         style={{
                                             background: 'linear-gradient(135deg, #0b0b14 0%, #0f0f1c 100%)',
                                             border: '1px solid rgba(255,255,255,0.11)',
@@ -311,10 +324,18 @@ const Dashboard = () => {
                                         <div className="absolute top-0 left-5 right-5 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
                                         {/* Content */}
                                         <span className="relative z-10 flex items-center justify-center gap-2">
-                                            <span className="bg-clip-text text-transparent bg-gradient-to-r from-white via-gray-100 to-gray-400">
-                                                {nextTask?.progress >= 80 ? "Finish It 💪" : "Continue Practice"}
-                                            </span>
-                                            <ArrowRight size={15} className="text-blue-400 group-hover/cta:translate-x-1 transition-transform duration-150" />
+                                            {isLoading ? (
+                                                <span className="bg-clip-text text-transparent bg-gradient-to-r from-gray-500 to-gray-600">
+                                                    Loading...
+                                                </span>
+                                            ) : (
+                                                <>
+                                                    <span className="bg-clip-text text-transparent bg-gradient-to-r from-white via-gray-100 to-gray-400">
+                                                        {nextTask?.progress >= 80 ? "Finish It 💪" : "Continue Practice"}
+                                                    </span>
+                                                    <ArrowRight size={15} className="text-blue-400 group-hover/cta:translate-x-1 transition-transform duration-150" />
+                                                </>
+                                            )}
                                         </span>
                                     </button>
                                 </div>

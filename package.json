@@ -22,6 +22,7 @@
     "express": "^5.2.1",
     "firebase": "^12.7.0",
     "framer-motion": "^12.30.0",
+    "html-react-parser": "^5.2.17",
     "lucide-react": "^0.562.0",
     "mongoose": "^9.1.5",
     "razorpay": "^2.9.6",

@@ -86,14 +86,36 @@ class MockRedis extends EventEmitter {
 
     scanStream({ match, count }) {
         const stream = new EventEmitter();
-        setTimeout(() => stream.emit("end"), 50);
+        setTimeout(() => {
+            if (match) {
+                const regex = new RegExp("^" + match.replace(/\*/g, ".*") + "$");
+                const keys = [];
+                for (const key of this._store.keys()) {
+                    if (regex.test(key)) keys.push(key);
+                }
+                if (keys.length > 0) {
+                    stream.emit("data", keys);
+                }
+            }
+            stream.emit("end");
+        }, 10);
         return stream;
     }
 
     pipeline() {
+        const keysToDelete = [];
         const pipe = {
-            del: () => pipe,
-            exec: async () => []
+            del: (key) => {
+                keysToDelete.push(key);
+                return pipe;
+            },
+            exec: async () => {
+                for (const key of keysToDelete) {
+                    this._store.delete(key);
+                    this._ttls.delete(key);
+                }
+                return [];
+            }
         };
         return pipe;
     }
