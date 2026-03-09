@@ -268,9 +268,9 @@ const Profile = () => {
                             <h2 className="text-lg font-bold text-white">Recent Activity</h2>
                         </div>
 
-                        {userData?.submissionHistory && userData.submissionHistory.length > 0 ? (
+                        {userData?.submissionHistory && userData.submissionHistory.some(sub => sub.verdict === 'Accepted') ? (
                             <div className="space-y-4">
-                                {[...userData.submissionHistory].reverse().slice(0, 10).map((sub, idx) => (
+                                {[...userData.submissionHistory].filter(sub => sub.verdict === 'Accepted').reverse().slice(0, 10).map((sub, idx) => (
                                     <div
                                         key={idx}
                                         onClick={() => sub.problemId && navigate(`/problem/${sub.problemId}`)}
