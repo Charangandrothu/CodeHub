@@ -127,6 +127,7 @@ const Navbar = () => {
     { name: 'Roadmap', path: '/roadmap' },
     { name: 'Mock Tests', path: '/mock-tests' },
     { name: 'Aptitude', path: '/aptitude' },
+    { name: 'Companies', path: '/companies' },
   ] : [
     { name: 'Home', path: '/' },
     { name: 'Features', path: '/#features' },
