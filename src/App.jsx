@@ -18,6 +18,8 @@ import RoadmapPage from './pages/RoadmapPage'
 import Pricing from './pages/Pricing'
 import MockTests from './pages/MockTests'
 import Aptitude from './pages/Aptitude'
+import Companies from './pages/Companies'
+import CompanyDetail from './pages/CompanyDetail'
 import Profile from './pages/Profile'
 import Settings from './pages/Settings'
 
@@ -125,6 +127,16 @@ function AppRoutes() {
       <Route path="/aptitude" element={
         <ProtectedRoute>
           <Aptitude />
+        </ProtectedRoute>
+      } />
+      <Route path="/companies" element={
+        <ProtectedRoute>
+          <Companies />
+        </ProtectedRoute>
+      } />
+      <Route path="/companies/:slug" element={
+        <ProtectedRoute>
+          <CompanyDetail />
         </ProtectedRoute>
       } />
       <Route path="/settings" element={
