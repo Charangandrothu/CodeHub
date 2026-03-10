@@ -10,7 +10,7 @@ import {
 const COMPANIES = [
     {
         slug: 'tcs', name: 'TCS', fullName: 'Tata Consultancy Services',
-        abbr: 'TCS', logoGradient: 'from-blue-500 to-blue-700', accentColor: 'blue',
+        abbr: 'TCS', logoGradient: 'from-blue-500 to-blue-700', accentColor: 'blue', image: '/tcs.jpg',
         description: "India's largest IT company. Hires 30,000+ freshers/year via TCS NQT.",
         package: '₹3.36 – 9 LPA', roles: ['Ninja', 'Digital', 'Prime'], totalQuestions: 500,
         sections: ['Numerical Ability', 'Verbal Ability', 'Reasoning', 'Coding'],
@@ -19,7 +19,7 @@ const COMPANIES = [
     },
     {
         slug: 'infosys', name: 'Infosys', fullName: 'Infosys Limited',
-        abbr: 'INFY', logoGradient: 'from-emerald-500 to-emerald-700', accentColor: 'emerald',
+        abbr: 'INFY', logoGradient: 'from-emerald-500 to-emerald-700', accentColor: 'emerald', image: '/infosys.jpg',
         description: 'Hires via InfyTQ. Known for strong academic requirements & InfysQA tests.',
         package: '₹3.6 – 8 LPA', roles: ['DSE', 'SP', 'PP'], totalQuestions: 0,
         sections: ['Aptitude', 'Verbal', 'Reasoning', 'Pseudocode'],
@@ -28,7 +28,7 @@ const COMPANIES = [
     },
     {
         slug: 'wipro', name: 'Wipro', fullName: 'Wipro Limited',
-        abbr: 'WIP', logoGradient: 'from-purple-500 to-purple-700', accentColor: 'purple',
+        abbr: 'WIP', logoGradient: 'from-purple-500 to-purple-700', accentColor: 'purple', image: '/wipro.jpg',
         description: 'Competitive tests via WILP/NLTH. Strong focus on aptitude and coding.',
         package: '₹3.5 – 6.5 LPA', roles: ['Project Engineer', 'Turbo'], totalQuestions: 0,
         sections: ['Aptitude', 'Written Communication', 'Coding'],
@@ -37,7 +37,7 @@ const COMPANIES = [
     },
     {
         slug: 'cognizant', name: 'Cognizant', fullName: 'Cognizant Technology Solutions',
-        abbr: 'CTS', logoGradient: 'from-sky-500 to-sky-700', accentColor: 'sky',
+        abbr: 'CTS', logoGradient: 'from-sky-500 to-sky-700', accentColor: 'sky', image: '/cognizant.jpg',
         description: 'Hires via GenC & GenC Elevate. Aptitude + communication focused tests.',
         package: '₹4 – 6.5 LPA', roles: ['GenC', 'GenC Elevate', 'GenC Pro'], totalQuestions: 0,
         sections: ['Aptitude', 'Cognitive', 'Verbal', 'Coding'],
@@ -46,7 +46,7 @@ const COMPANIES = [
     },
     {
         slug: 'accenture', name: 'Accenture', fullName: 'Accenture India',
-        abbr: 'ACC', logoGradient: 'from-pink-500 to-pink-700', accentColor: 'pink',
+        abbr: 'ACC', logoGradient: 'from-pink-500 to-pink-700', accentColor: 'pink', image: '/accenture.jpg',
         description: 'No negative marking. Strong focus on abstract reasoning & cognitive skills.',
         package: '₹4.5 – 8 LPA', roles: ['ASE', 'SE', 'Packaged App Associate'], totalQuestions: 0,
         sections: ['Cognitive', 'Technical', 'Coding'],
@@ -64,8 +64,15 @@ const colorMap = {
 };
 
 /* ─── Letter-mark logo (no emojis) ─────────────── */
-const CompanyLogo = ({ abbr, gradient, size = 'md' }) => {
+const CompanyLogo = ({ abbr, gradient, size = 'md', image }) => {
     const sz = size === 'lg' ? 'w-16 h-16 rounded-2xl text-sm' : 'w-14 h-14 rounded-2xl text-xs';
+    if (image) {
+        return (
+            <div className={`${sz} flex items-center justify-center shrink-0 shadow-lg overflow-hidden bg-white`}>
+                <img src={image} alt={abbr} className="w-full h-full object-contain p-1" />
+            </div>
+        );
+    }
     return (
         <div className={`${sz} bg-gradient-to-br ${gradient} flex items-center justify-center shrink-0 shadow-lg`}>
             <span className="font-black text-white tracking-tight leading-none">{abbr}</span>
@@ -188,8 +195,8 @@ const Companies = () => {
                             key={f}
                             onClick={() => setFilter(f)}
                             className={`px-5 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-all duration-200 ${filter === f
-                                    ? 'bg-white/10 text-white border border-white/20 shadow-lg'
-                                    : 'text-gray-500 hover:text-gray-300 border border-transparent hover:border-white/10'
+                                ? 'bg-white/10 text-white border border-white/20 shadow-lg'
+                                : 'text-gray-500 hover:text-gray-300 border border-transparent hover:border-white/10'
                                 }`}
                         >
                             {f === 'all' ? 'All Companies' : '⚡ Live Now'}
@@ -210,8 +217,8 @@ const Companies = () => {
                                 whileHover={company.isLive ? { y: -5 } : {}}
                                 whileTap={{ scale: 0.99 }}
                                 className={`group relative overflow-hidden rounded-3xl border bg-[#0A0A0A]/80 backdrop-blur-xl transition-all duration-300 shadow-2xl ${company.isLive
-                                        ? `${colors.border} ${colors.hover} cursor-pointer`
-                                        : 'border-white/5 cursor-default opacity-70'
+                                    ? `${colors.border} ${colors.hover} cursor-pointer`
+                                    : 'border-white/5 cursor-default opacity-70'
                                     }`}
                                 onClick={() => company.isLive && navigate(`/companies/${company.slug}`)}
                             >
@@ -223,7 +230,7 @@ const Companies = () => {
                                 <div className="relative z-10 p-6 sm:p-8">
                                     {/* Logo + Badge row */}
                                     <div className="flex items-start justify-between mb-5">
-                                        <CompanyLogo abbr={company.abbr} gradient={company.logoGradient} />
+                                        <CompanyLogo abbr={company.abbr} gradient={company.logoGradient} image={company.image} />
                                         <div className="flex flex-col items-end gap-1.5">
                                             <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide border ${colors.badge}`}>
                                                 {company.badge}
@@ -283,8 +290,8 @@ const Companies = () => {
                                         disabled={!company.isLive}
                                         onClick={(e) => { e.stopPropagation(); company.isLive && navigate(`/companies/${company.slug}`); }}
                                         className={`w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-semibold transition-all duration-200 ${company.isLive
-                                                ? `${colors.bg} border ${colors.border} ${colors.accent} hover:brightness-125 group-hover:shadow-lg`
-                                                : 'bg-white/[0.03] border border-white/[0.07] text-gray-600 cursor-not-allowed'
+                                            ? `${colors.bg} border ${colors.border} ${colors.accent} hover:brightness-125 group-hover:shadow-lg`
+                                            : 'bg-white/[0.03] border border-white/[0.07] text-gray-600 cursor-not-allowed'
                                             }`}
                                         style={company.isLive ? { boxShadow: '0 4px 14px rgba(0,0,0,0.4)' } : {}}
                                     >

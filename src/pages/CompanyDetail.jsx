@@ -14,8 +14,15 @@ import {
 import { useAuth } from '../context/AuthContext';
 
 /* ─── Letter-mark logo ──────────────────────────── */
-const CompanyLogo = ({ abbr, gradient, size = 'md' }) => {
+const CompanyLogo = ({ abbr, gradient, size = 'md', image }) => {
     const sz = size === 'lg' ? 'w-16 h-16 rounded-2xl text-sm' : 'w-12 h-12 rounded-xl text-xs';
+    if (image) {
+        return (
+            <div className={`${sz} flex items-center justify-center shrink-0 shadow-lg overflow-hidden bg-white`}>
+                <img src={image} alt={abbr} className="w-full h-full object-contain p-1" />
+            </div>
+        );
+    }
     return (
         <div className={`${sz} bg-gradient-to-br ${gradient} flex items-center justify-center shrink-0 shadow-lg`}>
             <span className="font-black text-white tracking-tight leading-none">{abbr}</span>
@@ -27,7 +34,7 @@ const CompanyLogo = ({ abbr, gradient, size = 'md' }) => {
 const COMPANY_CONFIG = {
     tcs: {
         name: 'TCS', fullName: 'Tata Consultancy Services', abbr: 'TCS',
-        logoGradient: 'from-blue-500 to-blue-700', accentColor: 'blue',
+        logoGradient: 'from-blue-500 to-blue-700', accentColor: 'blue', image: '/tcs.jpg',
         description: "India's largest IT company hiring 30,000+ freshers annually via TCS NQT. Two sections — Foundation (easy-moderate) and Advanced (for Digital/Prime roles).",
         hiringPattern: 'Mass Hiring — 30,000+ freshers/year',
         package: '₹3.36 LPA (Ninja) · ₹7–9 LPA (Digital/Prime)',
@@ -145,7 +152,7 @@ const CompanyDetail = () => {
                     <div className="absolute inset-0 rounded-3xl pointer-events-none" style={{ background: 'linear-gradient(to bottom, rgba(255,255,255,0.05), transparent 40%)' }} />
 
                     <div className="relative z-10 flex flex-col sm:flex-row sm:items-center gap-5">
-                        <CompanyLogo abbr={company.abbr} gradient={company.logoGradient} size="lg" />
+                        <CompanyLogo abbr={company.abbr} gradient={company.logoGradient} size="lg" image={company.image} />
                         <div className="flex-1">
                             <div className="flex items-center gap-2.5 mb-1.5">
                                 <h1 className="text-2xl sm:text-3xl font-black text-white">{company.name}</h1>
