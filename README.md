@@ -44,6 +44,10 @@ Sorting
 
 Recursion
 
+Linked List
+
+Bit manipulation
+
 And expanding...
 
 📊 Analytics & Progress Tracking
