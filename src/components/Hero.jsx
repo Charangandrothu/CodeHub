@@ -138,9 +138,9 @@ const Hero = () => {
           autoPlay
           loop
           muted
-          defaultMuted
+          defaultmuted="true"
           playsInline
-          preload="auto"
+          preload="none"
           aria-hidden="true"
         >
           <source src="/animated.MP4" type="video/mp4" />
