@@ -142,6 +142,44 @@ const Problems = () => {
     const [jsonImportProblemText, setJsonImportProblemText] = useState('');
     const [jsonImportProblemError, setJsonImportProblemError] = useState('');
 
+    const [showJsonImportTheory, setShowJsonImportTheory] = useState(false);
+    const [jsonImportTheoryText, setJsonImportTheoryText] = useState('');
+    const [jsonImportTheoryError, setJsonImportTheoryError] = useState('');
+
+    const handleImportTheoryJson = () => {
+        setJsonImportTheoryError('');
+        try {
+            const parsed = JSON.parse(jsonImportTheoryText.trim());
+            const emptyApproach = () => ({ explanation: '', timeComplexity: { value: '', explanation: '' }, spaceComplexity: { value: '', explanation: '' }, solutionCode: { javascript: '', python: '', java: '', cpp: '' } });
+            
+            let bruteData = parsed.bruteForce || parsed.brute || parsed.theory?.bruteForce || parsed.theory?.brute || null;
+            let optimalData = parsed.optimal || parsed.theory?.optimal || null;
+            
+            if (!bruteData && !optimalData && (parsed.explanation || parsed.solutionCode)) {
+                optimalData = parsed;
+            }
+
+            setFormData(prev => ({
+                ...prev,
+                theory: {
+                    ...prev.theory,
+                    bruteForce: bruteData || emptyApproach(),
+                    optimal: optimalData || emptyApproach()
+                }
+            }));
+
+            if (optimalData && !bruteData) {
+                setAdminTheoryApproach('optimal');
+            }
+
+            setShowJsonImportTheory(false);
+            setJsonImportTheoryText('');
+            toast.success('Successfully imported Explanation JSON');
+        } catch (e) {
+            setJsonImportTheoryError('Invalid JSON: ' + e.message);
+        }
+    };
+
     const handleImportFullJson = () => {
         setJsonImportProblemError('');
         try {
@@ -444,6 +482,31 @@ const Problems = () => {
                     </div>
                 )}
 
+                {/* JSON Import Theory Modal */}
+                {showJsonImportTheory && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+                        <div className="bg-[#111] border border-gray-700 rounded-2xl p-6 w-full max-w-2xl space-y-4 shadow-2xl">
+                            <div className="flex justify-between items-center">
+                                <h2 className="text-lg font-bold text-white">Import Explanation JSON</h2>
+                                <button onClick={() => { setShowJsonImportTheory(false); setJsonImportTheoryText(''); setJsonImportTheoryError(''); }} className="text-gray-500 hover:text-white transition"><X size={20} /></button>
+                            </div>
+                            <p className="text-xs text-gray-400">Paste the JSON containing <code>optimal</code> (and optionally <code>bruteForce</code>). If you only want to show the optimal approach, only include the <code>optimal</code> key.</p>
+                            <textarea
+                                className="w-full h-72 bg-[#0a0a0a] border border-gray-700 rounded-lg p-3 text-xs font-mono text-zinc-300 outline-none focus:border-blue-500/50"
+                                placeholder='{&#10;  "optimal": {&#10;    "explanation": "...",&#10;    "timeComplexity": {"value": "O(N)"},&#10;    "solutionCode": {"javascript": "..."}&#10;  }&#10;}'
+                                value={jsonImportTheoryText}
+                                onChange={e => { setJsonImportTheoryText(e.target.value); setJsonImportTheoryError(''); }}
+                                autoFocus
+                            />
+                            {jsonImportTheoryError && <p className="text-xs text-red-400">{jsonImportTheoryError}</p>}
+                            <div className="flex gap-3">
+                                <button onClick={handleImportTheoryJson} className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded-lg font-medium transition-colors border border-purple-500/30">Import & Replace Approaches</button>
+                                <button onClick={() => { setShowJsonImportTheory(false); setJsonImportTheoryText(''); setJsonImportTheoryError(''); }} className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white text-sm rounded-lg font-medium transition-colors border border-gray-700">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 <div className="flex items-center justify-between">
                     <h1 className="text-2xl font-bold text-white">
                         {editingId ? 'Edit Problem' : 'New Problem'}
@@ -647,6 +710,13 @@ const Problems = () => {
                                 <div className="flex items-center justify-between border-b border-gray-800 pb-2">
                                     <h3 className="text-lg font-bold text-white flex items-center gap-2">
                                         <span>⚡ Approach Solutions</span>
+                                        <button 
+                                            type="button"
+                                            onClick={() => setShowJsonImportTheory(true)}
+                                            className="ml-2 px-2 py-0.5 bg-purple-600/20 text-purple-400 border border-purple-600/30 rounded text-xs font-bold transition-colors hover:bg-purple-600/30 flex items-center gap-1"
+                                        >
+                                            {'{ }'} Import JSON
+                                        </button>
                                     </h3>
                                     <div className="flex items-center gap-1 bg-[#0d0d0d] border border-gray-800 rounded-lg p-0.5">
                                         {['brute', 'optimal'].map(ap => (
