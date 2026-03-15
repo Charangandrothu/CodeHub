@@ -116,10 +116,11 @@ const Categories = () => {
                                     { name: 'Binary Search', slug: 'binary-search', order: 6 },
                                     { name: 'Recursion', slug: 'recursion-backtracking', order: 7 },
                                     { name: 'Linked Lists', slug: 'linked-lists', order: 8 },
-                                    { name: 'Stacks & Queues', slug: 'stacks-queues', order: 9 },
-                                    { name: 'Hashing', slug: 'hashing', order: 10 },
-                                    { name: 'Trees & Graphs', slug: 'trees', order: 11 },
-                                    { name: 'Dynamic Programming', slug: 'dp', order: 12 },
+                                    { name: 'Bit Manipulation', slug: 'bit-manipulation', order: 9 },
+                                    { name: 'Stacks & Queues', slug: 'stacks-queues', order: 10 },
+                                    { name: 'Hashing', slug: 'hashing', order: 11 },
+                                    { name: 'Trees & Graphs', slug: 'trees', order: 12 },
+                                    { name: 'Dynamic Programming', slug: 'dp', order: 13 },
                                 ];
 
                                 let addedCount = 0;
