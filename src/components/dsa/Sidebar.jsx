@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Rocket, Box, GitMerge, Search, Layers, Database, Hash, Code, Puzzle, Filter, Code2, LogOut, User, Settings, Sparkles, Crown, Shield, Zap, Network, Share2, ArrowUpDown, Rows, Type, Link, Repeat, BarChart3, GitBranch, Brain, X } from 'lucide-react';
+import { Rocket, Box, GitMerge, Search, Layers, Database, Hash, Code, Puzzle, Filter, Code2, LogOut, User, Settings, Sparkles, Crown, Shield, Zap, Network, Share2, ArrowUpDown, Rows, Type, Link, Repeat, BarChart3, GitBranch, Brain, X, Binary } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { motion } from 'framer-motion';
 import logo_img from '../../assets/logo_img.png';
@@ -15,6 +15,7 @@ export const TOPICS = [
     { id: 'hashing', label: 'Hashing', icon: Hash, color: '#eab308' },
     { id: 'binary-search', label: 'Binary Search', icon: Search, color: '#06b6d4' },
     { id: 'linked-list', label: 'Linked List', icon: Link, color: '#14b8a6' },
+    { id: 'bit-manipulation', label: 'Bit Manipulation', icon: Binary, color: '#8b5cf6' },
     { id: 'stack-queue', label: 'Stack & Queue', icon: Layers, color: '#6366f1' },
     { id: 'recursion-backtracking', label: 'Recursion & Backtracking', icon: Repeat, color: '#ef4444' },
     { id: 'greedy', label: 'Greedy', icon: Zap, color: '#f59e0b' },

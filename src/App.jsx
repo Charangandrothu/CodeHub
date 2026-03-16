@@ -1,52 +1,41 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AnimatePresence, MotionConfig } from 'framer-motion';
 import ScrollToTop from './components/ScrollToTop';
 import ErrorBoundary from './components/ErrorBoundary';
 import LandingPage from './pages/LandingPage'
 import Navbar from './components/Navbar'
-import Login from './pages/Login'
-import ForgotPassword from './pages/ForgotPassword'
-import ResetPassword from './pages/ResetPassword'
+const Login = lazy(() => import('./pages/Login'))
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'))
+const ResetPassword = lazy(() => import('./pages/ResetPassword'))
 
-import CompleteProfile from './pages/CompleteProfile'
-import Dashboard from './pages/Dashboard'
-import DSA from './pages/DSA'
-import TopicPage from './pages/TopicPage'
-import QuestionPage from './pages/QuestionPage'
-import RoadmapPage from './pages/RoadmapPage'
-import Pricing from './pages/Pricing'
-import MockTests from './pages/MockTests'
-import Aptitude from './pages/Aptitude'
-import Companies from './pages/Companies'
-import CompanyDetail from './pages/CompanyDetail'
-import Profile from './pages/Profile'
-import Settings from './pages/Settings'
+const CompleteProfile = lazy(() => import('./pages/CompleteProfile'))
+const Dashboard = lazy(() => import('./pages/Dashboard'))
+const DSA = lazy(() => import('./pages/DSA'))
+const TopicPage = lazy(() => import('./pages/TopicPage'))
+const QuestionPage = lazy(() => import('./pages/QuestionPage'))
+const RoadmapPage = lazy(() => import('./pages/RoadmapPage'))
+const Pricing = lazy(() => import('./pages/Pricing'))
+const MockTests = lazy(() => import('./pages/MockTests'))
+const Aptitude = lazy(() => import('./pages/Aptitude'))
+const Companies = lazy(() => import('./pages/Companies'))
+const CompanyDetail = lazy(() => import('./pages/CompanyDetail'))
+const Profile = lazy(() => import('./pages/Profile'))
+const Settings = lazy(() => import('./pages/Settings'))
 
-import Unauthorized from './pages/Unauthorized'
-import NotFound from './pages/NotFound'
-import About from './pages/About'
-import PrivacyPolicy from './pages/PrivacyPolicy'
-import TermsAndConditions from './pages/TermsAndConditions'
-import Disclaimer from './pages/Disclaimer'
-import Contact from './pages/Contact'
-import Articles from './pages/Articles'
-import ArticleView from './pages/ArticleView'
-import Maintenance from './pages/Maintenance'
+const Unauthorized = lazy(() => import('./pages/Unauthorized'))
+const NotFound = lazy(() => import('./pages/NotFound'))
+const About = lazy(() => import('./pages/About'))
+const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'))
+const TermsAndConditions = lazy(() => import('./pages/TermsAndConditions'))
+const Disclaimer = lazy(() => import('./pages/Disclaimer'))
+const Contact = lazy(() => import('./pages/Contact'))
+const Articles = lazy(() => import('./pages/Articles'))
+const ArticleView = lazy(() => import('./pages/ArticleView'))
+const Maintenance = lazy(() => import('./pages/Maintenance'))
 
 // Admin Imports
-import AdminLayout from './layouts/AdminLayout'
-import AdminDashboard from './pages/admin/Dashboard'
-import UsersManagement from './pages/admin/UsersManagement'
-import Payments from './pages/admin/Payments'
-import Problems from './pages/admin/Problems'
-import Categories from './pages/admin/Categories'
-import AdminSettings from './pages/admin/Settings'
-import Announcements from './pages/admin/Announcements'
-import CompanyQuestions from './pages/admin/CompanyQuestions'
 
-import SecureAdminLogin from './pages/admin/SecureAdminLogin'
-import SecureAdminPricing from './pages/admin/SecureAdminPricing'
 
 import { useAuth } from './context/AuthContext'
 
@@ -214,7 +203,13 @@ function App() {
           <ErrorBoundary>
             <AnnouncementBar />
             <ConditionalNavbar />
-            <AppRoutes />
+            <Suspense fallback={
+              <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a]">
+                <div className="w-8 h-8 rounded-full border-2 border-emerald-500 border-t-transparent animate-spin"></div>
+              </div>
+            }>
+              <AppRoutes />
+            </Suspense>
           </ErrorBoundary>
         </div>
       </MotionConfig>

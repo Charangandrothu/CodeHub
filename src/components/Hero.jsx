@@ -98,6 +98,19 @@ const Hero = () => {
   const { currentUser } = useAuth();
   const [isHovered, setIsHovered] = useState(false);
   const navigate = useNavigate();
+  const videoRef = React.useRef(null);
+
+  React.useEffect(() => {
+    // Attempt to automatically play the video to bypass browser autoplay restrictions
+    if (videoRef.current) {
+      const playPromise = videoRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(error => {
+          console.log("Video autoplay failed:", error);
+        });
+      }
+    }
+  }, []);
 
   const handleStartPreparing = () => {
     if (currentUser) {
@@ -120,12 +133,14 @@ const Hero = () => {
     <section id="home" className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[#0a0a0a] px-4 sm:px-6 lg:px-8">
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <video
+          ref={videoRef}
           className="absolute inset-0 h-full w-full object-cover scale-105 opacity-45 blur-none md:blur-[2px]"
           autoPlay
           loop
           muted
+          defaultmuted="true"
           playsInline
-          preload="metadata"
+          preload="none"
           aria-hidden="true"
         >
           <source src="/animated.MP4" type="video/mp4" />
