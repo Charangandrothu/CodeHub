@@ -35,8 +35,18 @@ const ArticleView = lazy(() => import('./pages/ArticleView'))
 const Maintenance = lazy(() => import('./pages/Maintenance'))
 
 // Admin Imports
+import AdminLayout from './layouts/AdminLayout'
+const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'))
+const UsersManagement = lazy(() => import('./pages/admin/UsersManagement'))
+const Payments = lazy(() => import('./pages/admin/Payments'))
+const Problems = lazy(() => import('./pages/admin/Problems'))
+const CompanyQuestions = lazy(() => import('./pages/admin/CompanyQuestions'))
+const Categories = lazy(() => import('./pages/admin/Categories'))
+const AdminSettings = lazy(() => import('./pages/admin/Settings'))
+const Announcements = lazy(() => import('./pages/admin/Announcements'))
 
-
+const SecureAdminLogin = lazy(() => import('./pages/admin/SecureAdminLogin'))
+const SecureAdminPricing = lazy(() => import('./pages/admin/SecureAdminPricing'))
 import { useAuth } from './context/AuthContext'
 
 import PublicRoute from './components/routes/PublicRoute';
