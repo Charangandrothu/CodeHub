@@ -38,6 +38,19 @@ const userSchema = new mongoose.Schema({
     skills: { type: [String], default: [] },
     dsaRoadmap: { type: Object, default: null }, // Store roadmap state (isLocked, days, sections, etc.)
 
+    // Company Prep Progress — key: "company.section" (e.g. "tcs.aptitude")
+    // Each value tracks answered/correct/skipped question IDs for no-repeat filtering
+    companyPrep: {
+        type: Map,
+        of: new mongoose.Schema({
+            answeredIds: { type: [String], default: [] }, // never shown again
+            correctIds: { type: [String], default: [] }, // subset: answered correctly
+            skippedIds: { type: [String], default: [] }, // shown again at end of session
+            lastPracticed: { type: Date, default: null }
+        }, { _id: false }),
+        default: {}
+    },
+
     // User Preferences
     preferences: {
         goal: { type: String, default: "Placements" },

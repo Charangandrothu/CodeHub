@@ -50,6 +50,9 @@ app.use('/api/admin', adminRoutes);
 const aiRoutes = require("./routes/aiRoutes");
 app.use('/api/ai', aiRoutes);
 
+const companyQuestionRoutes = require('./routes/companyQuestionRoutes');
+app.use('/api/company-questions', companyQuestionRoutes);
+
 const platformRoutes = require("./routes/platform");
 app.use('/api/platform', platformRoutes);
 

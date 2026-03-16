@@ -58,6 +58,60 @@ const COMPANY_CONFIG = {
             { icon: Calendar, text: 'Held 4–5 times per year nationally' },
         ],
     },
+    infosys: {
+        name: 'Infosys', fullName: 'Infosys Limited', abbr: 'INFY',
+        logoGradient: 'from-emerald-500 to-emerald-700', accentColor: 'emerald', image: '/infosys.jpg',
+        description: "Global IT leader hiring 50,000+ freshers. Unique selection process including a notorious Pseudo Code section.",
+        hiringPattern: 'Mass Hiring — 50,000+ freshers/year',
+        package: '₹4.0–4.5 LPA (SE) · ₹6.5–10.5 LPA (DSE/SP)',
+        eligibility: '60% or 6.0 CGPA throughout · 0 active backlogs · All branches',
+        examPattern: 'Infosys Recruitment Test (IRT)',
+        rounds: ['Online Assessment (IRT)', 'Technical Interview', 'HR Interview'],
+        sections: [
+            { key: 'infosysAptitude', label: 'Quantitative Aptitude', icon: BarChart2, color: 'blue', totalTopics: 10, totalQuestions: 150, description: 'Percentages, Profit & Loss, Time & Work, Data Interpretation', isLive: true },
+            { key: 'infosysReasoning', label: 'Logical Reasoning', icon: Brain, color: 'purple', totalTopics: 9, totalQuestions: 150, description: 'Syllogisms, Puzzles, Data Interpretation, Blood Relations', isLive: true },
+            { key: 'infosysVerbal', label: 'Verbal Ability', icon: MessageSquare, color: 'emerald', totalTopics: 6, totalQuestions: 100, description: 'Reading Comprehension, Sentence Correction, Para Jumbles', isLive: true },
+            { key: 'pseudocode', label: 'Pseudo Code', icon: Code2, color: 'pink', totalTopics: 4, totalQuestions: 100, description: 'Trace & Output, Loop Tracing, Array Operations, String Manipulation', isLive: true },
+            { key: 'coding', label: 'Coding Problems', icon: Code2, color: 'orange', totalTopics: 5, totalQuestions: 30, description: 'Arrays, Strings, Greedy, Recursion — 2 problems in 58 min', isLive: false },
+            { key: 'mocks', label: 'Mock Tests', icon: FileText, color: 'yellow', totalTopics: 0, totalQuestions: 0, description: 'Full-length simulated IRT tests with detailed analysis', isLive: false },
+            { key: 'experiences', label: 'Interview Experiences', icon: Users, color: 'blue', totalTopics: 0, totalQuestions: 0, description: 'Real interview stories from students placed in Infosys', isLive: false },
+        ],
+        sprintDays: 30,
+        keyFacts: [
+            { icon: ShieldCheck, text: 'No negative marking — attempt ALL questions' },
+            { icon: Timer, text: 'Strict section-wise time limits' },
+            { icon: Target, text: 'Must clear sectional cut-offs (~70-80%ile)' },
+            { icon: AlertTriangle, text: 'Logical Reasoning & Pseudo Code are very hard' },
+            { icon: Calendar, text: 'Results typically within 2-3 weeks' },
+        ],
+    },
+    wipro: {
+        name: 'Wipro', fullName: 'Wipro Limited', abbr: 'WIPRO',
+        logoGradient: 'from-purple-500 to-purple-700', accentColor: 'purple', image: '/wipro.jpg',
+        description: "Hires 15,000+ freshers via the Elite National Talent Hunt (NLTH). Features a unique and mandatory 20-minute Essay Writing section.",
+        hiringPattern: 'Mass Hiring — 15,000+ freshers/year',
+        package: '₹3.5 LPA (Project Engineer)',
+        eligibility: '60% or 6.0 CGPA throughout · Max 1 active backlog · All branches',
+        examPattern: 'Elite National Talent Hunt (NLTH)',
+        rounds: ['NLTH Online Test', 'Voice Assessment', 'Business Discussion (Interview)'],
+        sections: [
+            { key: 'wiproAptitude', label: 'Quantitative Aptitude', icon: BarChart2, color: 'blue', totalTopics: 11, totalQuestions: 150, description: 'Percentages, Profit & Loss, Time & Work, Data Interpretation', isLive: true },
+            { key: 'wiproReasoning', label: 'Logical Reasoning', icon: Brain, color: 'purple', totalTopics: 8, totalQuestions: 150, description: 'Seating Arrangements, Puzzles, Blood Relations, Series', isLive: true },
+            { key: 'wiproVerbal', label: 'Verbal Ability', icon: MessageSquare, color: 'emerald', totalTopics: 6, totalQuestions: 100, description: 'Reading Comprehension, Sentence Correction, Para Jumbles', isLive: true },
+            { key: 'wiproEssay', label: 'Essay Writing', icon: PenLine, color: 'pink', totalTopics: 4, totalQuestions: 20, description: 'Technology, Social Issues, Education, and Professional Topics', isLive: true },
+            { key: 'coding', label: 'Coding Problems', icon: Code2, color: 'orange', totalTopics: 5, totalQuestions: 30, description: 'Arrays, Strings, Mathematics, Sorting — 2 problems in 60 min', isLive: false },
+            { key: 'mocks', label: 'Mock Tests', icon: FileText, color: 'yellow', totalTopics: 0, totalQuestions: 0, description: 'Full-length simulated NLTH tests with detailed analysis', isLive: false },
+            { key: 'experiences', label: 'Interview Experiences', icon: Users, color: 'blue', totalTopics: 0, totalQuestions: 0, description: 'Real interview stories from students placed in Wipro', isLive: false },
+        ],
+        sprintDays: 30,
+        keyFacts: [
+            { icon: ShieldCheck, text: 'No negative marking — attempt ALL questions' },
+            { icon: Timer, text: 'Essay writing is strictly 20 minutes' },
+            { icon: Target, text: 'Must clear both overall and sectional cut-offs' },
+            { icon: AlertTriangle, text: 'Only 1 active backlog allowed' },
+            { icon: Calendar, text: 'Role requires 12 months service agreement' },
+        ],
+    },
 };
 
 const colorMap = {
@@ -399,6 +453,80 @@ const TOPICS = {
         { name: 'Prepositions & Conjunctions', count: 10, priority: 'Medium', icon: Link2 },
         { name: 'Active & Passive Voice', count: 18, priority: 'High', icon: Repeat },
     ],
+    infosysAptitude: [
+        { name: 'Percentages', count: 20, priority: 'High', icon: Percent },
+        { name: 'Profit & Loss', count: 15, priority: 'Medium', icon: DollarSign },
+        { name: 'Time & Work', count: 18, priority: 'High', icon: Timer },
+        { name: 'Time, Speed & Distance', count: 16, priority: 'High', icon: Gauge },
+        { name: 'Ratio & Proportion', count: 12, priority: 'High', icon: Layers },
+        { name: 'Averages', count: 10, priority: 'Medium', icon: BarChart2 },
+        { name: 'Probability', count: 10, priority: 'Low', icon: CircleDot },
+        { name: 'Permutations & Combinations', count: 14, priority: 'Low', icon: Shuffle },
+        { name: 'Number Systems', count: 15, priority: 'Medium', icon: Binary },
+        { name: 'Data Interpretation', count: 20, priority: 'High', icon: LineChart },
+    ],
+    infosysReasoning: [
+        { name: 'Syllogisms', count: 25, priority: 'Very High', icon: Lightbulb },
+        { name: 'Data Interpretation', count: 20, priority: 'High', icon: LineChart },
+        { name: 'Data Sufficiency', count: 15, priority: 'Medium', icon: Database },
+        { name: 'Puzzles (Arrangement)', count: 25, priority: 'Very High', icon: PuzzleIcon },
+        { name: 'Blood Relations', count: 16, priority: 'High', icon: GitBranch },
+        { name: 'Coding-Decoding', count: 18, priority: 'High', icon: KeyRound },
+        { name: 'Series (Number/Letter)', count: 15, priority: 'High', icon: Hash },
+        { name: 'Direction Sense', count: 10, priority: 'Low', icon: Compass },
+        { name: 'Venn Diagrams', count: 12, priority: 'Medium', icon: CircleDot },
+    ],
+    infosysVerbal: [
+        { name: 'Reading Comprehension', count: 40, priority: 'Very High', icon: BookMarked },
+        { name: 'Sentence Correction', count: 15, priority: 'High', icon: AlertTriangle },
+        { name: 'Para Jumbles', count: 12, priority: 'High', icon: ListOrdered },
+        { name: 'Synonyms & Antonyms', count: 15, priority: 'High', icon: SpellCheck },
+        { name: 'Fill in the Blanks', count: 10, priority: 'Medium', icon: PenLine },
+        { name: 'Idioms & Phrases', count: 10, priority: 'Low', icon: MessageCircle },
+    ],
+    pseudocode: [
+        { name: 'Trace & Output', count: 40, priority: 'Very High', icon: Code2 },
+        { name: 'Code Logic', count: 20, priority: 'High', icon: GitBranch },
+        { name: 'Error Detection', count: 15, priority: 'High', icon: AlertTriangle },
+        { name: 'Loop Tracing', count: 25, priority: 'High', icon: Repeat },
+    ],
+    wiproAptitude: [
+        { name: 'Percentages', count: 20, priority: 'High', icon: Percent },
+        { name: 'Profit & Loss', count: 18, priority: 'High', icon: DollarSign },
+        { name: 'Time & Work', count: 18, priority: 'High', icon: Timer },
+        { name: 'Ratio & Proportion', count: 16, priority: 'High', icon: Layers },
+        { name: 'Data Interpretation', count: 20, priority: 'High', icon: LineChart },
+        { name: 'Time, Speed & Distance', count: 15, priority: 'Medium', icon: Gauge },
+        { name: 'Averages', count: 12, priority: 'Medium', icon: BarChart2 },
+        { name: 'Number Systems', count: 15, priority: 'Medium', icon: Binary },
+        { name: 'Simple & Compound Interest', count: 10, priority: 'Low', icon: TrendingUp },
+        { name: 'Ages', count: 8, priority: 'Low', icon: Users },
+        { name: 'Mixtures & Alligations', count: 10, priority: 'Low', icon: Anchor },
+    ],
+    wiproReasoning: [
+        { name: 'Seating Arrangements', count: 25, priority: 'Very High', icon: Users },
+        { name: 'Blood Relations', count: 20, priority: 'High', icon: GitBranch },
+        { name: 'Coding-Decoding', count: 18, priority: 'High', icon: KeyRound },
+        { name: 'Syllogisms', count: 18, priority: 'High', icon: Lightbulb },
+        { name: 'Series (Number/Letter)', count: 20, priority: 'High', icon: Hash },
+        { name: 'Puzzles', count: 22, priority: 'High', icon: PuzzleIcon },
+        { name: 'Direction Sense', count: 12, priority: 'Medium', icon: Compass },
+        { name: 'Clocks & Calendars', count: 10, priority: 'Low', icon: AlarmClock },
+    ],
+    wiproVerbal: [
+        { name: 'Reading Comprehension', count: 40, priority: 'Very High', icon: BookMarked },
+        { name: 'Sentence Correction', count: 25, priority: 'High', icon: AlertTriangle },
+        { name: 'Synonyms & Antonyms', count: 20, priority: 'High', icon: SpellCheck },
+        { name: 'Fill in the Blanks', count: 20, priority: 'Medium', icon: PenLine },
+        { name: 'Para Jumbles', count: 15, priority: 'Medium', icon: ListOrdered },
+        { name: 'Idioms & Phrases', count: 10, priority: 'Low', icon: MessageCircle },
+    ],
+    wiproEssay: [
+        { name: 'Technology & AI', count: 15, priority: 'Very High', icon: Binary },
+        { name: 'Social Issues', count: 12, priority: 'High', icon: Users },
+        { name: 'Professional & Ethics', count: 10, priority: 'High', icon: CheckCircle2 },
+        { name: 'Education & Environment', count: 10, priority: 'Medium', icon: BookOpen },
+    ],
 };
 
 const priorityColors = {
@@ -573,7 +701,7 @@ const SprintTab = ({ company, accentColors, colorMap }) => (
                         <Calendar size={22} />
                     </div>
                     <div>
-                        <h3 className="text-white font-black text-xl">30-Day TCS NQT Sprint</h3>
+                        <h3 className="text-white font-black text-xl">30-Day {company.abbr} Sprint</h3>
                         <p className="text-zinc-500 text-sm">Structured daily plan — 0 → job-ready in 30 days</p>
                     </div>
                 </div>

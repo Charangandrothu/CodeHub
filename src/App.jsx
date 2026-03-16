@@ -43,6 +43,7 @@ import Problems from './pages/admin/Problems'
 import Categories from './pages/admin/Categories'
 import AdminSettings from './pages/admin/Settings'
 import Announcements from './pages/admin/Announcements'
+import CompanyQuestions from './pages/admin/CompanyQuestions'
 
 import SecureAdminLogin from './pages/admin/SecureAdminLogin'
 import SecureAdminPricing from './pages/admin/SecureAdminPricing'
@@ -159,6 +160,7 @@ function AppRoutes() {
         <Route path="users" element={<UsersManagement />} />
         <Route path="payments" element={<Payments />} />
         <Route path="problems" element={<Problems />} />
+        <Route path="company-questions" element={<CompanyQuestions />} />
         <Route path="categories" element={<Categories />} />
         <Route path="announcements" element={<Announcements />} />
         <Route path="settings" element={<AdminSettings />} />
