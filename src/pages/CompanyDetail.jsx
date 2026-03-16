@@ -536,7 +536,8 @@ const priorityColors = {
     'Low': 'text-gray-400 bg-white/5 border-white/10',
 };
 
-const SectionTab = ({ section, colorMap }) => {
+const SectionTab = ({ section, colorMap, company }) => {
+    const navigate = useNavigate();
     const colors = colorMap[section.color] || colorMap.blue;
     const Icon = section.icon;
 
@@ -645,7 +646,12 @@ const SectionTab = ({ section, colorMap }) => {
                                 </div>
                                 <h4 className="text-white text-sm font-semibold mb-1">{topic.name}</h4>
                                 <p className="text-xs text-zinc-500 mb-4">{topic.count} questions</p>
-                                <button className={`w-full py-2.5 rounded-xl text-xs font-semibold ${colors.bg} border ${colors.border} ${colors.accent} hover:brightness-125 transition-all flex items-center justify-center gap-1.5`}
+                                <button
+                                    onClick={() => {
+                                        const topicSlug = topic.name.toLowerCase().replace(/[&]/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+                                        navigate(`/companies/${company.name.toLowerCase()}/practice/${section.key}/${topicSlug}`);
+                                    }}
+                                    className={`w-full py-2.5 rounded-xl text-xs font-semibold ${colors.bg} border ${colors.border} ${colors.accent} hover:brightness-125 transition-all flex items-center justify-center gap-1.5`}
                                     style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.4)' }}
                                 >
                                     Practice Now <ArrowRight size={11} className="group-hover:translate-x-0.5 transition-transform" />

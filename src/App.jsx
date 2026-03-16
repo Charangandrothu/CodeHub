@@ -20,6 +20,7 @@ const MockTests = lazy(() => import('./pages/MockTests'))
 const Aptitude = lazy(() => import('./pages/Aptitude'))
 const Companies = lazy(() => import('./pages/Companies'))
 const CompanyDetail = lazy(() => import('./pages/CompanyDetail'))
+const CompanyPractice = lazy(() => import('./pages/CompanyPractice'))
 const Profile = lazy(() => import('./pages/Profile'))
 const Settings = lazy(() => import('./pages/Settings'))
 
@@ -137,6 +138,11 @@ function AppRoutes() {
       <Route path="/companies/:slug" element={
         <ProtectedRoute>
           <CompanyDetail />
+        </ProtectedRoute>
+      } />
+      <Route path="/companies/:company/practice/:section/:topic" element={
+        <ProtectedRoute>
+          <CompanyPractice />
         </ProtectedRoute>
       } />
       <Route path="/settings" element={

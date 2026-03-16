@@ -178,15 +178,25 @@ router.get('/admin/stats', verifyAdmin, async (req, res) => {
 // correctAnswer is NEVER sent here — only after submitting
 router.get('/practice/:company/:section/:topic', verifyUser, async (req, res) => {
     try {
-        const { company, section, topic } = req.params;
+        const { company, section, topic: topicSlug } = req.params;
         const { page = 1, limit = 10 } = req.query;
+
+        // Convert URL slug back to regex for flexible DB matching
+        // e.g. "profit-and-loss" -> matches "profit & loss" or "profit and loss"
+        const topicPattern = topicSlug
+            .replace(/-and-/g, '([& ]and[& ]|[& ]+)')
+            .replace(/-/g, '[\\s&,\\-]+');
+        const topicRegex = new RegExp(`^${topicPattern}$`, 'i');
+
+        // Also try exact match first (for simple topics like "percentages")
+        const topicFilter = topicSlug.includes('-') ? topicRegex : { $in: [topicSlug, topicRegex] };
 
         // Get user's answered IDs. Map key pattern: "company.section"
         const mapKey = `${company}.${section}`;
         const answeredIds = req.user.companyPrep?.get?.(mapKey)?.answeredIds || [];
 
         const filter = {
-            company, section, topic,
+            company, section, topic: topicFilter,
             isActive: true,
             _id: { $nin: answeredIds }
         };
@@ -200,7 +210,7 @@ router.get('/practice/:company/:section/:topic', verifyUser, async (req, res) =>
             .select('-correctAnswer -questions.correctAnswer'); // never leak answer
 
         // Total questions in topic (including answered)
-        const topicTotal = await CompanyQuestion.countDocuments({ company, section, topic, isActive: true });
+        const topicTotal = await CompanyQuestion.countDocuments({ company, section, topic: topicFilter, isActive: true });
 
         res.json({
             questions,
