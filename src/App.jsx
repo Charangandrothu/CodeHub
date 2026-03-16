@@ -40,6 +40,7 @@ const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'))
 const UsersManagement = lazy(() => import('./pages/admin/UsersManagement'))
 const Payments = lazy(() => import('./pages/admin/Payments'))
 const Problems = lazy(() => import('./pages/admin/Problems'))
+const CompanyQuestions = lazy(() => import('./pages/admin/CompanyQuestions'))
 const Categories = lazy(() => import('./pages/admin/Categories'))
 const AdminSettings = lazy(() => import('./pages/admin/Settings'))
 const Announcements = lazy(() => import('./pages/admin/Announcements'))
@@ -159,6 +160,7 @@ function AppRoutes() {
         <Route path="users" element={<UsersManagement />} />
         <Route path="payments" element={<Payments />} />
         <Route path="problems" element={<Problems />} />
+        <Route path="company-questions" element={<CompanyQuestions />} />
         <Route path="categories" element={<Categories />} />
         <Route path="announcements" element={<Announcements />} />
         <Route path="settings" element={<AdminSettings />} />
