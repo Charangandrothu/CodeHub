@@ -183,10 +183,11 @@ const ConditionalNavbar = () => {
   const isAdminPage = location.pathname.startsWith('/admin');
   const isRoadmapDSAPage = location.pathname.startsWith('/roadmap/dsa');
   const isLoginPage = location.pathname === '/login';
+  const isCompanyPracticePage = location.pathname.includes('/practice/');
 
   return (
     <AnimatePresence>
-      {!isDSAPage && !isAdminPage && !isRoadmapDSAPage && !isLoginPage && <Navbar key="navbar" />}
+      {!isDSAPage && !isAdminPage && !isRoadmapDSAPage && !isLoginPage && !isCompanyPracticePage && <Navbar key="navbar" />}
     </AnimatePresence>
   );
 };
