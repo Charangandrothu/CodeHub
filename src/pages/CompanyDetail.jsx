@@ -125,10 +125,19 @@ const colorMap = {
 
 /* ─── Main Page ──────────────────────────────────── */
 const CompanyDetail = () => {
-    const { slug } = useParams();
+    const { slug, tab } = useParams();
     const navigate = useNavigate();
     useAuth(); // keep context alive
-    const [activeTab, setActiveTab] = useState('overview');
+    const [activeTab, setActiveTab] = useState(tab || 'overview');
+
+    React.useEffect(() => {
+        if (tab) setActiveTab(tab);
+    }, [tab]);
+
+    const handleTabChange = (key) => {
+        setActiveTab(key);
+        navigate(`/companies/${slug}/${key}`, { replace: true });
+    };
 
     const company = COMPANY_CONFIG[slug];
 
@@ -244,7 +253,7 @@ const CompanyDetail = () => {
                             return (
                                 <button
                                     key={tab.key}
-                                    onClick={() => setActiveTab(tab.key)}
+                                    onClick={() => handleTabChange(tab.key)}
                                     className={`relative flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium rounded-full transition-all duration-300 whitespace-nowrap ${isActive ? 'text-white' : 'text-gray-500 hover:text-gray-300'
                                         }`}
                                 >
@@ -272,7 +281,7 @@ const CompanyDetail = () => {
                 {/* Tab Content */}
                 <AnimatePresence mode="wait">
                     {activeTab === 'overview' && (
-                        <OverviewTab key="overview" company={company} accentColors={accentColors} colorMap={colorMap} onTabChange={setActiveTab} />
+                        <OverviewTab key="overview" company={company} accentColors={accentColors} colorMap={colorMap} onTabChange={handleTabChange} />
                     )}
                     {activeTab === 'sprint' && (
                         <SprintTab key="sprint" company={company} accentColors={accentColors} colorMap={colorMap} />
@@ -416,42 +425,42 @@ const OverviewTab = ({ company, accentColors, colorMap, onTabChange }) => (
 /* ─── Section Tab (Aptitude / Reasoning / Verbal) ── */
 const TOPICS = {
     aptitude: [
-        { name: 'Percentages', count: 20, priority: 'Very High', icon: Percent },
-        { name: 'Profit & Loss', count: 18, priority: 'Very High', icon: DollarSign },
-        { name: 'Time & Work', count: 16, priority: 'High', icon: Timer },
-        { name: 'Time, Speed & Distance', count: 15, priority: 'High', icon: Gauge },
-        { name: 'Averages', count: 12, priority: 'Medium', icon: BarChart2 },
-        { name: 'Ratio & Proportion', count: 12, priority: 'Medium', icon: Layers },
-        { name: 'Number Series', count: 14, priority: 'High', icon: Hash },
-        { name: 'Data Interpretation', count: 16, priority: 'High', icon: LineChart },
-        { name: 'Simple & Compound Interest', count: 10, priority: 'Medium', icon: TrendingUp },
-        { name: 'Permutations & Combinations', count: 10, priority: 'Medium', icon: Shuffle },
-        { name: 'Probability', count: 10, priority: 'Medium', icon: CircleDot },
-        { name: 'Mixtures & Alligation', count: 8, priority: 'Low', icon: Anchor },
-        { name: 'Boats & Streams', count: 8, priority: 'Low', icon: Gauge },
-        { name: 'Number System', count: 11, priority: 'Medium', icon: Binary },
+        { name: 'Percentages', count: 20, priority: 'Very High', icon: Percent, slug: 'percentages' },
+        { name: 'Profit & Loss', count: 18, priority: 'Very High', icon: DollarSign, slug: 'profit-loss' },
+        { name: 'Time & Work', count: 16, priority: 'High', icon: Timer, slug: 'time-work' },
+        { name: 'Time, Speed & Distance', count: 15, priority: 'High', icon: Gauge, slug: 'time-speed-distance' },
+        { name: 'Averages', count: 12, priority: 'Medium', icon: BarChart2, slug: 'averages' },
+        { name: 'Ratio & Proportion', count: 12, priority: 'Medium', icon: Layers, slug: 'ratio-proportion' },
+        { name: 'Number Series', count: 14, priority: 'High', icon: Hash, slug: 'number-series' },
+        { name: 'Data Interpretation', count: 16, priority: 'High', icon: LineChart, slug: 'data-interpretation' },
+        { name: 'Simple & Compound Interest', count: 10, priority: 'Medium', icon: TrendingUp, slug: 'interest' },
+        { name: 'Permutations & Combinations', count: 10, priority: 'Medium', icon: Shuffle, slug: 'permutations-combinations' },
+        { name: 'Probability', count: 10, priority: 'Medium', icon: CircleDot, slug: 'probability' },
+        { name: 'Mixtures & Alligation', count: 8, priority: 'Low', icon: Anchor, slug: 'mixtures' },
+        { name: 'Boats & Streams', count: 8, priority: 'Low', icon: Gauge, slug: 'boats-streams' },
+        { name: 'Number System', count: 11, priority: 'Medium', icon: Binary, slug: 'number-systems' },
     ],
     reasoning: [
-        { name: 'Seating Arrangements', count: 18, priority: 'Very High', icon: Users },
-        { name: 'Direction Sense', count: 12, priority: 'High', icon: Compass },
-        { name: 'Coding-Decoding', count: 16, priority: 'Very High', icon: KeyRound },
-        { name: 'Blood Relations', count: 12, priority: 'High', icon: GitBranch },
-        { name: 'Syllogisms', count: 14, priority: 'High', icon: Lightbulb },
-        { name: 'Analogies', count: 10, priority: 'Medium', icon: Link2 },
-        { name: 'Odd One Out', count: 10, priority: 'Medium', icon: CircleDot },
-        { name: 'Puzzles', count: 14, priority: 'High', icon: PuzzleIcon },
-        { name: 'Data Sufficiency', count: 12, priority: 'Medium', icon: Database },
-        { name: 'Clocks & Calendars', count: 12, priority: 'Medium', icon: AlarmClock },
+        { name: 'Seating Arrangements', count: 18, priority: 'Very High', icon: Users, slug: 'seating-arrangements' },
+        { name: 'Direction Sense', count: 12, priority: 'High', icon: Compass, slug: 'direction-sense' },
+        { name: 'Coding-Decoding', count: 16, priority: 'Very High', icon: KeyRound, slug: 'coding-decoding' },
+        { name: 'Blood Relations', count: 12, priority: 'High', icon: GitBranch, slug: 'blood-relations' },
+        { name: 'Syllogisms', count: 14, priority: 'High', icon: Lightbulb, slug: 'syllogisms' },
+        { name: 'Analogies', count: 10, priority: 'Medium', icon: Link2, slug: 'analogies' },
+        { name: 'Odd One Out', count: 10, priority: 'Medium', icon: CircleDot, slug: 'odd-one-out' },
+        { name: 'Puzzles', count: 14, priority: 'High', icon: PuzzleIcon, slug: 'puzzles' },
+        { name: 'Data Sufficiency', count: 12, priority: 'Medium', icon: Database, slug: 'data-sufficiency' },
+        { name: 'Clocks & Calendars', count: 12, priority: 'Medium', icon: AlarmClock, slug: 'clocks-calendars' },
     ],
     verbal: [
-        { name: 'Error Identification', count: 20, priority: 'Very High', icon: AlertTriangle },
-        { name: 'Reading Comprehension', count: 25, priority: 'Very High', icon: BookMarked },
-        { name: 'Sentence Completion', count: 15, priority: 'High', icon: PenLine },
-        { name: 'Synonyms & Antonyms', count: 20, priority: 'High', icon: SpellCheck },
-        { name: 'Para Jumbles', count: 12, priority: 'Medium', icon: ListOrdered },
-        { name: 'Idioms & Phrases', count: 10, priority: 'Medium', icon: MessageCircle },
-        { name: 'Prepositions & Conjunctions', count: 10, priority: 'Medium', icon: Link2 },
-        { name: 'Active & Passive Voice', count: 18, priority: 'High', icon: Repeat },
+        { name: 'Error Identification', count: 20, priority: 'Very High', icon: AlertTriangle, slug: 'error-identification' },
+        { name: 'Reading Comprehension', count: 25, priority: 'Very High', icon: BookMarked, slug: 'reading-comprehension' },
+        { name: 'Sentence Completion', count: 15, priority: 'High', icon: PenLine, slug: 'sentence-completion' },
+        { name: 'Synonyms & Antonyms', count: 20, priority: 'High', icon: SpellCheck, slug: 'synonyms-antonyms' },
+        { name: 'Para Jumbles', count: 12, priority: 'Medium', icon: ListOrdered, slug: 'para-jumbles' },
+        { name: 'Idioms & Phrases', count: 10, priority: 'Medium', icon: MessageCircle, slug: 'idioms-phrases' },
+        { name: 'Prepositions & Conjunctions', count: 10, priority: 'Medium', icon: Link2, slug: 'prepositions-conjunctions' },
+        { name: 'Active & Passive Voice', count: 18, priority: 'High', icon: Repeat, slug: 'active-passive' },
     ],
     infosysAptitude: [
         { name: 'Percentages', count: 20, priority: 'High', icon: Percent },
@@ -648,7 +657,7 @@ const SectionTab = ({ section, colorMap, company }) => {
                                 <p className="text-xs text-zinc-500 mb-4">{topic.count} questions</p>
                                 <button
                                     onClick={() => {
-                                        const topicSlug = topic.name.toLowerCase().replace(/[&]/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+                                        const topicSlug = topic.slug || topic.name.toLowerCase().replace(/[&]/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
                                         navigate(`/companies/${company.name.toLowerCase()}/practice/${section.key}/${topicSlug}`);
                                     }}
                                     className={`w-full py-2.5 rounded-xl text-xs font-semibold ${colors.bg} border ${colors.border} ${colors.accent} hover:brightness-125 transition-all flex items-center justify-center gap-1.5`}

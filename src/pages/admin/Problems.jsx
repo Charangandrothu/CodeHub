@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, Edit2, Trash2, Save, X, Eye, EyeOff, Search, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, Edit2, Trash2, Save, X, Eye, EyeOff, Search, ChevronDown, ChevronUp, FileUp, UploadCloud, AlertTriangle, CheckCircle2, FileJson } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import Editor from '@monaco-editor/react';
 import { useAuth } from '../../context/AuthContext';
@@ -145,6 +145,67 @@ const Problems = () => {
     const [showJsonImportTheory, setShowJsonImportTheory] = useState(false);
     const [jsonImportTheoryText, setJsonImportTheoryText] = useState('');
     const [jsonImportTheoryError, setJsonImportTheoryError] = useState('');
+
+    // Bulk upload state
+    const [bulkText, setBulkText] = useState('');
+    const [bulkParsed, setBulkParsed] = useState(null);
+    const [bulkParseError, setBulkParseError] = useState('');
+    const [bulkResult, setBulkResult] = useState(null);
+    const [bulkUploading, setBulkUploading] = useState(false);
+    const [bulkDragOver, setBulkDragOver] = useState(false);
+
+    const handleBulkParse = (text) => {
+        setBulkParseError('');
+        setBulkResult(null);
+        try {
+            const parsed = JSON.parse(text.trim());
+            const arr = Array.isArray(parsed) ? parsed : parsed?.problems;
+            if (!Array.isArray(arr)) throw new Error('Root must be a JSON array [ ] or an object with a "problems" key');
+            if (arr.length === 0) throw new Error('Array is empty');
+            setBulkParsed(arr);
+        } catch (e) {
+            setBulkParseError(e.message);
+            setBulkParsed(null);
+        }
+    };
+
+    const handleBulkFileUpload = (file) => {
+        if (!file || !file.name.endsWith('.json')) {
+            setBulkParseError('Please upload a .json file');
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            const text = ev.target.result;
+            setBulkText(text);
+            handleBulkParse(text);
+        };
+        reader.readAsText(file);
+    };
+
+    const handleBulkUpload = async () => {
+        if (!bulkParsed || bulkParsed.length === 0) return;
+        setBulkUploading(true);
+        setBulkResult(null);
+        try {
+            const res = await fetch(`${API_URL}/api/problems/bulk`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'x-user-uid': currentUser?.uid },
+                body: JSON.stringify(bulkParsed),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || data.message || 'Upload failed');
+            setBulkResult(data);
+            setBulkParsed(null);
+            setBulkText('');
+            toast.success(`✅ ${data.message || 'Bulk upload successful'}`);
+            fetchProblems();
+        } catch (err) {
+            toast.error(err.message);
+        } finally {
+            setBulkUploading(false);
+        }
+    };
 
     const handleImportTheoryJson = () => {
         setJsonImportTheoryError('');
@@ -456,6 +517,108 @@ const Problems = () => {
             toast.error("Failed to delete problem");
         }
     };
+
+    if (view === 'bulk') {
+        const problemCount = bulkParsed?.length ?? null;
+        return (
+            <div className="space-y-6">
+                <div className="flex items-center justify-between bg-[#111] p-4 rounded-xl border border-gray-800">
+                    <div>
+                        <h1 className="text-2xl font-bold text-white">Bulk Upload Problems (DSA)</h1>
+                        <p className="text-sm text-gray-500 mt-0.5">Paste a JSON array or upload a .json file — up to 2,000 problems at once</p>
+                    </div>
+                    <button onClick={() => { setView('list'); setBulkText(''); setBulkParsed(null); setBulkParseError(''); setBulkResult(null); }} className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition text-sm">
+                        ← Back to List
+                    </button>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+                    {/* Left: Input */}
+                    <div className="lg:col-span-3 space-y-4">
+                        <div
+                            onDragOver={e => { e.preventDefault(); setBulkDragOver(true); }}
+                            onDragLeave={() => setBulkDragOver(false)}
+                            onDrop={e => { e.preventDefault(); setBulkDragOver(false); handleBulkFileUpload(e.dataTransfer.files[0]); }}
+                            className={`border-2 border-dashed rounded-xl p-6 text-center transition cursor-pointer ${bulkDragOver ? 'border-blue-500 bg-blue-500/5' : 'border-gray-800 hover:border-gray-700 bg-[#111]'}`}
+                            onClick={() => document.getElementById('bulk-file-input').click()}
+                        >
+                            <FileUp size={28} className="mx-auto text-gray-600 mb-2" />
+                            <p className="text-sm text-gray-400">Drag & drop a <span className="text-blue-400 font-mono">.json</span> file here, or click to browse</p>
+                            <input id="bulk-file-input" type="file" accept=".json" className="hidden" onChange={e => handleBulkFileUpload(e.target.files[0])} />
+                        </div>
+
+                        <div className="relative">
+                            <div className="absolute top-3 right-3 flex items-center gap-2">
+                                {bulkText && <button onClick={() => { setBulkText(''); setBulkParsed(null); setBulkParseError(''); setBulkResult(null); }} className="text-xs text-gray-600 hover:text-gray-400 flex items-center gap-1"><X size={12} /> Clear</button>}
+                            </div>
+                            <textarea
+                                value={bulkText}
+                                onChange={e => { setBulkText(e.target.value); if (e.target.value.trim()) handleBulkParse(e.target.value); else { setBulkParsed(null); setBulkParseError(''); } }}
+                                className="w-full h-[400px] bg-[#0a0a0a] border border-gray-800 rounded-xl p-4 text-xs font-mono text-zinc-300 focus:outline-none focus:border-blue-500/50 resize-none"
+                                placeholder={'[\n  {\n    "title": "Two Sum",\n    "slug": "two-sum",\n    "topic": "arrays-strings",\n    "difficulty": "Easy",\n    "description": "...",\n    "starterCode": { ... },\n    "testCases": { ... }\n  },\n  { ... }\n]'}
+                            />
+                        </div>
+
+                        {bulkParseError && (
+                            <div className="flex items-start gap-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                                <AlertTriangle size={14} className="text-red-400 mt-0.5 shrink-0" />
+                                <p className="text-xs text-red-400">{bulkParseError}</p>
+                            </div>
+                        )}
+
+                        <button
+                            onClick={handleBulkUpload}
+                            disabled={!bulkParsed || bulkUploading}
+                            className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-800 disabled:text-gray-600 text-white font-semibold rounded-xl transition flex items-center justify-center gap-2"
+                        >
+                            {bulkUploading ? (
+                                <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Uploading...</>
+                            ) : (
+                                <><UploadCloud size={16} /> Upload {problemCount ? `${problemCount} Problems` : 'Problems'}</>
+                            )}
+                        </button>
+                    </div>
+
+                    {/* Right: Requirements */}
+                    <div className="lg:col-span-2 space-y-4">
+                        {bulkParsed && !bulkParseError ? (
+                            <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-xl space-y-2">
+                                <div className="flex items-center gap-2">
+                                    <CheckCircle2 size={16} className="text-green-400" />
+                                    <p className="text-sm font-semibold text-green-400">Valid JSON — {bulkParsed.length} problems ready</p>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="bg-[#111] p-6 rounded-xl border border-gray-800 space-y-4">
+                                <h3 className="text-sm font-bold text-gray-300 uppercase tracking-wider">Required Fields Per Problem</h3>
+                                <div className="space-y-3 text-xs">
+                                    <div className="grid grid-cols-3 gap-2 border-b border-gray-800 pb-2">
+                                        <span className="text-blue-400 font-mono">title</span>
+                                        <span className="col-span-2 text-gray-400">E.g., "Two Sum"</span>
+                                    </div>
+                                    <div className="grid grid-cols-3 gap-2 border-b border-gray-800 pb-2">
+                                        <span className="text-blue-400 font-mono">slug</span>
+                                        <span className="col-span-2 text-gray-400">Always unique! "two-sum"</span>
+                                    </div>
+                                    <div className="grid grid-cols-3 gap-2 border-b border-gray-800 pb-2">
+                                        <span className="text-blue-400 font-mono">topic</span>
+                                        <span className="col-span-2 text-gray-400">E.g. "arrays", "beginner"</span>
+                                    </div>
+                                    <div className="grid grid-cols-3 gap-2 border-b border-gray-800 pb-2">
+                                        <span className="text-blue-400 font-mono">difficulty</span>
+                                        <span className="col-span-2 text-gray-400">"Easy" | "Medium" | "Hard"</span>
+                                    </div>
+                                </div>
+                                <div className="pt-2">
+                                    <p className="text-xs text-gray-500 italic">Optional but highly recommended: description, starterCode, testCases, and theory (bruteForce & optimal approaches).</p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     if (view === 'edit') {
         return (
@@ -891,20 +1054,28 @@ const Problems = () => {
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h1 className="text-2xl font-bold text-white">Problems Management</h1>
-                <button
-                    onClick={() => {
-                        setEditingId(null);
-                        setFormData(initialFormState);
-                        setJsonEditorContent({
-                            examples: JSON.stringify([], null, 2),
-                            constraints: JSON.stringify([], null, 2)
-                        });
-                        setView('edit');
-                    }}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition"
-                >
-                    <Plus className="w-4 h-4" /> Add Problem
-                </button>
+                <div className="flex gap-2">
+                    <button
+                        onClick={() => setView('bulk')}
+                        className="bg-purple-600/20 hover:bg-purple-600/30 text-purple-400 border border-purple-600/30 px-4 py-2 rounded-lg flex items-center gap-2 transition font-medium"
+                    >
+                        <UploadCloud className="w-4 h-4" /> Bulk Upload
+                    </button>
+                    <button
+                        onClick={() => {
+                            setEditingId(null);
+                            setFormData(initialFormState);
+                            setJsonEditorContent({
+                                examples: JSON.stringify([], null, 2),
+                                constraints: JSON.stringify([], null, 2)
+                            });
+                            setView('edit');
+                        }}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition"
+                    >
+                        <Plus className="w-4 h-4" /> Add Problem
+                    </button>
+                </div>
             </div>
 
             {/* Filter Bar */}

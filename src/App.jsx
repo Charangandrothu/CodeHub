@@ -140,6 +140,11 @@ function AppRoutes() {
           <CompanyDetail />
         </ProtectedRoute>
       } />
+      <Route path="/companies/:slug/:tab" element={
+        <ProtectedRoute>
+          <CompanyDetail />
+        </ProtectedRoute>
+      } />
       <Route path="/companies/:company/practice/:section/:topic" element={
         <ProtectedRoute>
           <CompanyPractice />

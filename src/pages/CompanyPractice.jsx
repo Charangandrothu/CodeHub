@@ -370,7 +370,7 @@ const CompanyPractice = () => {
                         </div>
                     )}
                     <button
-                        onClick={() => navigate(`/companies/${company}`)}
+                        onClick={() => navigate(`/companies/${company}/${section}`)}
                         className="inline-flex items-center gap-2 px-6 py-3 bg-white/10 border border-white/15 rounded-2xl text-white text-sm font-semibold hover:bg-white/15 transition-all"
                     >
                         <ArrowLeft size={14} /> Back to {company.toUpperCase()}
@@ -395,7 +395,7 @@ const CompanyPractice = () => {
                 {/* Header */}
                 <div className="flex items-center justify-between mb-6">
                     <button
-                        onClick={() => navigate(`/companies/${company}`)}
+                        onClick={() => navigate(`/companies/${company}/${section}`)}
                         className="flex items-center gap-2 text-zinc-400 hover:text-white transition-all group bg-white/5 px-4 py-2 rounded-full border border-white/10 hover:border-white/20 text-sm font-medium"
                     >
                         <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" />
