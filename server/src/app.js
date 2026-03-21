@@ -12,7 +12,7 @@ app.disable("x-powered-by");
 app.use(helmet());
 app.use(cors({ origin: true, credentials: true })); // Allow secure cross-origin cookies
 app.use(cookieParser());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 
 // Global Rate Limiting
 app.use(limiter);
