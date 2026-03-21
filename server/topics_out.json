@@ -1,0 +1,114 @@
+[
+  {
+    "_id": {
+      "company": "tcs",
+      "section": "aptitude",
+      "topic": "averages"
+    },
+    "count": 12
+  },
+  {
+    "_id": {
+      "company": "tcs",
+      "section": "aptitude",
+      "topic": "boats-streams"
+    },
+    "count": 8
+  },
+  {
+    "_id": {
+      "company": "tcs",
+      "section": "aptitude",
+      "topic": "data-interpretation"
+    },
+    "count": 15
+  },
+  {
+    "_id": {
+      "company": "tcs",
+      "section": "aptitude",
+      "topic": "interest"
+    },
+    "count": 9
+  },
+  {
+    "_id": {
+      "company": "tcs",
+      "section": "aptitude",
+      "topic": "mixtures"
+    },
+    "count": 8
+  },
+  {
+    "_id": {
+      "company": "tcs",
+      "section": "aptitude",
+      "topic": "number-series"
+    },
+    "count": 13
+  },
+  {
+    "_id": {
+      "company": "tcs",
+      "section": "aptitude",
+      "topic": "number-systems"
+    },
+    "count": 11
+  },
+  {
+    "_id": {
+      "company": "tcs",
+      "section": "aptitude",
+      "topic": "percentages"
+    },
+    "count": 20
+  },
+  {
+    "_id": {
+      "company": "tcs",
+      "section": "aptitude",
+      "topic": "permutations-combinations"
+    },
+    "count": 10
+  },
+  {
+    "_id": {
+      "company": "tcs",
+      "section": "aptitude",
+      "topic": "probability"
+    },
+    "count": 10
+  },
+  {
+    "_id": {
+      "company": "tcs",
+      "section": "aptitude",
+      "topic": "profit-loss"
+    },
+    "count": 18
+  },
+  {
+    "_id": {
+      "company": "tcs",
+      "section": "aptitude",
+      "topic": "ratio-proportion"
+    },
+    "count": 11
+  },
+  {
+    "_id": {
+      "company": "tcs",
+      "section": "aptitude",
+      "topic": "time-speed-distance"
+    },
+    "count": 13
+  },
+  {
+    "_id": {
+      "company": "tcs",
+      "section": "aptitude",
+      "topic": "time-work"
+    },
+    "count": 15
+  }
+]

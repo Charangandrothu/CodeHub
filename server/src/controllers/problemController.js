@@ -202,3 +202,34 @@ exports.updateProblem = async (req, res) => {
     res.status(500).json({ message: "Server Error", error: error.message });
   }
 };
+
+// POST /api/problems/bulk
+exports.bulkUploadProblems = async (req, res) => {
+  try {
+    const problems = req.body;
+    if (!Array.isArray(problems)) {
+        return res.status(400).json({ message: "Payload must be an array of DSA problems" });
+    }
+
+    const ops = problems.map(p => {
+        // Prepare doc avoiding _id
+        const doc = { ...p };
+        delete doc._id;
+        return {
+            updateOne: {
+                filter: { slug: doc.slug },
+                update: { $set: doc },
+                upsert: true
+            }
+        };
+    });
+
+    await Problem.bulkWrite(ops);
+    await clearCache("cache:/api/problems*");
+
+    res.json({ message: `Successfully processed ${problems.length} problems` });
+  } catch (error) {
+    console.error("Bulk upload error:", error);
+    res.status(500).json({ message: "Bulk upload failed", error: error.message });
+  }
+};

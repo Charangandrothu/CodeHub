@@ -7,7 +7,8 @@ const {
   getFullProblemForAdmin,
   createProblem,
   updateProblem,
-  deleteProblem
+  deleteProblem,
+  bulkUploadProblems
 } = require("../controllers/problemController");
 
 const cacheMiddleware = require("../middleware/cache");
@@ -18,6 +19,7 @@ router.get("/", cacheMiddleware(60), getAllProblems);
 // Admin-only: fetch full problem (all theory fields, no sanitization, no cache)
 router.get("/admin-edit/:id", getFullProblemForAdmin);
 
+router.post("/bulk", bulkUploadProblems);
 router.post("/", createProblem);
 router.put("/:id", updateProblem);
 router.delete("/:id", deleteProblem);
