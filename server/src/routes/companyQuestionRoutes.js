@@ -182,10 +182,9 @@ router.get('/practice/:company/:section/:topic', verifyUser, async (req, res) =>
         const { page = 1, limit = 10 } = req.query;
 
         // Convert URL slug back to regex for flexible DB matching
-        // e.g. "profit-and-loss" -> matches "profit & loss" or "profit and loss"
+        // Make it robust against "profit-and-loss" vs "profit-loss"
         const topicPattern = topicSlug
-            .replace(/-and-/g, '([& ]and[& ]|[& ]+)')
-            .replace(/-/g, '[\\s&,\\-]+');
+            .replace(/(-and-|-)/g, '[\\s\\-&]*(and|&)*[\\s\\-&]*');
         const topicRegex = new RegExp(`^${topicPattern}$`, 'i');
 
         // Also try exact match first (for simple topics like "percentages")
@@ -264,9 +263,8 @@ router.post('/submit', verifyUser, async (req, res) => {
         }
         existing.lastPracticed = new Date();
 
-        await User.findByIdAndUpdate(req.user._id, {
-            $set: { [`companyPrep.${mapKey}`]: existing }
-        });
+        req.user.companyPrep.set(mapKey, existing);
+        await req.user.save();
 
         const response = { skipped: !!skipped };
         if (!skipped) {
@@ -326,22 +324,42 @@ router.get('/overview/:company', verifyUser, async (req, res) => {
 });
 
 // DELETE /api/company-questions/progress/reset
-// Resets user's progress for a company (full) or company+section
+// Resets user's progress for a company (full), company+section, or company+section+topic
 router.delete('/progress/reset', verifyUser, async (req, res) => {
     try {
-        const { company, section } = req.body;
+        const { company, section, topic } = req.body;
         if (!company) return res.status(400).json({ error: 'company is required' });
 
-        if (section) {
-            // Reset just this section
+        if (topic && section) {
+            // Find all question IDs for this topic
             const mapKey = `${company}.${section}`;
-            await User.findByIdAndUpdate(req.user._id, { $unset: { [`companyPrep.${mapKey}`]: '' } });
+            const topicPattern = topic
+                .replace(/(-and-|-)/g, '[\\s\\-&]*(and|&)*[\\s\\-&]*');
+            const topicRegex = new RegExp(`^${topicPattern}$`, 'i');
+            const topicFilter = topic.includes('-') ? topicRegex : { $in: [topic, topicRegex] };
+            
+            const topicQs = await CompanyQuestion.find({ company, section, topic: topicFilter }, '_id');
+            const topicIdStrings = topicQs.map(q => q._id.toString());
+            
+            const existing = req.user.companyPrep?.get?.(mapKey);
+            if (existing) {
+                existing.answeredIds = existing.answeredIds.filter(id => !topicIdStrings.includes(id.toString()));
+                existing.correctIds = existing.correctIds.filter(id => !topicIdStrings.includes(id.toString()));
+                existing.skippedIds = existing.skippedIds.filter(id => !topicIdStrings.includes(id.toString()));
+                
+                req.user.companyPrep.set(mapKey, existing);
+                await req.user.save();
+            }
+        } else if (section) {
+            // Reset just this section entirely
+            const mapKey = `${company}.${section}`;
+            req.user.companyPrep.delete(mapKey);
+            await req.user.save();
         } else {
             // Reset entire company (all sections)
             const sections = ['aptitude', 'reasoning', 'verbal', 'coding'];
-            const unset = {};
-            sections.forEach(s => { unset[`companyPrep.${company}.${s}`] = ''; });
-            await User.findByIdAndUpdate(req.user._id, { $unset: unset });
+            sections.forEach(s => { req.user.companyPrep.delete(`${company}.${s}`); });
+            await req.user.save();
         }
         res.json({ message: 'Progress reset' });
     } catch (err) {

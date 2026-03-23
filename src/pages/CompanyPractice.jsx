@@ -100,6 +100,7 @@ const CompanyPractice = () => {
                 totalAnswered: data.totalAnswered || 0,
                 totalRemaining: data.totalRemaining || 0,
                 progressPercent: data.progressPercent || 0,
+                initialAnswered: data.totalAnswered || 0,
             });
             setCurrentIndex(0);
             setSelectedAnswers({});
@@ -152,6 +153,14 @@ const CompanyPractice = () => {
             const data = await res.json();
             setResults(prev => ({ ...prev, [currentQ._id]: data }));
             setSessionStats(prev => ({ ...prev, [data.isCorrect ? 'correct' : 'wrong']: prev[data.isCorrect ? 'correct' : 'wrong'] + 1 }));
+
+            // Dynamically update topic overall progress
+            setStats(prev => {
+                const newAnswered = prev.totalAnswered + 1;
+                const newRemaining = Math.max(0, prev.totalRemaining - 1);
+                const newPercent = prev.totalQuestions > 0 ? Math.round((newAnswered / prev.totalQuestions) * 100) : 0;
+                return { ...prev, totalAnswered: newAnswered, totalRemaining: newRemaining, progressPercent: newPercent };
+            });
         } catch (err) {
             console.error('Submit error:', err);
         } finally {
@@ -193,6 +202,27 @@ const CompanyPractice = () => {
         }
     };
 
+    const handleResetTopic = async () => {
+        if (submitting) return;
+        if (!window.confirm('Are you sure you want to reset all progress for this topic?')) return;
+        setSubmitting(true);
+        try {
+            const res = await fetch(`${API_URL}/api/company-questions/progress/reset`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json', 'x-user-uid': currentUser.uid },
+                body: JSON.stringify({ company, section, topic })
+            });
+            if (!res.ok) throw new Error('Failed to reset progress');
+            // Reset local states and re-fetch
+            setSessionStats({ correct: 0, wrong: 0, skipped: 0 });
+            await fetchQuestions();
+        } catch (err) {
+            console.error('Reset error:', err);
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
     /* ─── Loading / Error / Empty states ──────────── */
     if (loading && questions.length === 0) {
         return (
@@ -221,6 +251,29 @@ const CompanyPractice = () => {
     }
 
     if (questions.length === 0) {
+        if (stats.totalQuestions === 0) {
+            // Empy State: No questions inside the DB
+            return (
+                <div className="min-h-screen bg-[#050505] flex items-center justify-center px-4">
+                    <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center space-y-6 max-w-md">
+                        <div className="w-20 h-20 rounded-3xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mx-auto">
+                            <BookOpen size={36} className="text-blue-400" />
+                        </div>
+                        <div>
+                            <h2 className="text-2xl font-black text-white mb-2">Coming Soon</h2>
+                            <p className="text-zinc-400 text-sm">We are still adding questions for <span className="text-white font-semibold">{topicDisplay}</span>. Check back later!</p>
+                        </div>
+                        <div className="flex justify-center mt-6">
+                            <button onClick={() => navigate(`/companies/${company}`)} className="inline-flex justify-center items-center gap-2 px-6 py-3 bg-white/10 border border-white/15 rounded-2xl text-white text-sm font-semibold hover:bg-white/15 transition-all">
+                                <ArrowLeft size={14} /> Back to {company.toUpperCase()}
+                            </button>
+                        </div>
+                    </motion.div>
+                </div>
+            );
+        }
+
+        // Completed State
         return (
             <div className="min-h-screen bg-[#050505] flex items-center justify-center px-4">
                 <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center space-y-6 max-w-md">
@@ -229,7 +282,7 @@ const CompanyPractice = () => {
                     </div>
                     <div>
                         <h2 className="text-2xl font-black text-white mb-2">All Done! 🎉</h2>
-                        <p className="text-zinc-400 text-sm">You've completed all available questions for <span className="text-white font-semibold">{topicDisplay}</span>.</p>
+                        <p className="text-zinc-400 text-sm">You've completed all {stats.totalQuestions} questions for <span className="text-white font-semibold">{topicDisplay}</span>.</p>
                     </div>
                     {totalAttempted > 0 && (
                         <div className="flex justify-center gap-4">
@@ -247,9 +300,14 @@ const CompanyPractice = () => {
                             </div>
                         </div>
                     )}
-                    <button onClick={() => navigate(`/companies/${company}`)} className="inline-flex items-center gap-2 px-6 py-3 bg-white/10 border border-white/15 rounded-2xl text-white text-sm font-semibold hover:bg-white/15 transition-all">
-                        <ArrowLeft size={14} /> Back to {company.toUpperCase()}
-                    </button>
+                    <div className="flex flex-col gap-3 mt-6">
+                        <button onClick={handleResetTopic} disabled={submitting} className="inline-flex justify-center items-center gap-2 px-6 py-3 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-400 text-sm font-semibold hover:bg-red-500/20 transition-all">
+                            {submitting ? <Loader2 size={16} className="animate-spin" /> : <RotateCcw size={16} />} Reset Topic Progress
+                        </button>
+                        <button onClick={() => navigate(`/companies/${company}`)} className="inline-flex justify-center items-center gap-2 px-6 py-3 bg-white/10 border border-white/15 rounded-2xl text-white text-sm font-semibold hover:bg-white/15 transition-all">
+                            <ArrowLeft size={14} /> Back to {company.toUpperCase()}
+                        </button>
+                    </div>
                 </motion.div>
             </div>
         );
@@ -264,7 +322,7 @@ const CompanyPractice = () => {
 
     /* ─── Main Render ─────────────────────────────── */
     return (
-        <div className="min-h-screen bg-[#050505] pt-24 pb-20 px-4 sm:px-6 lg:px-8 selection:bg-purple-500/30">
+        <div className="min-h-screen bg-[#050505] pt-10 pb-20 px-4 sm:px-6 lg:px-8 selection:bg-purple-500/30">
             {/* Ambient glows */}
             <div className="fixed top-20 left-1/4 w-96 h-96 bg-blue-600/5 rounded-full blur-[128px] pointer-events-none hidden sm:block" />
             <div className="fixed bottom-20 right-1/4 w-96 h-96 bg-purple-600/5 rounded-full blur-[128px] pointer-events-none hidden sm:block" />
@@ -336,8 +394,8 @@ const CompanyPractice = () => {
                                     <ArrowLeft size={15} />
                                 </button>
                                 <span className="text-sm font-bold text-white">
-                                    Question <span className="text-blue-400">{currentIndex + 1}</span>
-                                    <span className="text-zinc-500 font-normal"> / {questions.length}</span>
+                                    Question <span className="text-blue-400">{(stats.initialAnswered || 0) + currentIndex + 1}</span>
+                                    <span className="text-zinc-500 font-normal"> / {stats.totalQuestions}</span>
                                 </span>
                                 <button
                                     onClick={goNext}
@@ -350,8 +408,8 @@ const CompanyPractice = () => {
                             <div className="flex items-center gap-2">
                                 {currentQ?.difficulty && (
                                     <span className={`text-[10px] px-2.5 py-1 rounded-full border font-bold uppercase tracking-wider ${currentQ.difficulty === 'Easy' ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' :
-                                            currentQ.difficulty === 'Medium' ? 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20' :
-                                                'text-red-400 bg-red-500/10 border-red-500/20'
+                                        currentQ.difficulty === 'Medium' ? 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20' :
+                                            'text-red-400 bg-red-500/10 border-red-500/20'
                                         }`}>
                                         {currentQ.difficulty}
                                     </span>
@@ -378,14 +436,14 @@ const CompanyPractice = () => {
                                     className="rounded-2xl border border-white/[0.07] bg-[#0A0A0A]/80 overflow-hidden shadow-2xl"
                                 >
                                     {/* Question text */}
-                                    <div className="p-6 sm:p-8 border-b border-white/[0.05]">
-                                        <p className="text-white text-base sm:text-lg font-medium leading-relaxed whitespace-pre-wrap">
+                                    <div className="p-4 sm:p-6 border-b border-white/[0.05]">
+                                        <p className="text-white text-base md:text-lg font-medium leading-relaxed whitespace-pre-wrap">
                                             {currentQ.questionText}
                                         </p>
                                     </div>
 
                                     {/* Options */}
-                                    <div className="p-6 sm:p-8 space-y-3">
+                                    <div className="p-4 sm:p-6 space-y-3">
                                         {currentQ.options?.map((opt) => {
                                             const isSelected = currentSelected === opt.key;
                                             let optStyle = 'border-white/[0.07] bg-white/[0.02] hover:bg-white/[0.05] hover:border-white/[0.15]';
@@ -407,29 +465,29 @@ const CompanyPractice = () => {
                                                     key={opt.key}
                                                     onClick={() => !currentResult && setSelectedAnswers(prev => ({ ...prev, [currentQ._id]: opt.key }))}
                                                     disabled={!!currentResult}
-                                                    className={`w-full text-left p-4 sm:p-5 rounded-xl border transition-all duration-200 flex items-start gap-3.5 group ${optStyle} ${currentResult ? 'cursor-default' : 'cursor-pointer'}`}
+                                                    className={`w-full text-left p-3 sm:p-4 rounded-xl border transition-all duration-200 flex items-center gap-3.5 group ${optStyle} ${currentResult ? 'cursor-default' : 'cursor-pointer'}`}
                                                 >
                                                     <span className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 border transition-all ${currentResult && !currentResult.skipped && opt.key === currentResult.correctAnswer
-                                                            ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400'
-                                                            : currentResult && !currentResult.skipped && isSelected && !currentResult.isCorrect
-                                                                ? 'bg-red-500/20 border-red-500/40 text-red-400'
-                                                                : isSelected
-                                                                    ? 'bg-blue-500/20 border-blue-500/40 text-blue-400'
-                                                                    : 'bg-white/5 border-white/10 text-zinc-500 group-hover:text-white group-hover:border-white/20'
+                                                        ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400'
+                                                        : currentResult && !currentResult.skipped && isSelected && !currentResult.isCorrect
+                                                            ? 'bg-red-500/20 border-red-500/40 text-red-400'
+                                                            : isSelected
+                                                                ? 'bg-blue-500/20 border-blue-500/40 text-blue-400'
+                                                                : 'bg-white/5 border-white/10 text-zinc-500 group-hover:text-white group-hover:border-white/20'
                                                         }`}>
                                                         {opt.key}
                                                     </span>
-                                                    <span className={`text-sm sm:text-base leading-relaxed pt-0.5 ${currentResult && !currentResult.skipped && opt.key === currentResult.correctAnswer ? 'text-emerald-300 font-medium' :
-                                                            currentResult && !currentResult.skipped && isSelected && !currentResult.isCorrect ? 'text-red-300' :
-                                                                isSelected ? 'text-blue-300' : 'text-zinc-300'
+                                                    <span className={`text-base sm:text-lg leading-relaxed ${currentResult && !currentResult.skipped && opt.key === currentResult.correctAnswer ? 'text-emerald-300 font-medium' :
+                                                        currentResult && !currentResult.skipped && isSelected && !currentResult.isCorrect ? 'text-red-300' :
+                                                            isSelected ? 'text-blue-300' : 'text-zinc-300'
                                                         }`}>
                                                         {opt.text}
                                                     </span>
                                                     {currentResult && !currentResult.skipped && opt.key === currentResult.correctAnswer && (
-                                                        <CheckCircle2 size={20} className="text-emerald-400 ml-auto shrink-0 mt-1" />
+                                                        <CheckCircle2 size={20} className="text-emerald-400 ml-auto shrink-0" />
                                                     )}
                                                     {currentResult && !currentResult.skipped && isSelected && !currentResult.isCorrect && (
-                                                        <XCircle size={20} className="text-red-400 ml-auto shrink-0 mt-1" />
+                                                        <XCircle size={20} className="text-red-400 ml-auto shrink-0" />
                                                     )}
                                                 </button>
                                             );
@@ -532,8 +590,8 @@ const CompanyPractice = () => {
                                                     onClick={handleSubmit}
                                                     disabled={!currentSelected || submitting}
                                                     className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${currentSelected
-                                                            ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/20'
-                                                            : 'bg-white/5 text-zinc-600 cursor-not-allowed border border-white/10'
+                                                        ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/20'
+                                                        : 'bg-white/5 text-zinc-600 cursor-not-allowed border border-white/10'
                                                         }`}
                                                 >
                                                     {submitting ? <Loader2 size={16} className="animate-spin" /> : <Target size={14} />}
@@ -614,7 +672,7 @@ const CompanyPractice = () => {
                             <div className="pt-3 border-t border-white/[0.06]">
                                 <div className="flex items-center justify-between text-xs">
                                     <span className="text-zinc-500 font-medium">Attempted</span>
-                                    <span className="text-white font-bold">{totalAttempted} / {questions.length}</span>
+                                    <span className="text-white font-bold">{totalAttempted} / {stats.totalQuestions}</span>
                                 </div>
                             </div>
                         </div>
