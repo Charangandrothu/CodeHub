@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     ArrowLeft, ArrowRight, BookOpen, Brain, MessageSquare, Code2,
@@ -180,8 +180,9 @@ const colorMap = {
 const CompanyDetail = () => {
     const { slug } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
     useAuth(); // keep context alive
-    const [activeTab, setActiveTab] = useState('overview');
+    const [activeTab, setActiveTab] = useState(location.state?.tab || 'overview');
 
     const company = COMPANY_CONFIG[slug];
 

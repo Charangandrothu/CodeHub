@@ -264,7 +264,7 @@ const CompanyPractice = () => {
                             <p className="text-zinc-400 text-sm">We are still adding questions for <span className="text-white font-semibold">{topicDisplay}</span>. Check back later!</p>
                         </div>
                         <div className="flex justify-center mt-6">
-                            <button onClick={() => navigate(`/companies/${company}`)} className="inline-flex justify-center items-center gap-2 px-6 py-3 bg-white/10 border border-white/15 rounded-2xl text-white text-sm font-semibold hover:bg-white/15 transition-all">
+                            <button onClick={() => navigate(`/companies/${company}`, { state: { tab: section } })} className="inline-flex justify-center items-center gap-2 px-6 py-3 bg-white/10 border border-white/15 rounded-2xl text-white text-sm font-semibold hover:bg-white/15 transition-all">
                                 <ArrowLeft size={14} /> Back to {company.toUpperCase()}
                             </button>
                         </div>
@@ -304,7 +304,7 @@ const CompanyPractice = () => {
                         <button onClick={handleResetTopic} disabled={submitting} className="inline-flex justify-center items-center gap-2 px-6 py-3 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-400 text-sm font-semibold hover:bg-red-500/20 transition-all">
                             {submitting ? <Loader2 size={16} className="animate-spin" /> : <RotateCcw size={16} />} Reset Topic Progress
                         </button>
-                        <button onClick={() => navigate(`/companies/${company}`)} className="inline-flex justify-center items-center gap-2 px-6 py-3 bg-white/10 border border-white/15 rounded-2xl text-white text-sm font-semibold hover:bg-white/15 transition-all">
+                        <button onClick={() => navigate(`/companies/${company}`, { state: { tab: section } })} className="inline-flex justify-center items-center gap-2 px-6 py-3 bg-white/10 border border-white/15 rounded-2xl text-white text-sm font-semibold hover:bg-white/15 transition-all">
                             <ArrowLeft size={14} /> Back to {company.toUpperCase()}
                         </button>
                     </div>
@@ -336,14 +336,14 @@ const CompanyPractice = () => {
                 {/* ── Breadcrumb Header ──────────────────────── */}
                 <div className="flex items-center justify-between mb-6">
                     <button
-                        onClick={() => navigate(`/companies/${company}`)}
+                        onClick={() => navigate(`/companies/${company}`, { state: { tab: section } })}
                         className="flex items-center gap-2 text-zinc-400 hover:text-white transition-all group bg-white/5 px-4 py-2 rounded-full border border-white/10 hover:border-white/20 text-sm font-medium"
                     >
                         <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" />
                         Back
                     </button>
                     <div className="hidden sm:flex items-center gap-1.5 text-xs text-zinc-500 font-medium">
-                        <span className="text-zinc-400 hover:text-white cursor-pointer transition-colors" onClick={() => navigate(`/companies/${company}`)}>{company.toUpperCase()}</span>
+                        <span className="text-zinc-400 hover:text-white cursor-pointer transition-colors" onClick={() => navigate(`/companies/${company}`, { state: { tab: section } })}>{company.toUpperCase()}</span>
                         <ChevronRight size={12} />
                         <span className="text-zinc-400">{sectionDisplay}</span>
                         <ChevronRight size={12} />
