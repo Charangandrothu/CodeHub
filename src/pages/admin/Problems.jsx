@@ -162,7 +162,35 @@ const Problems = () => {
             const arr = Array.isArray(parsed) ? parsed : parsed?.problems;
             if (!Array.isArray(arr)) throw new Error('Root must be a JSON array [ ] or an object with a "problems" key');
             if (arr.length === 0) throw new Error('Array is empty');
-            setBulkParsed(arr);
+            
+            const formattedArr = arr.map(problem => {
+                if (problem.approaches) {
+                    problem.theory = problem.theory || {};
+                    const approaches = problem.approaches;
+                    
+                    ['bruteForce', 'optimal'].forEach(type => {
+                        if (approaches[type]) {
+                            problem.theory[type] = problem.theory[type] || {};
+                            problem.theory[type].explanation = approaches[type].idea || approaches[type].explanation || '';
+                            problem.theory[type].timeComplexity = approaches[type].timeComplexity || { value: '', explanation: '' };
+                            problem.theory[type].spaceComplexity = approaches[type].spaceComplexity || { value: '', explanation: '' };
+                            problem.theory[type].solutionCode = problem.theory[type].solutionCode || {};
+                            
+                            ['javascript', 'python', 'java', 'cpp'].forEach(lang => {
+                                if (approaches[type][lang]?.raw) {
+                                    problem.theory[type].solutionCode[lang] = approaches[type][lang].raw;
+                                } else if (typeof approaches[type][lang] === 'string') {
+                                    problem.theory[type].solutionCode[lang] = approaches[type][lang];
+                                }
+                            });
+                        }
+                    });
+                    delete problem.approaches;
+                }
+                return problem;
+            });
+            
+            setBulkParsed(formattedArr);
         } catch (e) {
             setBulkParseError(e.message);
             setBulkParsed(null);
@@ -213,6 +241,37 @@ const Problems = () => {
             const parsed = JSON.parse(jsonImportTheoryText.trim());
             const emptyApproach = () => ({ explanation: '', timeComplexity: { value: '', explanation: '' }, spaceComplexity: { value: '', explanation: '' }, solutionCode: { javascript: '', python: '', java: '', cpp: '' } });
             
+            if (parsed.approaches) {
+                parsed.bruteForce = parsed.approaches.bruteForce || parsed.bruteForce;
+                parsed.optimal = parsed.approaches.optimal || parsed.optimal;
+            }
+
+            // Map approaches properties if they pasted the approaches object
+            if (parsed.bruteForce && parsed.bruteForce.idea) {
+                parsed.bruteForce.explanation = parsed.bruteForce.idea;
+                ['javascript', 'python', 'java', 'cpp'].forEach(lang => {
+                    if (parsed.bruteForce[lang]?.raw) {
+                        parsed.bruteForce.solutionCode = parsed.bruteForce.solutionCode || {};
+                        parsed.bruteForce.solutionCode[lang] = parsed.bruteForce[lang].raw;
+                    } else if (typeof parsed.bruteForce[lang] === 'string') {
+                        parsed.bruteForce.solutionCode = parsed.bruteForce.solutionCode || {};
+                        parsed.bruteForce.solutionCode[lang] = parsed.bruteForce[lang];
+                    }
+                });
+            }
+            if (parsed.optimal && parsed.optimal.idea) {
+                parsed.optimal.explanation = parsed.optimal.idea;
+                ['javascript', 'python', 'java', 'cpp'].forEach(lang => {
+                    if (parsed.optimal[lang]?.raw) {
+                        parsed.optimal.solutionCode = parsed.optimal.solutionCode || {};
+                        parsed.optimal.solutionCode[lang] = parsed.optimal[lang].raw;
+                    } else if (typeof parsed.optimal[lang] === 'string') {
+                        parsed.optimal.solutionCode = parsed.optimal.solutionCode || {};
+                        parsed.optimal.solutionCode[lang] = parsed.optimal[lang];
+                    }
+                });
+            }
+
             let bruteData = parsed.bruteForce || parsed.brute || parsed.theory?.bruteForce || parsed.theory?.brute || null;
             let optimalData = parsed.optimal || parsed.theory?.optimal || null;
             
@@ -246,6 +305,27 @@ const Problems = () => {
         try {
             const p = JSON.parse(jsonImportProblemText.trim());
             if (typeof p !== 'object' || Array.isArray(p)) throw new Error('Must be a single problem JSON object');
+            
+            if (p.approaches) {
+                p.theory = p.theory || {};
+                ['bruteForce', 'optimal'].forEach(type => {
+                    if (p.approaches[type]) {
+                        p.theory[type] = p.theory[type] || {};
+                        p.theory[type].explanation = p.approaches[type].idea || p.approaches[type].explanation || '';
+                        p.theory[type].timeComplexity = p.approaches[type].timeComplexity || { value: '', explanation: '' };
+                        p.theory[type].spaceComplexity = p.approaches[type].spaceComplexity || { value: '', explanation: '' };
+                        p.theory[type].solutionCode = p.theory[type].solutionCode || {};
+                        ['javascript', 'python', 'java', 'cpp'].forEach(lang => {
+                            if (p.approaches[type][lang]?.raw) {
+                                p.theory[type].solutionCode[lang] = p.approaches[type][lang].raw;
+                            } else if (typeof p.approaches[type][lang] === 'string') {
+                                p.theory[type].solutionCode[lang] = p.approaches[type][lang];
+                            }
+                        });
+                    }
+                });
+            }
+
             const emptyApproach = () => ({ explanation: '', timeComplexity: { value: '', explanation: '' }, spaceComplexity: { value: '', explanation: '' }, solutionCode: { javascript: '', python: '', java: '', cpp: '' } });
             // Helper: an approach is considered "filled" if it has any explanation text
             const approachFilled = (ap) => !!(ap?.explanation?.trim() || ap?.solutionCode?.javascript?.trim() || ap?.solutionCode?.python?.trim());
