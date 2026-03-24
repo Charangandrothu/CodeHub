@@ -112,6 +112,58 @@ const COMPANY_CONFIG = {
             { icon: Calendar, text: 'Role requires 12 months service agreement' },
         ],
     },
+    cognizant: {
+        name: 'Cognizant', fullName: 'Cognizant Technology Solutions', abbr: 'CTS',
+        logoGradient: 'from-sky-500 to-sky-700', accentColor: 'sky', image: '/cognizant.jpg',
+        description: "Leading IT services company known for its unique assessment pattern featuring Game-Based Aptitude and AI-evaluated Communication tests.",
+        hiringPattern: 'Mass Hiring — 20,000+ freshers/year',
+        package: '₹4.0 LPA (GenC) · ₹6.0–7.0 LPA (GenC Next)',
+        eligibility: '60% or 6.0 CGPA throughout · 0 active backlogs · All branches',
+        examPattern: 'Cognizant GenC Assessment',
+        rounds: ['Communication Assessment', 'Game-Based Aptitude', 'Technical Assessment', 'Technical Interview'],
+        sections: [
+            { key: 'cognizantCommunication', label: 'Communication Assessment', icon: MessageSquare, color: 'emerald', totalTopics: 5, totalQuestions: 30, description: 'Reading, Listening, Speaking, Writing, and Typing speed test', isLive: true },
+            { key: 'cognizantGames', label: 'Game-Based Aptitude', icon: PuzzleIcon, color: 'purple', totalTopics: 4, totalQuestions: 24, description: 'Adaptive cognitive games testing Numerical, Logical, Verbal, and Spatial skills', isLive: true },
+            { key: 'cognizantTechnical', label: 'Technical Assessment', icon: Code2, color: 'orange', totalTopics: 6, totalQuestions: 40, description: 'Cluster-based technical section covering Core CS, SQL, and Domain skills', isLive: true },
+            { key: 'coding', label: 'Coding Problems', icon: Code2, color: 'blue', totalTopics: 4, totalQuestions: 15, description: 'Advanced programming challenges for GenC Pro and GenC Next roles', isLive: false },
+            { key: 'mocks', label: 'Mock Tests', icon: FileText, color: 'yellow', totalTopics: 0, totalQuestions: 0, description: 'Full-length simulated Cognizant exams with adaptive game mechanics', isLive: false },
+            { key: 'experiences', label: 'Interview Experiences', icon: Users, color: 'pink', totalTopics: 0, totalQuestions: 0, description: 'Real interview stories from students placed in Cognizant', isLive: false },
+        ],
+        sprintDays: 30,
+        keyFacts: [
+            { icon: ShieldCheck, text: 'No negative marking — attempt ALL questions' },
+            { icon: AlertTriangle, text: 'Communication Assessment is a major elimination round' },
+            { icon: Repeat, text: 'Game-based aptitude has adaptive difficulty' },
+            { icon: Target, text: 'Higher scores unlock GenC Pro and GenC Next packages' },
+            { icon: Calendar, text: 'Must choose Technical Cluster during registration' },
+        ],
+    },
+    accenture: {
+        name: 'Accenture', fullName: 'Accenture India', abbr: 'ACC',
+        logoGradient: 'from-pink-500 to-pink-700', accentColor: 'pink', image: '/accenture.jpg',
+        description: "Global consulting and technology services company. Features a comprehensive 6-section assessment with adaptive difficulty.",
+        hiringPattern: 'Mass Hiring — 50,000+ freshers/year',
+        package: '₹4.5 LPA (ASE) · ₹6.5–10.0 LPA (AAE/ADA)',
+        eligibility: '60% or 6.0 CGPA throughout · 0 active backlogs · All branches',
+        examPattern: 'Accenture National Level Test (NLT)',
+        rounds: ['Cognitive Assessment', 'Technical Assessment', 'Coding', 'Communication Assessment'],
+        sections: [
+            { key: 'accentureCognitive', label: 'Cognitive Assessment', icon: Brain, color: 'purple', totalTopics: 3, totalQuestions: 50, description: 'English Ability, Critical Reasoning, and Abstract Reasoning', isLive: true },
+            { key: 'accentureTechnical', label: 'Technical Assessment', icon: Code2, color: 'blue', totalTopics: 3, totalQuestions: 40, description: 'Common Applications & MS Office, Pseudocode, Networking & Cloud', isLive: true },
+            { key: 'coding', label: 'Coding Problems', icon: Code2, color: 'orange', totalTopics: 4, totalQuestions: 2, description: 'Programming questions on Arrays, Strings, and Data Structures', isLive: false },
+            { key: 'accentureCommunication', label: 'Communication Assessment', icon: MessageSquare, color: 'emerald', totalTopics: 4, totalQuestions: 50, description: 'Reading, Listening, Speaking, and Writing (Non-elimination)', isLive: true },
+            { key: 'mocks', label: 'Mock Tests', icon: FileText, color: 'yellow', totalTopics: 0, totalQuestions: 0, description: 'Full-length simulated Accenture NLT tests with adaptive metrics', isLive: false },
+            { key: 'experiences', label: 'Interview Experiences', icon: Users, color: 'pink', totalTopics: 0, totalQuestions: 0, description: 'Real interview stories from students placed in Accenture', isLive: false },
+        ],
+        sprintDays: 30,
+        keyFacts: [
+            { icon: ShieldCheck, text: 'No negative marking — attempt ALL questions' },
+            { icon: AlertTriangle, text: 'Cognitive Assessment has adaptive difficulty' },
+            { icon: Timer, text: 'Strict section-wise cutoffs; Pseudocode is heavily weighted' },
+            { icon: Target, text: 'Higher scores unlock Advanced and Digital roles' },
+            { icon: Calendar, text: 'Must clear previous round to advance' },
+        ],
+    },
 };
 
 const colorMap = {
@@ -121,6 +173,7 @@ const colorMap = {
     orange: { accent: 'text-orange-400', bg: 'bg-orange-500/10', border: 'border-orange-500/20', active: 'bg-orange-500/15 border-orange-500/30 text-orange-300', bar: 'bg-orange-500' },
     pink: { accent: 'text-pink-400', bg: 'bg-pink-500/10', border: 'border-pink-500/20', active: 'bg-pink-500/15 border-pink-500/30 text-pink-300', bar: 'bg-pink-500' },
     yellow: { accent: 'text-yellow-400', bg: 'bg-yellow-500/10', border: 'border-yellow-500/20', active: 'bg-yellow-500/15 border-yellow-500/30 text-yellow-300', bar: 'bg-yellow-500' },
+    sky: { accent: 'text-sky-400', bg: 'bg-sky-500/10', border: 'border-sky-500/20', active: 'bg-sky-500/15 border-sky-500/30 text-sky-300', bar: 'bg-sky-500' },
 };
 
 /* ─── Main Page ──────────────────────────────────── */
@@ -535,6 +588,43 @@ const TOPICS = {
         { name: 'Social Issues', count: 12, priority: 'High', icon: Users },
         { name: 'Professional & Ethics', count: 10, priority: 'High', icon: CheckCircle2 },
         { name: 'Education & Environment', count: 10, priority: 'Medium', icon: BookOpen },
+    ],
+    cognizantCommunication: [
+        { name: 'Reading Comprehension', count: 10, priority: 'High', icon: BookMarked },
+        { name: 'Listening Comprehension', count: 10, priority: 'Medium', icon: MessageCircle },
+        { name: 'Speaking Assessment', count: 5, priority: 'High', icon: MessageSquare },
+        { name: 'Writing Assessment', count: 2, priority: 'Very High', icon: PenLine },
+        { name: 'Typing Speed', count: 3, priority: 'Low', icon: Target },
+    ],
+    cognizantGames: [
+        { name: 'Numerical Games', count: 6, priority: 'High', icon: Hash },
+        { name: 'Logical Games', count: 6, priority: 'Very High', icon: GitBranch },
+        { name: 'Verbal Games', count: 6, priority: 'Medium', icon: SpellCheck },
+        { name: 'Spatial Games', count: 6, priority: 'High', icon: Compass },
+    ],
+    cognizantTechnical: [
+        { name: 'Java Programming', count: 15, priority: 'Very High', icon: Code2 },
+        { name: 'ANSI SQL', count: 10, priority: 'Very High', icon: Database },
+        { name: 'Web Technologies', count: 5, priority: 'High', icon: Link2 },
+        { name: 'Python Programming', count: 5, priority: 'Medium', icon: Code2 },
+        { name: 'Cloud Fundamentals', count: 3, priority: 'Low', icon: Rocket },
+        { name: 'C# Programming', count: 2, priority: 'Low', icon: Code2 },
+    ],
+    accentureCognitive: [
+        { name: 'English Ability', count: 17, priority: 'High', icon: SpellCheck },
+        { name: 'Critical Reasoning', count: 18, priority: 'Very High', icon: Lightbulb },
+        { name: 'Abstract Reasoning', count: 15, priority: 'Very High', icon: PuzzleIcon },
+    ],
+    accentureTechnical: [
+        { name: 'MS Office', count: 12, priority: 'High', icon: Layers },
+        { name: 'Pseudocode', count: 18, priority: 'Very High', icon: Code2 },
+        { name: 'Networking & Cloud', count: 10, priority: 'Medium', icon: Target },
+    ],
+    accentureCommunication: [
+        { name: 'Reading', count: 15, priority: 'High', icon: BookMarked },
+        { name: 'Listening', count: 15, priority: 'Medium', icon: MessageCircle },
+        { name: 'Speaking', count: 10, priority: 'High', icon: MessageSquare },
+        { name: 'Writing', count: 10, priority: 'Very High', icon: PenLine },
     ],
 };
 

@@ -22,6 +22,12 @@ const SECTIONS_MAP = {
     reasoning: { label: 'Reasoning Ability', icon: '🧩' },
     verbal: { label: 'Verbal Ability', icon: '📖' },
     coding: { label: 'Coding', icon: '💻' },
+    cognizantCommunication: { label: 'Communication Assessment', icon: '🗣️' },
+    cognizantGames: { label: 'Game-Based Aptitude', icon: '🎮' },
+    cognizantTechnical: { label: 'Technical Assessment', icon: '⚙️' },
+    accentureCognitive: { label: 'Cognitive Assessment', icon: '🧠' },
+    accentureTechnical: { label: 'Technical Assessment', icon: '⚙️' },
+    accentureCommunication: { label: 'Communication Assessment', icon: '🗣️' },
 };
 
 const TOPICS_BY_SECTION = {
@@ -68,6 +74,43 @@ const TOPICS_BY_SECTION = {
         { id: 'strings', label: 'Strings' },
         { id: 'patterns', label: 'Pattern Problems' },
         { id: 'basic-algorithms', label: 'Basic Algorithms' },
+    ],
+    cognizantCommunication: [
+        { id: 'reading', label: 'Reading Comprehension' },
+        { id: 'listening', label: 'Listening Comprehension' },
+        { id: 'speaking', label: 'Speaking Assessment' },
+        { id: 'writing', label: 'Writing Assessment' },
+        { id: 'typing', label: 'Typing Speed Test' },
+    ],
+    cognizantGames: [
+        { id: 'numerical-games', label: 'Numerical Games' },
+        { id: 'logical-games', label: 'Logical Games' },
+        { id: 'verbal-games', label: 'Verbal Games' },
+        { id: 'spatial-games', label: 'Spatial Games' },
+    ],
+    cognizantTechnical: [
+        { id: 'java', label: 'Java Programming' },
+        { id: 'sql', label: 'ANSI SQL' },
+        { id: 'web', label: 'HTML, CSS, JavaScript' },
+        { id: 'python', label: 'Python Programming' },
+        { id: 'cloud', label: 'Cloud Fundamentals' },
+        { id: 'csharp', label: 'C# Programming' },
+    ],
+    accentureCognitive: [
+        { id: 'english', label: 'English Ability' },
+        { id: 'critical-reasoning', label: 'Critical Reasoning & Problem Solving' },
+        { id: 'abstract-reasoning', label: 'Abstract Reasoning' },
+    ],
+    accentureTechnical: [
+        { id: 'ms-office', label: 'Common Applications & MS Office' },
+        { id: 'pseudocode', label: 'Pseudocode' },
+        { id: 'networking-cloud', label: 'Networking, Security & Cloud' },
+    ],
+    accentureCommunication: [
+        { id: 'reading', label: 'Reading Comprehension' },
+        { id: 'listening', label: 'Listening Comprehension' },
+        { id: 'speaking', label: 'Speaking Assessment' },
+        { id: 'writing', label: 'Writing Assessment' },
     ],
 };
 
