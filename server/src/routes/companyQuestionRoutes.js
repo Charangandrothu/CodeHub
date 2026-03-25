@@ -190,8 +190,8 @@ router.get('/practice/:company/:section/:topic', verifyUser, async (req, res) =>
         // Also try exact match first (for simple topics like "percentages")
         const topicFilter = topicSlug.includes('-') ? topicRegex : { $in: [topicSlug, topicRegex] };
 
-        // Get user's answered IDs. Map key pattern: "company.section"
-        const mapKey = `${company}.${section}`;
+        // Get user's answered IDs. Map key pattern: "company_section"
+        const mapKey = `${company}_${section}`;
         const answeredIds = req.user.companyPrep?.get?.(mapKey)?.answeredIds || [];
 
         const filter = {
@@ -233,12 +233,25 @@ router.post('/submit', verifyUser, async (req, res) => {
         const q = await CompanyQuestion.findById(questionId);
         if (!q) return res.status(404).json({ error: 'Question not found' });
 
-        const mapKey = `${company}.${section}`;
-        const existing = req.user.companyPrep?.get?.(mapKey) || {
-            answeredIds: [],
-            correctIds: [],
-            skippedIds: [],
-            lastPracticed: null
+        if (!req.user.companyPrep) {
+            req.user.companyPrep = {};
+        }
+
+        const mapKey = `${company}_${section}`;
+        let currentData;
+        if (req.user.companyPrep && typeof req.user.companyPrep.get === 'function') {
+            currentData = req.user.companyPrep.get(mapKey);
+        }
+
+        const baseData = currentData 
+            ? (typeof currentData.toObject === 'function' ? currentData.toObject() : { ...currentData }) 
+            : {};
+
+        const existing = {
+            answeredIds: baseData.answeredIds || [],
+            correctIds: baseData.correctIds || [],
+            skippedIds: baseData.skippedIds || [],
+            lastPracticed: baseData.lastPracticed || null
         };
 
         let isCorrect = false;
@@ -282,7 +295,8 @@ router.post('/submit', verifyUser, async (req, res) => {
         }
         res.json(response);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        console.error("Submit Question Error: ", err);
+        res.status(500).json({ error: err.message, stack: err.stack });
     }
 });
 
@@ -295,7 +309,7 @@ router.get('/overview/:company', verifyUser, async (req, res) => {
         const result = {};
 
         for (const section of sections) {
-            const mapKey = `${company}.${section}`;
+            const mapKey = `${company}_${section}`;
             const progress = req.user.companyPrep?.get?.(mapKey) || { answeredIds: [], correctIds: [] };
             const totalQs = await CompanyQuestion.countDocuments({ company, section, isActive: true });
             const answered = progress.answeredIds.length;
@@ -332,7 +346,7 @@ router.delete('/progress/reset', verifyUser, async (req, res) => {
 
         if (topic && section) {
             // Find all question IDs for this topic
-            const mapKey = `${company}.${section}`;
+            const mapKey = `${company}_${section}`;
             const topicPattern = topic
                 .replace(/(-and-|-)/g, '[\\s\\-&]*(and|&)*[\\s\\-&]*');
             const topicRegex = new RegExp(`^${topicPattern}$`, 'i');
@@ -341,8 +355,9 @@ router.delete('/progress/reset', verifyUser, async (req, res) => {
             const topicQs = await CompanyQuestion.find({ company, section, topic: topicFilter }, '_id');
             const topicIdStrings = topicQs.map(q => q._id.toString());
             
-            const existing = req.user.companyPrep?.get?.(mapKey);
+            let existing = req.user.companyPrep?.get?.(mapKey);
             if (existing) {
+                existing = typeof existing.toObject === 'function' ? existing.toObject() : { ...existing };
                 existing.answeredIds = existing.answeredIds.filter(id => !topicIdStrings.includes(id.toString()));
                 existing.correctIds = existing.correctIds.filter(id => !topicIdStrings.includes(id.toString()));
                 existing.skippedIds = existing.skippedIds.filter(id => !topicIdStrings.includes(id.toString()));
@@ -352,14 +367,18 @@ router.delete('/progress/reset', verifyUser, async (req, res) => {
             }
         } else if (section) {
             // Reset just this section entirely
-            const mapKey = `${company}.${section}`;
-            req.user.companyPrep.delete(mapKey);
-            await req.user.save();
+            const mapKey = `${company}_${section}`;
+            if (req.user.companyPrep) {
+                req.user.companyPrep.delete(mapKey);
+                await req.user.save();
+            }
         } else {
             // Reset entire company (all sections)
             const sections = ['aptitude', 'reasoning', 'verbal', 'coding'];
-            sections.forEach(s => { req.user.companyPrep.delete(`${company}.${s}`); });
-            await req.user.save();
+            if (req.user.companyPrep) {
+                sections.forEach(s => { req.user.companyPrep.delete(`${company}_${s}`); });
+                await req.user.save();
+            }
         }
         res.json({ message: 'Progress reset' });
     } catch (err) {

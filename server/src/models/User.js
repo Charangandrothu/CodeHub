@@ -38,7 +38,7 @@ const userSchema = new mongoose.Schema({
     skills: { type: [String], default: [] },
     dsaRoadmap: { type: Object, default: null }, // Store roadmap state (isLocked, days, sections, etc.)
 
-    // Company Prep Progress — key: "company.section" (e.g. "tcs.aptitude")
+    // Company Prep Progress — key: "company_section" (e.g. "tcs_aptitude")
     // Each value tracks answered/correct/skipped question IDs for no-repeat filtering
     companyPrep: {
         type: Map,
