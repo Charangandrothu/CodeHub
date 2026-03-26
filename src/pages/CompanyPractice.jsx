@@ -37,23 +37,27 @@ const AccuracyRing = ({ correct, total, size = 80 }) => {
     );
 };
 
-/* ─── Question Navigator Pills ─────────────────────── */
-const QuestionNav = ({ questions, currentIndex, onSelect, results }) => (
-    <div className="flex flex-wrap gap-1.5">
+const QuestionNav = ({ questions, currentIndex, onSelect, results, selectedAnswers }) => (
+    <div className="grid grid-cols-5 gap-2">
         {questions.map((q, i) => {
             const r = results[q._id];
+            const isSelected = selectedAnswers[q._id] !== undefined;
             const isCurrent = i === currentIndex;
-            let pillStyle = 'bg-white/5 border-white/10 text-zinc-500';
-            if (r?.isCorrect) pillStyle = 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400';
-            else if (r && !r.isCorrect && !r.skipped) pillStyle = 'bg-red-500/15 border-red-500/30 text-red-400';
-            else if (r?.skipped) pillStyle = 'bg-zinc-500/15 border-zinc-500/30 text-zinc-400';
-            if (isCurrent) pillStyle += ' ring-2 ring-blue-500/50 ring-offset-1 ring-offset-[#0A0A0A]';
+            let pillStyle = 'bg-white/5 border-white/10 text-zinc-500 hover:bg-white/10'; // Not visited
+
+            if (r) {
+                if (r.skipped) pillStyle = 'bg-red-500/15 border-red-500/30 text-red-500 hover:bg-red-500/20'; // Skipped
+                else pillStyle = 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20'; // Submitted
+            } else if (isSelected) {
+                pillStyle = 'bg-yellow-500/15 border-yellow-500/30 text-yellow-500 hover:bg-yellow-500/20'; // Attempted
+            }
+            if (isCurrent) pillStyle += ' ring-2 ring-blue-500/50 ring-offset-1 ring-offset-[#0A0A0A] scale-110 z-10';
 
             return (
                 <button
                     key={q._id}
                     onClick={() => onSelect(i)}
-                    className={`w-8 h-8 rounded-lg border text-[11px] font-bold transition-all duration-200 hover:brightness-125 ${pillStyle}`}
+                    className={`h-9 rounded-lg border text-[11px] font-bold transition-all duration-200 flex items-center justify-center ${pillStyle}`}
                 >
                     {i + 1}
                 </button>
@@ -81,11 +85,51 @@ const CompanyPractice = () => {
     const [selectedAnswers, setSelectedAnswers] = useState({});
     const [results, setResults] = useState({});
     const [showExplanations, setShowExplanations] = useState({});
+    const [reviewMode, setReviewMode] = useState(false);
 
-    const fetchQuestions = useCallback(async () => {
+    const isSessionCompleted = questions.length > 0 && Object.keys(results).length === questions.length;
+
+    const STATE_KEY = `quizState_${company}_${section}_${topic}`;
+
+    // Auto-save to localStorage
+    useEffect(() => {
+        if (questions.length > 0) {
+            localStorage.setItem(STATE_KEY, JSON.stringify({
+                questions, currentIndex, selectedAnswers, results, sessionStats, stats, showExplanations, reviewMode
+            }));
+        }
+    }, [questions, currentIndex, selectedAnswers, results, sessionStats, stats, showExplanations, reviewMode, STATE_KEY]);
+
+    const fetchQuestions = useCallback(async (force = false) => {
         if (!currentUser) return;
         setLoading(true);
         setError(null);
+
+        if (force) {
+            localStorage.removeItem(STATE_KEY);
+        } else {
+            try {
+                const savedState = localStorage.getItem(STATE_KEY);
+                if (savedState) {
+                    const parsed = JSON.parse(savedState);
+                    if (parsed.questions && parsed.questions.length > 0) {
+                        setQuestions(parsed.questions);
+                        setCurrentIndex(parsed.currentIndex || 0);
+                        setSelectedAnswers(parsed.selectedAnswers || {});
+                        setResults(parsed.results || {});
+                        setSessionStats(parsed.sessionStats || { correct: 0, wrong: 0, skipped: 0 });
+                        setStats(parsed.stats || { totalQuestions: 0, totalAnswered: 0, totalRemaining: 0, progressPercent: 0 });
+                        setShowExplanations(parsed.showExplanations || {});
+                        setReviewMode(parsed.reviewMode || false);
+                        setLoading(false);
+                        return;
+                    }
+                }
+            } catch (e) {
+                console.error("Failed to restore state", e);
+            }
+        }
+
         try {
             const res = await fetch(
                 `${API_URL}/api/company-questions/practice/${company}/${section}/${topic}?limit=20`,
@@ -106,6 +150,7 @@ const CompanyPractice = () => {
             setSelectedAnswers({});
             setResults({});
             setShowExplanations({});
+            setReviewMode(false);
             setDirection(1);
         } catch (err) {
             console.error('Fetch error:', err);
@@ -113,7 +158,7 @@ const CompanyPractice = () => {
         } finally {
             setLoading(false);
         }
-    }, [currentUser, company, section, topic]);
+    }, [currentUser, company, section, topic, STATE_KEY]);
 
     useEffect(() => { fetchQuestions(); }, [fetchQuestions]);
 
@@ -151,7 +196,25 @@ const CompanyPractice = () => {
             });
             if (!res.ok) throw new Error('Submit failed');
             const data = await res.json();
-            setResults(prev => ({ ...prev, [currentQ._id]: data }));
+            setResults(prev => {
+                const map = { ...prev, [currentQ._id]: data };
+                setTimeout(() => {
+                    let nextIdx = -1;
+                    for (let i = currentIndex + 1; i < questions.length; i++) {
+                        if (!map[questions[i]._id]) { nextIdx = i; break; }
+                    }
+                    if (nextIdx === -1) {
+                        for (let i = 0; i < currentIndex; i++) {
+                            if (!map[questions[i]._id]) { nextIdx = i; break; }
+                        }
+                    }
+                    if (nextIdx !== -1) {
+                        setDirection(nextIdx > currentIndex ? 1 : -1);
+                        setCurrentIndex(nextIdx);
+                    }
+                }, 1500);
+                return map;
+            });
             setSessionStats(prev => ({ ...prev, [data.isCorrect ? 'correct' : 'wrong']: prev[data.isCorrect ? 'correct' : 'wrong'] + 1 }));
 
             // Dynamically update topic overall progress
@@ -177,7 +240,25 @@ const CompanyPractice = () => {
                 headers: { 'Content-Type': 'application/json', 'x-user-uid': currentUser.uid },
                 body: JSON.stringify({ company, section, questionId: currentQ._id, skipped: true }),
             });
-            setResults(prev => ({ ...prev, [currentQ._id]: { skipped: true, isCorrect: false } }));
+            setResults(prev => {
+                const map = { ...prev, [currentQ._id]: { skipped: true, isCorrect: false } };
+                setTimeout(() => {
+                    let nextIdx = -1;
+                    for (let i = currentIndex + 1; i < questions.length; i++) {
+                        if (!map[questions[i]._id]) { nextIdx = i; break; }
+                    }
+                    if (nextIdx === -1) {
+                        for (let i = 0; i < currentIndex; i++) {
+                            if (!map[questions[i]._id]) { nextIdx = i; break; }
+                        }
+                    }
+                    if (nextIdx !== -1) {
+                        setDirection(nextIdx > currentIndex ? 1 : -1);
+                        setCurrentIndex(nextIdx);
+                    }
+                }, 400); // Shorter delay for skipping
+                return map;
+            });
             setSessionStats(prev => ({ ...prev, skipped: prev.skipped + 1 }));
         } catch (err) {
             console.error('Skip error:', err);
@@ -191,7 +272,7 @@ const CompanyPractice = () => {
             setDirection(1);
             setCurrentIndex(i => i + 1);
         } else {
-            fetchQuestions(); // Load more
+            fetchQuestions(true); // Load more natively, bypassing localStorage
         }
     };
 
@@ -215,7 +296,8 @@ const CompanyPractice = () => {
             if (!res.ok) throw new Error('Failed to reset progress');
             // Reset local states and re-fetch
             setSessionStats({ correct: 0, wrong: 0, skipped: 0 });
-            await fetchQuestions();
+            localStorage.removeItem(STATE_KEY);
+            await fetchQuestions(true);
         } catch (err) {
             console.error('Reset error:', err);
         } finally {
@@ -425,9 +507,56 @@ const CompanyPractice = () => {
                             </div>
                         </div>
 
-                        {/* The Question Card (with slide animation) */}
+                        {/* The Question Card (with slide animation) or Completion Summary */}
                         <AnimatePresence mode="wait" custom={direction}>
-                            {currentQ && (
+                            {isSessionCompleted && !reviewMode ? (
+                                <motion.div
+                                    key="summary"
+                                    initial={{ opacity: 0, scale: 0.95 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    className="rounded-2xl border border-white/[0.07] bg-[#0A0A0A]/80 p-8 text-center shadow-2xl space-y-6"
+                                >
+                                    <div className="w-20 h-20 rounded-3xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto">
+                                        <Trophy size={36} className="text-emerald-400" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-2xl font-black text-white mb-2">Practice Session Complete! 🎉</h2>
+                                        <p className="text-zinc-400 text-sm">You've attempted all {questions.length} loaded questions.</p>
+                                    </div>
+                                    
+                                    <div className="flex justify-center gap-4">
+                                        <div className="px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                                            <p className="text-emerald-400 font-bold text-lg">{sessionStats.correct}</p>
+                                            <p className="text-[10px] text-zinc-500 uppercase tracking-wider">Correct</p>
+                                        </div>
+                                        <div className="px-4 py-2 rounded-xl bg-red-500/10 border border-red-500/20">
+                                            <p className="text-red-400 font-bold text-lg">{sessionStats.wrong}</p>
+                                            <p className="text-[10px] text-zinc-500 uppercase tracking-wider">Wrong</p>
+                                        </div>
+                                        <div className="px-4 py-2 rounded-xl bg-white/5 border border-white/10">
+                                            <p className="text-zinc-300 font-bold text-lg">{sessionStats.skipped}</p>
+                                            <p className="text-[10px] text-zinc-500 uppercase tracking-wider">Skipped</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex flex-col justify-center mt-6">
+                                        <button
+                                            onClick={() => setReviewMode(true)}
+                                            className="px-6 py-3 mb-3 bg-white/10 border border-white/15 rounded-2xl text-white text-sm font-semibold hover:bg-white/15 transition-all"
+                                        >
+                                            Review Mode
+                                        </button>
+                                        {stats.totalRemaining > 0 && (
+                                            <button
+                                                onClick={() => fetchQuestions(true)}
+                                                className="px-6 py-3 bg-blue-600 border border-blue-500/20 rounded-2xl text-white text-sm font-semibold hover:bg-blue-700 transition-all flex items-center justify-center gap-2"
+                                            >
+                                                Load More Questions <ArrowRight size={14} />
+                                            </button>
+                                        )}
+                                    </div>
+                                </motion.div>
+                            ) : currentQ && (
                                 <motion.div
                                     key={currentQ._id}
                                     custom={direction}
@@ -690,12 +819,13 @@ const CompanyPractice = () => {
                                 currentIndex={currentIndex}
                                 onSelect={(i) => { setDirection(i > currentIndex ? 1 : -1); setCurrentIndex(i); }}
                                 results={results}
+                                selectedAnswers={selectedAnswers}
                             />
                         </div>
 
                         {/* Load more button in sidebar */}
                         <button
-                            onClick={fetchQuestions}
+                            onClick={() => fetchQuestions(true)}
                             disabled={loading}
                             className="w-full py-2.5 rounded-xl text-xs font-bold bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white border border-white/10 transition-all flex items-center justify-center gap-2"
                         >
