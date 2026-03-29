@@ -22,7 +22,7 @@ Session persistence & token validation
 
 Role-based feature access (Free vs Pro)
 
-💻 DSA & Coding Environment
+💻 DSA & Coding Practice
 
 Integrated Monaco Editor
 
