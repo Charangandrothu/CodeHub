@@ -190,8 +190,8 @@ router.get('/practice/:company/:section/:topic', verifyUser, async (req, res) =>
         // Also try exact match first (for simple topics like "percentages")
         const topicFilter = topicSlug.includes('-') ? topicRegex : { $in: [topicSlug, topicRegex] };
 
-        // Get user's answered IDs. Map key pattern: "company.section"
-        const mapKey = `${company}.${section}`;
+        // Get user's answered IDs. Map key pattern: "company_section"
+        const mapKey = `${company}_${section}`;
         const answeredIds = req.user.companyPrep?.get?.(mapKey)?.answeredIds || [];
 
         const filter = {
@@ -233,13 +233,16 @@ router.post('/submit', verifyUser, async (req, res) => {
         const q = await CompanyQuestion.findById(questionId);
         if (!q) return res.status(404).json({ error: 'Question not found' });
 
-        const mapKey = `${company}.${section}`;
-        const existing = req.user.companyPrep?.get?.(mapKey) || {
-            answeredIds: [],
-            correctIds: [],
-            skippedIds: [],
-            lastPracticed: null
-        };
+        const mapKey = `${company}_${section}`;
+        let existing = req.user.companyPrep?.get?.(mapKey);
+        if (!existing) {
+            existing = { answeredIds: [], correctIds: [], skippedIds: [], lastPracticed: null };
+        } else {
+            // Ensure properties exist if corrupted in DB
+            existing.answeredIds = existing.answeredIds || [];
+            existing.correctIds = existing.correctIds || [];
+            existing.skippedIds = existing.skippedIds || [];
+        }
 
         let isCorrect = false;
 
@@ -263,6 +266,10 @@ router.post('/submit', verifyUser, async (req, res) => {
         }
         existing.lastPracticed = new Date();
 
+        if (!req.user.companyPrep) {
+            req.user.companyPrep = new Map();
+        }
+        
         req.user.companyPrep.set(mapKey, existing);
         await req.user.save();
 
@@ -295,8 +302,14 @@ router.get('/overview/:company', verifyUser, async (req, res) => {
         const result = {};
 
         for (const section of sections) {
-            const mapKey = `${company}.${section}`;
-            const progress = req.user.companyPrep?.get?.(mapKey) || { answeredIds: [], correctIds: [] };
+            const mapKey = `${company}_${section}`;
+            let progress = req.user.companyPrep?.get?.(mapKey);
+            if (!progress) {
+                progress = { answeredIds: [], correctIds: [] };
+            } else {
+                progress.answeredIds = progress.answeredIds || [];
+                progress.correctIds = progress.correctIds || [];
+            }
             const totalQs = await CompanyQuestion.countDocuments({ company, section, isActive: true });
             const answered = progress.answeredIds.length;
             const correct = progress.correctIds.length;

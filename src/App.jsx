@@ -49,6 +49,8 @@ const Announcements = lazy(() => import('./pages/admin/Announcements'))
 const SecureAdminLogin = lazy(() => import('./pages/admin/SecureAdminLogin'))
 const SecureAdminPricing = lazy(() => import('./pages/admin/SecureAdminPricing'))
 import { useAuth } from './context/AuthContext'
+import { FocusProvider } from './context/FocusContext'
+import FocusWidget from './components/FocusWidget'
 
 import PublicRoute from './components/routes/PublicRoute';
 import ProtectedRoute from './components/routes/ProtectedRoute';
@@ -214,12 +216,14 @@ function App() {
 
   return (
     <Router>
-      <MotionConfig reducedMotion={reduceMotion ? 'always' : 'never'}>
-        <div className="bg-[#0a0a0a] min-h-screen text-white relative">
-          <ScrollToTop />
+      <FocusProvider>
+        <MotionConfig reducedMotion={reduceMotion ? 'always' : 'never'}>
+          <div className="bg-[#0a0a0a] min-h-screen text-white relative">
+            <ScrollToTop />
           <ErrorBoundary>
             <AnnouncementBar />
             <ConditionalNavbar />
+            <FocusWidget />
             <Suspense fallback={
               <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a]">
                 <div className="w-8 h-8 rounded-full border-2 border-emerald-500 border-t-transparent animate-spin"></div>
@@ -230,6 +234,7 @@ function App() {
           </ErrorBoundary>
         </div>
       </MotionConfig>
+      </FocusProvider>
     </Router>
   )
 }

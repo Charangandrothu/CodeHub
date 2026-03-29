@@ -7,6 +7,7 @@ import {
     BarChart2, Loader2, Hash, Flame, RotateCcw, BookOpen
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useFocus } from '../context/FocusContext';
 import { API_URL } from '../config';
 
 /* ─── Accuracy Ring (SVG donut) ────────────────────── */
@@ -67,6 +68,7 @@ const CompanyPractice = () => {
     const { company, section, topic } = useParams();
     const navigate = useNavigate();
     const { currentUser } = useAuth();
+    const { logAnswer, isActive } = useFocus();
 
     const [questions, setQuestions] = useState([]);
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -161,6 +163,8 @@ const CompanyPractice = () => {
                 const newPercent = prev.totalQuestions > 0 ? Math.round((newAnswered / prev.totalQuestions) * 100) : 0;
                 return { ...prev, totalAnswered: newAnswered, totalRemaining: newRemaining, progressPercent: newPercent };
             });
+
+            if (isActive) logAnswer(data.isCorrect ? 'correct' : 'wrong');
         } catch (err) {
             console.error('Submit error:', err);
         } finally {
@@ -179,6 +183,16 @@ const CompanyPractice = () => {
             });
             setResults(prev => ({ ...prev, [currentQ._id]: { skipped: true, isCorrect: false } }));
             setSessionStats(prev => ({ ...prev, skipped: prev.skipped + 1 }));
+
+            // Fix the skip bug by updating stats
+            setStats(prev => {
+                const newAnswered = prev.totalAnswered + 1;
+                const newRemaining = Math.max(0, prev.totalRemaining - 1);
+                const newPercent = prev.totalQuestions > 0 ? Math.round((newAnswered / prev.totalQuestions) * 100) : 0;
+                return { ...prev, totalAnswered: newAnswered, totalRemaining: newRemaining, progressPercent: newPercent };
+            });
+
+            if (isActive) logAnswer('skipped');
         } catch (err) {
             console.error('Skip error:', err);
         } finally {
