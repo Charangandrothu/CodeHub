@@ -83,6 +83,7 @@ const CompanyPractice = () => {
     const [selectedAnswers, setSelectedAnswers] = useState({});
     const [results, setResults] = useState({});
     const [showExplanations, setShowExplanations] = useState({});
+    const [showHints, setShowHints] = useState({});
 
     const fetchQuestions = useCallback(async () => {
         if (!currentUser) return;
@@ -108,6 +109,7 @@ const CompanyPractice = () => {
             setSelectedAnswers({});
             setResults({});
             setShowExplanations({});
+            setShowHints({});
             setDirection(1);
         } catch (err) {
             console.error('Fetch error:', err);
@@ -454,6 +456,34 @@ const CompanyPractice = () => {
                                         <p className="text-white text-base md:text-lg font-medium leading-relaxed whitespace-pre-wrap">
                                             {currentQ.questionText}
                                         </p>
+                                        
+                                        {/* Hint feature during solving */}
+                                        {currentQ.formulaHint && !currentResult && (
+                                            <div className="mt-4">
+                                                <button
+                                                    onClick={() => setShowHints(prev => ({ ...prev, [currentQ._id]: !showHints[currentQ._id] }))}
+                                                    className="flex items-center gap-1.5 text-xs text-yellow-400 hover:text-yellow-300 font-semibold transition-colors"
+                                                >
+                                                    <Lightbulb size={12} />
+                                                    {showHints[currentQ._id] ? 'Hide Hint' : 'Show Hint'}
+                                                </button>
+                                                <AnimatePresence>
+                                                    {showHints[currentQ._id] && (
+                                                        <motion.div
+                                                            initial={{ height: 0, opacity: 0 }}
+                                                            animate={{ height: 'auto', opacity: 1 }}
+                                                            exit={{ height: 0, opacity: 0 }}
+                                                            className="overflow-hidden"
+                                                        >
+                                                            <div className="mt-3 p-3 rounded-xl bg-yellow-500/10 border border-yellow-500/20 text-yellow-200/90 text-sm leading-relaxed">
+                                                                <span className="font-bold text-yellow-400 mr-2">Hint:</span>
+                                                                {currentQ.formulaHint}
+                                                            </div>
+                                                        </motion.div>
+                                                    )}
+                                                </AnimatePresence>
+                                            </div>
+                                        )}
                                     </div>
 
                                     {/* Options */}

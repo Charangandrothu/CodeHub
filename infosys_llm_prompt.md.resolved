@@ -1,0 +1,133 @@
+# Infosys Questions — Data Format Guide for Claude
+
+> **Give this entire file to Claude.** It has everything Claude needs to generate production-ready question batches specifically for the **Infosys IRT** exam that can be directly bulk-uploaded to CodeHubX.
+
+---
+
+## Your Instruction to Claude (copy-paste this)
+
+```
+You are an expert interview preparation content creator for a placement training platform called CodeHubX.
+Your task is to generate mock interview MCQ questions specifically tailored to the Infosys Recruitment Test (IRT).
+
+Infosys is known for having a notoriously difficult Pseudo Code section, and strict time limits.
+Generate questions in the exact JSON format specified in the attached guide below.
+Output ONLY a valid JSON array with no extra text, no markdown fences, no explanation outside the array.
+The array must start with [ and end with ]. Every object must be valid JSON.
+```
+
+---
+
+## Output Format
+
+Claude must produce a **single JSON array** — no wrappers, no markdown, just raw JSON:
+
+```json
+[
+  { ...question1... },
+  { ...question2... }
+]
+```
+
+## Required Fields
+
+| Field | Type | Required Value for Infosys |
+|---|---|---|
+| `company` | string | MUST BE `"infosys"` |
+| `section` | string | MUST BE `"aptitude"`, `"reasoning"`, `"verbal"`, or `"pseudocode"` |
+| `topic` | string | See allowed Infosys topic slugs below |
+| `difficulty` | string | `"Easy"`, `"Medium"`, or `"Hard"` (Infosys leans towards Medium-Hard) |
+| `questionText` | string | Full question sentence |
+| `options` | array | Exactly 4 options: `[{"key":"A","text":"..."},{"key":"B","text":"..."},{"key":"C","text":"..."},{"key":"D","text":"..."}]` |
+| `correctAnswer` | string | `"A"`, `"B"`, `"C"`, or `"D"` |
+| `explanation` | string | Full step-by-step solution. Crucial for Pseudo code trace logic. |
+
+## Optional Fields
+
+| Field | Default | Notes |
+|---|---|---|
+| `priority` | `"High"` | `"Very High"`, `"High"`, `"Medium"`, `"Low"` |
+| `formulaHint` | `""` | One-line formula tip shown as collapsible hint |
+| `timeLimit` | `90` | Infosys timing: Aptitude/Verbal ~80s, Reasoning ~100s, Pseudo code ~120s |
+
+---
+
+## Allowed Topic Slugs for Infosys
+
+When specifying the `topic` field, you MUST use one of these exact slugs corresponding to the chosen `section`. **Do not invent new slugs.**
+
+### For `section: "aptitude"` (Quantitative Aptitude)
+- `percentages`
+- `profit-loss`
+- `time-work`
+- `time-speed-distance`
+- `ratio-proportion`
+- `averages`
+- `probability`
+- `permutations-combinations`
+- `number-systems`
+- `data-interpretation`
+
+### For `section: "reasoning"` (Logical Reasoning - HARDEST SECTION)
+- `syllogisms`
+- `data-interpretation`
+- `data-sufficiency`
+- `puzzles` (Arrangement)
+- `blood-relations`
+- `coding-decoding`
+- `letter-number-series`
+- `direction-sense`
+- `logical-reasoning` (Venn Diagrams)
+
+### For `section: "verbal"` (Verbal Ability - GRE/CAT Level)
+- `reading-comprehension`
+- `error-identification` (Sentence Correction)
+- `para-jumbles`
+- `synonyms-antonyms`
+- `sentence-completion` (Fill in the Blanks)
+- `idioms-phrases`
+
+### For `section: "pseudocode"` (Pseudo Code - UNIQUE TO INFOSYS)
+- `trace-output` (Trace Code & Predict Output)
+- `code-logic`
+- `error-detection`
+- `loop-tracing`
+
+*Note: For pseudocode questions, use formatting like `\n` in strings within the JSON to represent line breaks clearly if providing a code block within the `questionText`.*
+
+---
+
+## Explanation Rules for Claude
+
+The `explanation` field is the most important part.
+- For logic/math: Show every step using `→`.
+- For Pseudo Code: Briefly walk through the loop iterations or variable state changes step-by-step (`Iter 1: a=5, b=2`, `Iter 2: a=3, b=3`).
+- Tell Claude it MUST end the explanation with: `∴ Answer: C` (or X).
+
+---
+
+## Prompt Template 1: Generate Infosys Pseudo Code Batch
+
+*(Copy and paste this into Claude after providing the rules above)*
+
+```text
+Generate 15 highly complex MCQ questions for the Infosys Pseudo Code section.
+Mix the topics: trace-output (5), code-logic (4), error-detection (3), loop-tracing (3).
+Make the difficulty 30% Medium, 70% Hard. Time limits should be exactly 120.
+Format the code snippets inside the `questionText` clearly.
+In the `explanation` field, provide a step-by-step trace of the variable states.
+Ensure the `company` field is exactly "infosys" and `section` is "pseudocode".
+Output ONLY the raw JSON array.
+```
+
+## Prompt Template 2: Generate Infosys Reasoning Batch
+
+*(Copy and paste this into Claude)*
+
+```text
+Generate 20 MCQ questions for the Infosys reasoning section. This section is known to be very difficult.
+Mix the topics: syllogisms (5), puzzles (5), data-interpretation (5), blood-relations (5).
+Make the difficulty 50% Medium, 50% Hard. Time limit: 100s.
+Ensure the `company` field is exactly "infosys" and `section` is "reasoning".
+Output ONLY the raw JSON array.
+```
