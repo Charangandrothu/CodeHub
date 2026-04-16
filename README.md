@@ -11,7 +11,7 @@ Built for serious placement preparation.
 CodeHubX aims to become a complete placement operating system —
 where learning, practicing, testing, analytics, and optimization exist in one seamless flow.
 
-✨ Core Features
+Core Features
 🔐 Authentication & Access Control
 
 Secure authentication via Firebase Auth
