@@ -48,7 +48,7 @@ Linked List
 
 Bit manipulation
 
-And expanding...
+And expanding... soon
 
 📊 Analytics & Progress Tracking
 
