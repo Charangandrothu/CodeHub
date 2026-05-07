@@ -5,8 +5,7 @@ CodeHubX is a unified, test-driven placement preparation ecosystem designed to s
 It combines structured learning paths, real-time code execution, analytics, and premium mock simulations to help aspirants prepare efficiently and consistently.
 
 Built for serious placement preparatio
-🌐 Visio
-
+🌐 
 CodeHubX aims to become a complete placement operating system —
 where learning, practicing, testing, analytics, and optimization exist in one seamless flow.
 
