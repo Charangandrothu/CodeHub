@@ -38,8 +38,7 @@ Patterns
 
 Arrays
 
-Sorting
-
+Sortin
 Recursion
 
 Linked List
