@@ -1,6 +1,6 @@
 🚀 CodeHubX — Structured Placement Preparation Platform
 
-CodeHubX is a unified, test-driven placement preparation ecosystem designed to streamline DSA, Aptitude, and Core CS learning into a single high-performance environment.
+CodeHubX is a unified, test-driven placement preparation ecosystem designed to streamline DSA, Aptitude, and Core CS learning into a single high-performance environment
 
 It combines structured learning paths, real-time code execution, analytics, and premium mock simulations to help aspirants prepare efficiently and consistently.
 
