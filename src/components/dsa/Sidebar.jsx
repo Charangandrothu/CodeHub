@@ -30,10 +30,10 @@ export default function Sidebar({ isMobileOpen = false, onCloseMobile = () => { 
     const location = useLocation();
     const { currentUser, userData, logout } = useAuth();
     const [topicStats, setTopicStats] = useState({});
-    const [isDesktop, setIsDesktop] = useState(() => window.innerWidth >= 1024);
+    const [isDesktop, setIsDesktop] = useState(() => window.innerWidth >= 768);
 
     useEffect(() => {
-        const mq = window.matchMedia('(min-width: 1024px)');
+        const mq = window.matchMedia('(min-width: 768px)');
         const handler = (e) => setIsDesktop(e.matches);
         mq.addEventListener('change', handler);
         return () => mq.removeEventListener('change', handler);
@@ -70,7 +70,7 @@ export default function Sidebar({ isMobileOpen = false, onCloseMobile = () => { 
     return (
         <>
             <div
-                className={`lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-[54] transition-opacity duration-300 ${isMobileOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+                className={`md:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-[54] transition-opacity duration-300 ${isMobileOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
                 onClick={onCloseMobile}
             />
 
@@ -81,9 +81,9 @@ export default function Sidebar({ isMobileOpen = false, onCloseMobile = () => { 
                     opacity: isDesktop ? 1 : (isMobileOpen ? 1 : 0)
                 }}
                 transition={{ type: "spring", stiffness: 260, damping: 28 }}
-                className="w-72 h-screen fixed top-0 left-0 flex flex-col bg-[#0a0a0a] border-r border-white/5 z-[55] lg:z-50 p-4 sm:p-6 lg:p-6"
+                className="w-72 h-screen fixed top-0 left-0 flex flex-col bg-[#0a0a0a] border-r border-white/5 z-[55] md:z-50 p-4 sm:p-6 lg:p-6"
             >
-                <div className="lg:hidden flex justify-end mb-2">
+                <div className="md:hidden flex justify-end mb-2">
                     <button
                         onClick={onCloseMobile}
                         className="h-9 w-9 inline-flex items-center justify-center rounded-lg border border-white/10 bg-white/5 text-gray-200"

@@ -2,7 +2,7 @@ const express = require("express");
 const axios = require("axios");
 const redis = require("../config/redis");
 const { addJob } = require("./queue");
-const { generateDriverCode, buildJavaDriver, executeWithPolling, normalizeOutput, languageIds, timeLimits, buildBatchDriver, buildBatchCombinedStdin } = require("../utils/judgeHelpers");
+const { generateDriverCode, buildJavaDriver, executeWithPolling, normalizeOutput, languageIds, timeLimits, buildBatchDriver, buildBatchCombinedStdin, getFunctionSignature } = require("../utils/judgeHelpers");
 
 const router = express.Router();
 
@@ -10,19 +10,7 @@ const Problem = require("../models/Problem");
 const User = require("../models/User");
 const Submission = require("../models/Submission");
 
-// Helper to extract function signature locally for /run
-const getLocalFunctionSignature = (code, language) => {
-    if (language === 'python') {
-        const match = code.match(/def\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(([^)]*)\):/);
-        if (match) return { name: match[1], args: match[2].split(',').map(arg => arg.trim()).filter(a => a) };
-    } else if (language === 'javascript') {
-        const matchFunc = code.match(/function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(([^)]*)\)/);
-        if (matchFunc) return { name: matchFunc[1], args: matchFunc[2].split(',').map(arg => arg.trim()).filter(a => a) };
-        const matchArrow = code.match(/(?:const|let|var)\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*\(?([^)=]*)\)?\s*=>/);
-        if (matchArrow) return { name: matchArrow[1], args: matchArrow[2].split(',').map(arg => arg.trim()).filter(a => a) };
-    }
-    return null;
-};
+
 
 // Helper to generate driver code locally for /run
 const generateLocalDriverCode = (userCode, language, testCaseInput) => {
@@ -40,7 +28,7 @@ const generateLocalDriverCode = (userCode, language, testCaseInput) => {
         return buildJavaDriver(userCode, inputValues) || userCode;
     }
 
-    const signature = getLocalFunctionSignature(userCode, language);
+    const signature = getFunctionSignature(userCode, language);
     if (!signature) return userCode;
 
     const { name, args } = signature;
@@ -407,6 +395,12 @@ router.post("/submit", async (req, res) => {
             await userUpdate.save();
             await redis.del(`cache:/api/users/${userId}`);
             if (userUpdate.username) await redis.del(`cache:/api/users/handle/${userUpdate.username}`);
+
+            // Trigger referral checks in the background
+            const ReferralService = require('../services/referralService');
+            ReferralService.checkAndUpdateReferrals(userId).catch(err => {
+                console.error("Error updating referrals (non-fatal):", err);
+            });
         }
 
         // 6. Deduct credit for free users

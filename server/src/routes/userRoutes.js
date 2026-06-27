@@ -17,7 +17,7 @@ router.get('/check-username/:username', async (req, res) => {
 });
 
 router.post('/sync', async (req, res) => {
-    const { uid, email, displayName, photoURL } = req.body;
+    const { uid, email, displayName, photoURL, referredBy } = req.body;
 
     if (!uid || !email) {
         return res.status(400).json({ error: "Missing required fields" });
@@ -25,6 +25,7 @@ router.post('/sync', async (req, res) => {
 
     try {
         let user = await User.findOne({ uid });
+        const todayStr = new Date().toISOString().split('T')[0];
 
         // Check if new user and registrations are allowed
         if (!user) {
@@ -63,6 +64,24 @@ router.post('/sync', async (req, res) => {
                 }
             }
 
+            // Generate unique referral code
+            const cleanCode = candidateUsername.toUpperCase().replace(/[^A-Z0-9]/g, '');
+            let referralCode = cleanCode || 'USER';
+            const referralCodeExists = await User.exists({ referralCode });
+            if (referralCodeExists) {
+                referralCode = `${referralCode}${Math.floor(10 + Math.random() * 90)}`;
+            }
+
+            // Process referredBy
+            let finalReferredBy = null;
+            let referrerUser = null;
+            if (referredBy) {
+                referrerUser = await User.findOne({ referralCode: referredBy.toUpperCase().trim() });
+                if (referrerUser && referrerUser.uid !== uid) {
+                    finalReferredBy = referrerUser.referralCode;
+                }
+            }
+
             const userPayload = {
                 uid,
                 email,
@@ -70,6 +89,9 @@ router.post('/sync', async (req, res) => {
                 displayName: displayName || '',
                 photoURL: photoURL || 'https://api.dicebear.com/9.x/adventurer/svg?seed=Emery&backgroundColor=d1d4f9',
                 isPro: false,
+                referralCode,
+                referredBy: finalReferredBy,
+                activeDates: [todayStr],
                 stats: {
                     streak: 0,
                     solvedProblems: 0,
@@ -107,6 +129,26 @@ router.post('/sync', async (req, res) => {
             try {
                 user = new User(userPayload);
                 await user.save();
+
+                // If referred by someone, log the referral relation
+                if (referrerUser && finalReferredBy) {
+                    const Referral = require('../models/Referral');
+                    const refDoc = new Referral({
+                        referrerId: referrerUser.uid,
+                        referredId: uid,
+                        referredUsername: candidateUsername,
+                        referredEmail: email,
+                        status: 'Pending',
+                        emailVerified: false,
+                        profileCompleted: false
+                    });
+                    await refDoc.save();
+
+                    // Update referrer user model counts
+                    referrerUser.referralStats.totalReferrals += 1;
+                    referrerUser.referralStats.pendingReferrals += 1;
+                    await referrerUser.save();
+                }
             } catch (saveError) {
                 if (!isDuplicateKeyError(saveError)) {
                     throw saveError;
@@ -148,11 +190,36 @@ router.post('/sync', async (req, res) => {
             if (displayName || photoURL) {
                 user.displayName = displayName || user.displayName;
                 user.photoURL = photoURL || user.photoURL;
-                await user.save();
             }
+
+            // Backfill referralCode if missing
+            if (!user.referralCode) {
+                const cleanCode = (user.username || user.displayName || user.email.split('@')[0]).toUpperCase().replace(/[^A-Z0-9]/g, '');
+                let refCode = cleanCode || 'USER';
+                const exists = await User.exists({ referralCode: refCode });
+                if (exists) {
+                    refCode = `${refCode}${Math.floor(10 + Math.random() * 90)}`;
+                }
+                user.referralCode = refCode;
+            }
+
+            // Track active dates
+            if (!user.activeDates) user.activeDates = [];
+            if (!user.activeDates.includes(todayStr)) {
+                user.activeDates.push(todayStr);
+            }
+
+            await user.save();
         }
 
         if (user) {
+            // Check status of referrals this user was invited by
+            const ReferralService = require('../services/referralService');
+            // Safely run in the background
+            ReferralService.checkAndUpdateReferrals(user.uid).catch(err => {
+                console.error("Error checking referrals inside sync (non-fatal):", err);
+            });
+
             // Invalidate cache — wrapped separately so Redis failures don't break sync
             try {
                 await redis.del(`cache:/api/users/${uid}`);
@@ -383,6 +450,12 @@ router.post('/complete-profile', async (req, res) => {
         // Invalidate cache
         await redis.del(`cache:/api/users/${uid}`);
 
+        // Trigger referral check in background
+        const ReferralService = require('../services/referralService');
+        ReferralService.checkAndUpdateReferrals(uid).catch(err => {
+            console.error("Error updating referrals (non-fatal):", err);
+        });
+
         res.json({ success: true, user });
     } catch (error) {
         console.error("Complete profile error:", error);
@@ -439,6 +512,12 @@ router.put('/:uid', async (req, res) => {
         if (updatedUser.username) {
             await redis.del(`cache:/api/users/handle/${updatedUser.username}`);
         }
+
+        // Trigger referral check in background
+        const ReferralService = require('../services/referralService');
+        ReferralService.checkAndUpdateReferrals(req.params.uid).catch(err => {
+            console.error("Error updating referrals (non-fatal):", err);
+        });
 
         res.json(updatedUser);
     } catch (error) {
@@ -558,6 +637,86 @@ router.get('/roadmap/:uid', cacheMiddleware(300), async (req, res) => {
         res.json({ roadmap: user.dsaRoadmap || null });
     } catch (err) {
         console.error("Roadmap fetch error:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Update User Aptitude Roadmap State
+router.put('/roadmap-aptitude/:uid', async (req, res) => {
+    try {
+        const { roadmap } = req.body;
+        if (!roadmap) {
+            return res.status(400).json({ error: "Missing roadmap data" });
+        }
+
+        console.log(`Saving Aptitude roadmap for UID: ${req.params.uid}`);
+
+        const user = await User.findOne({ uid: req.params.uid });
+        if (!user) return res.status(404).json({ error: "User not found" });
+
+        user.aptitudeRoadmap = roadmap;
+        user.markModified('aptitudeRoadmap'); // Ensure mixed type changes are detected
+        await user.save();
+
+        await redis.del(`cache:/api/users/${req.params.uid}`);
+        await redis.del(`cache:/api/users/roadmap-aptitude/${req.params.uid}`);
+
+        res.json({ success: true, roadmap: user.aptitudeRoadmap });
+    } catch (err) {
+        console.error("Aptitude Roadmap save error:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Get User Aptitude Roadmap
+router.get('/roadmap-aptitude/:uid', cacheMiddleware(300), async (req, res) => {
+    try {
+        const user = await User.findOne({ uid: req.params.uid }).select('aptitudeRoadmap');
+        if (!user) return res.status(404).json({ error: "User not found" });
+
+        res.json({ roadmap: user.aptitudeRoadmap || null });
+    } catch (err) {
+        console.error("Aptitude Roadmap fetch error:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Update User Mock Roadmap State
+router.put('/roadmap-mock/:uid', async (req, res) => {
+    try {
+        const { roadmap } = req.body;
+        if (!roadmap) {
+            return res.status(400).json({ error: "Missing roadmap data" });
+        }
+
+        console.log(`Saving Mock roadmap for UID: ${req.params.uid}`);
+
+        const user = await User.findOne({ uid: req.params.uid });
+        if (!user) return res.status(404).json({ error: "User not found" });
+
+        user.mockRoadmap = roadmap;
+        user.markModified('mockRoadmap'); // Ensure mixed type changes are detected
+        await user.save();
+
+        await redis.del(`cache:/api/users/${req.params.uid}`);
+        await redis.del(`cache:/api/users/roadmap-mock/${req.params.uid}`);
+
+        res.json({ success: true, roadmap: user.mockRoadmap });
+    } catch (err) {
+        console.error("Mock Roadmap save error:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Get User Mock Roadmap
+router.get('/roadmap-mock/:uid', cacheMiddleware(300), async (req, res) => {
+    try {
+        const user = await User.findOne({ uid: req.params.uid }).select('mockRoadmap');
+        if (!user) return res.status(404).json({ error: "User not found" });
+
+        res.json({ roadmap: user.mockRoadmap || null });
+    } catch (err) {
+        console.error("Mock Roadmap fetch error:", err);
         res.status(500).json({ error: err.message });
     }
 });

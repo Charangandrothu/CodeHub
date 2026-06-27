@@ -22,36 +22,170 @@ const normalizeOutput = (str) => {
     if (!str) return "";
     return str.replace(/\r\n/g, "\n")
         .split('\n')
-        .map(line => line.replace(/\s+$/, ''))
+        .map(line => line.replace(/\s+$/, '').replace(/,\s+/g, ','))
         .join('\n')
-        .replace(/\n+$/, '');
+        .replace(/\n+$/, '')
+        .replace(/,\s+/g, ',');
+};
+
+const getBraceMatchedSubstring = (str, startBraceIndex) => {
+    let depth = 0;
+    for (let i = startBraceIndex; i < str.length; i++) {
+        if (str[i] === '{') depth++;
+        else if (str[i] === '}') {
+            depth--;
+            if (depth === 0) {
+                return str.substring(startBraceIndex + 1, i);
+            }
+        }
+    }
+    return "";
+};
+
+const getPythonBody = (code, startIndex) => {
+    const lines = code.substring(startIndex).split('\n');
+    if (lines.length === 0) return "";
+    let firstLineIdx = 0;
+    while (firstLineIdx < lines.length && !lines[firstLineIdx].trim()) {
+        firstLineIdx++;
+    }
+    if (firstLineIdx >= lines.length) return "";
+    const matchIndent = lines[firstLineIdx].match(/^\s+/);
+    const baseIndent = matchIndent ? matchIndent[0].length : 0;
+    if (baseIndent === 0) return "";
+    
+    const bodyLines = [];
+    for (let i = firstLineIdx; i < lines.length; i++) {
+        const line = lines[i];
+        if (!line.trim()) {
+            bodyLines.push(line);
+            continue;
+        }
+        const curIndentMatch = line.match(/^\s+/);
+        const curIndent = curIndentMatch ? curIndentMatch[0].length : 0;
+        if (curIndent < baseIndent) {
+            break;
+        }
+        bodyLines.push(line);
+    }
+    return bodyLines.join('\n');
+};
+
+const extractJavaFunction = (userCode) => {
+    const methodRe = /(?:public\s+|protected\s+|private\s+|static\s+|final\s+)*([\w\[\]<>,\s]+?)\s+([a-zA-Z_]\w*)\s*\(([^)]*)\)\s*\{/g;
+    const classNameMatch = userCode.match(/class\s+(\w+)/);
+    const userClassName = classNameMatch ? classNameMatch[1] : 'Solution';
+    let m;
+    const methods = [];
+    while ((m = methodRe.exec(userCode)) !== null) {
+        const name = m[2];
+        if (name === 'main' || name === userClassName) continue; // skip constructor & main
+        methods.push({
+            returnType: m[1].trim(),
+            name: m[2],
+            paramStr: m[3],
+            index: m.index,
+            fullMatch: m[0]
+        });
+    }
+    if (methods.length === 0) return null;
+    const solveMethod = methods.find(m => m.name === 'solve');
+    if (solveMethod) return solveMethod;
+    
+    const nonHelpers = methods.filter(m => {
+        return !methods.some(other => {
+            if (other.name === m.name) return false;
+            const openBrace = userCode.indexOf('{', other.index);
+            if (openBrace === -1) return false;
+            const body = getBraceMatchedSubstring(userCode, openBrace);
+            return body.includes(m.name);
+        });
+    });
+    if (nonHelpers.length > 0) return nonHelpers[0];
+    return methods[0];
+};
+
+const extractCppFunction = (userCode) => {
+    const methodRe = /(?:inline\s+|static\s+|virtual\s+|constexpr\s+)*([\w<>\s:&*]+)\s+([a-zA-Z_]\w*)\s*\(([^)]*)\)\s*\{/g;
+    let m;
+    const methods = [];
+    while ((m = methodRe.exec(userCode)) !== null) {
+        if (m[2] === 'main') continue;
+        methods.push({
+            returnType: m[1].trim(),
+            name: m[2],
+            paramStr: m[3],
+            index: m.index
+        });
+    }
+    if (methods.length === 0) return null;
+    const solveMethod = methods.find(m => m.name === 'solve');
+    if (solveMethod) return solveMethod;
+    
+    const nonHelpers = methods.filter(m => {
+        return !methods.some(other => {
+            if (other.name === m.name) return false;
+            const openBrace = userCode.indexOf('{', other.index);
+            if (openBrace === -1) return false;
+            const body = getBraceMatchedSubstring(userCode, openBrace);
+            return body.includes(m.name);
+        });
+    });
+    if (nonHelpers.length > 0) return nonHelpers[0];
+    return methods[0];
 };
 
 // Helper to extract signature
 const getFunctionSignature = (code, language) => {
     if (language === 'python') {
-        const match = code.match(/def\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(([^)]*)\):/);
-        if (match) {
-            return {
-                name: match[1],
-                args: match[2].split(',').map(arg => arg.trim()).filter(a => a)
-            };
+        const regex = /def\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(([^)]*)\)[^:]*:/g;
+        let match;
+        const funcs = [];
+        while ((match = regex.exec(code)) !== null) {
+            const name = match[1];
+            const rawArgs = match[2].split(',').map(arg => arg.trim()).filter(a => a);
+            const cleanArgs = rawArgs.map(arg => arg.split('=')[0].split(':')[0].trim());
+            funcs.push({ name, args: cleanArgs, index: match.index });
         }
+        if (funcs.length === 0) return null;
+        const solveFunc = funcs.find(f => f.name === 'solve');
+        if (solveFunc) return solveFunc;
+        
+        const nonHelpers = funcs.filter(f => {
+            return !funcs.some(other => {
+                if (other.name === f.name) return false;
+                const body = getPythonBody(code, other.index);
+                return body.includes(f.name);
+            });
+        });
+        if (nonHelpers.length > 0) return nonHelpers[0];
+        return funcs[0];
     } else if (language === 'javascript') {
-        const matchFunc = code.match(/function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(([^)]*)\)/);
-        if (matchFunc) {
-            return {
-                name: matchFunc[1],
-                args: matchFunc[2].split(',').map(arg => arg.trim()).filter(a => a)
-            };
+        const funcs = [];
+        const funcRegex = /function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(([^)]*)\)/g;
+        let match;
+        while ((match = funcRegex.exec(code)) !== null) {
+            funcs.push({ name: match[1], args: match[2].split(',').map(arg => arg.trim()).filter(a => a), index: match.index });
         }
-        const matchArrow = code.match(/(?:const|let|var)\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*\(?([^)=]*)\)?\s*=>/);
-        if (matchArrow) {
-            return {
-                name: matchArrow[1],
-                args: matchArrow[2].split(',').map(arg => arg.trim()).filter(a => a)
-            };
+        const arrowRegex = /(?:const|let|var)\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*\(?([^)=]*)\)?\s*=>/g;
+        while ((match = arrowRegex.exec(code)) !== null) {
+            funcs.push({ name: match[1], args: match[2].split(',').map(arg => arg.trim()).filter(a => a), index: match.index });
         }
+        if (funcs.length === 0) return null;
+        const solveFunc = funcs.find(f => f.name === 'solve');
+        if (solveFunc) return solveFunc;
+        
+        const nonHelpers = funcs.filter(f => {
+            return !funcs.some(other => {
+                if (other.name === f.name) return false;
+                const openBrace = code.indexOf('{', other.index);
+                if (openBrace === -1) return false;
+                const body = getBraceMatchedSubstring(code, openBrace);
+                return body.includes(f.name);
+            });
+        });
+        if (nonHelpers.length > 0) return nonHelpers[0];
+        return funcs[0];
     }
     return null;
 };
@@ -152,22 +286,12 @@ const JAVA_HELPERS = `
 
 // Build the full Java driver wrapping user's class
 const buildJavaDriver = (userCode, inputValues) => {
-    // Extract public/package-private method: return-type methodName(params)
-    // Match the first non-constructor, non-main method
-    const methodRe = /(?:public\s+)?(?:static\s+)?([\w\[\]<>,\s]+?)\s+([a-zA-Z_]\w*)\s*\(([^)]*)\)\s*\{/g;
-    let methodMatch = null;
-    let m;
-    while ((m = methodRe.exec(userCode)) !== null) {
-        const name = m[2];
-        if (name === 'main' || name === userCode.match(/class\s+(\w+)/)?.[1]) continue; // skip constructor & main
-        methodMatch = m;
-        break;
-    }
+    const methodMatch = extractJavaFunction(userCode);
     if (!methodMatch) return null; // can't auto-wrap; fall back to as-is
 
-    const returnType = methodMatch[1].trim();
-    const methodName = methodMatch[2];
-    const paramStr = methodMatch[3];
+    const returnType = methodMatch.returnType.replace(/\b(public|protected|private|static|final)\b/g, '').trim();
+    const methodName = methodMatch.name;
+    const paramStr = methodMatch.paramStr;
 
     // Parse parameter list
     const params = paramStr.split(',').map(p => {
@@ -186,7 +310,7 @@ const buildJavaDriver = (userCode, inputValues) => {
     const parseLines = params.map((p, i) => javaParseValue(p.type, p.name, inputValues[i] || '""'));
 
     // Check if method is static
-    const isStatic = methodMatch[0].includes('static');
+    const isStatic = methodMatch.fullMatch.includes('static');
     const callExpr = isStatic
         ? `${userClassName}.${methodName}(${params.map(p => p.name).join(', ')})`
         : `new ${userClassName}().${methodName}(${params.map(p => p.name).join(', ')})`;
@@ -299,20 +423,32 @@ try {
 // Helper: Execute with Optimized Polling
 const executeWithPolling = async (source_code, language_id, stdin, cpu_time_limit = 2) => {
     try {
+        const b64SourceCode = Buffer.from(source_code || "").toString('base64');
+        const b64Stdin = Buffer.from(stdin || "").toString('base64');
+
         const createRes = await axios.post(
-            "https://ce.judge0.com/submissions?base64_encoded=false&wait=true",
+            "https://ce.judge0.com/submissions?base64_encoded=true&wait=true",
             {
-                source_code,
+                source_code: b64SourceCode,
                 language_id,
-                stdin,
+                stdin: b64Stdin,
                 cpu_time_limit,
                 memory_limit: 262144  // 256 MB in KB
             },
             { headers: { "Content-Type": "application/json" } }
         );
 
+        const decodeResponse = (data) => {
+            if (!data) return data;
+            const decoded = { ...data };
+            if (decoded.stdout) decoded.stdout = Buffer.from(decoded.stdout, 'base64').toString('utf8');
+            if (decoded.stderr) decoded.stderr = Buffer.from(decoded.stderr, 'base64').toString('utf8');
+            if (decoded.compile_output) decoded.compile_output = Buffer.from(decoded.compile_output, 'base64').toString('utf8');
+            return decoded;
+        };
+
         if (createRes.data.status && createRes.data.status.id > 2) {
-            return createRes.data;
+            return decodeResponse(createRes.data);
         }
 
         const token = createRes.data.token;
@@ -326,14 +462,14 @@ const executeWithPolling = async (source_code, language_id, stdin, cpu_time_limi
             await new Promise(r => setTimeout(r, 200));
 
             const getRes = await axios.get(
-                `https://ce.judge0.com/submissions/${token}?base64_encoded=false&fields=stdout,stderr,status,compile_output,time,memory`,
+                `https://ce.judge0.com/submissions/${token}?base64_encoded=true&fields=stdout,stderr,status,compile_output,time,memory`,
                 { headers: { "Content-Type": "application/json" } }
             );
 
             const statusId = getRes.data.status?.id;
 
             if (statusId && statusId > 2) {
-                return getRes.data;
+                return decodeResponse(getRes.data);
             }
         }
         throw new Error("Execution timed out (polling limit exceeded)");
@@ -369,18 +505,12 @@ const javaRuntimeParseFromVar = (type, varName, stringVar) => {
 /** Build a Java batch driver that loops over T test cases read from stdin.
  *  Replaces the per-value-hardcoded buildJavaDriver for submissions. */
 const buildBatchDriverJava = (userCode) => {
-    const methodRe = /(?:public\s+)?(?:static\s+)?([\w\[\]<>,\s]+?)\s+([a-zA-Z_]\w*)\s*\(([^)]*)\)\s*\{/g;
-    let methodMatch = null, m;
-    while ((m = methodRe.exec(userCode)) !== null) {
-        const name = m[2];
-        if (name === 'main' || name === (userCode.match(/class\s+(\w+)/)?.[1])) continue;
-        methodMatch = m; break;
-    }
+    const methodMatch = extractJavaFunction(userCode);
     if (!methodMatch) return null;
 
-    const returnType = methodMatch[1].trim();
-    const methodName = methodMatch[2];
-    const paramStr = methodMatch[3];
+    const returnType = methodMatch.returnType.replace(/\b(public|protected|private|static|final)\b/g, '').trim();
+    const methodName = methodMatch.name;
+    const paramStr = methodMatch.paramStr;
     const params = paramStr.split(',').map(p => {
         p = p.trim(); if (!p) return null;
         const i = p.lastIndexOf(' '); if (i < 0) return null;
@@ -389,7 +519,7 @@ const buildBatchDriverJava = (userCode) => {
 
     const classNameMatch = userCode.match(/class\s+(\w+)/);
     const userClassName = classNameMatch ? classNameMatch[1] : 'Solution';
-    const isStatic = methodMatch[0].includes('static');
+    const isStatic = methodMatch.fullMatch.includes('static');
 
     // One readLine + type-parse per param
     const parseLines = params.map((p, i) => {
@@ -462,8 +592,8 @@ const buildBatchDriverJS = (userCode, signature) => {
 const buildBatchDriverPython = (userCode, signature) => {
     const { name, args } = signature;
     const readArgs = args.map(arg =>
-        `${arg} = _pv(_lines[_i]); _i += 1`
-    ).join('\n        ');
+        `${arg} = _pv(_lines[_i])\n            _i += 1`
+    ).join('\n            ');
 
     return `import sys
 import json
@@ -506,31 +636,29 @@ const cppRuntimeParseFromVar = (type, varName, stringVar) => {
     if (t === 'vector<int>') return `vector<int> ${varName} = _pvi(${stringVar});`;
     if (t === 'vector<long>' || t === 'vector<longlong>') return `vector<long long> ${varName} = _pvl(${stringVar});`;
     if (t === 'vector<string>') return `vector<string> ${varName} = _pvs(${stringVar});`;
+    if (t === 'vector<vector<int>>') return `vector<vector<int>> ${varName} = _pvvi(${stringVar});`;
     return `// unsupported c++ type ${type} for ${varName}`;
 };
 
 const cppFormatPrint = (returnType, callExpr) => {
-    const t = returnType.replace(/\s+/g, '');
+    const t = returnType.replace(/\s+/g, '').replace(/&$/, '');
     if (t === 'void') return `${callExpr};`;
     if (t === 'vector<int>' || t === 'vector<longlong>' || t === 'vector<long>')
         return `auto _res = ${callExpr}; cout << "["; for(size_t i=0;i<_res.size();i++) { cout << _res[i] << (i+1==_res.size()?"":","); } cout << "]";`;
+    if (t === 'vector<vector<int>>' || t === 'vector<vector<longlong>>' || t === 'vector<vector<long>>')
+        return `auto _res = ${callExpr}; cout << "["; for(size_t i=0;i<_res.size();i++) { cout << "["; for(size_t j=0;j<_res[i].size();j++) { cout << _res[i][j] << (j+1==_res[i].size()?"":","); } cout << "]" << (i+1==_res.size()?"":","); } cout << "]";`;
     if (t === 'bool')
         return `cout << (${callExpr} ? "true" : "false");`;
     return `cout << ${callExpr};`;
 };
 
 const buildBatchDriverCpp = (userCode) => {
-    const methodRe = /(?:inline\s+|static\s+|virtual\s+|constexpr\s+)*([\w<>\s:&*]+)\s+([a-zA-Z_]\w*)\s*\(([^)]*)\)\s*\{/g;
-    let methodMatch = null, m;
-    while ((m = methodRe.exec(userCode)) !== null) {
-        if (m[2] === 'main') continue;
-        methodMatch = m; break;
-    }
+    const methodMatch = extractCppFunction(userCode);
     if (!methodMatch) return null;
 
-    const returnType = methodMatch[1].trim();
-    const methodName = methodMatch[2];
-    const paramStr = methodMatch[3];
+    const returnType = methodMatch.returnType;
+    const methodName = methodMatch.name;
+    const paramStr = methodMatch.paramStr;
     const params = paramStr.split(',').map(p => {
         p = p.trim(); if (!p) return null;
         let lastSpace = p.lastIndexOf(' '); if (lastSpace < 0) return null;
@@ -545,16 +673,25 @@ const buildBatchDriverCpp = (userCode) => {
     const callExpr = `${methodName}(${params.map(p => p.name).join(', ')})`;
     const printLine = cppFormatPrint(returnType, callExpr);
 
-    return `${userCode}
-
-// === AUTO-GENERATED BATCH RUNNER ===
+    return `// === AUTO-GENERATED BATCH RUNNER ===
 #include <iostream>
 #include <vector>
 #include <string>
 #include <sstream>
 #include <algorithm>
+#include <climits>
+#include <queue>
+#include <stack>
+#include <map>
+#include <unordered_map>
+#include <set>
+#include <unordered_set>
+#include <cmath>
+#include <numeric>
 
 using namespace std;
+
+${userCode}
 
 string _tr(string s) {
     size_t start = s.find_first_not_of(" \\t\\r\\n");
@@ -593,8 +730,34 @@ vector<string> _pvs(string s) {
     stringstream ss(s); string item;
     while(getline(ss, item, ',')) {
         item = _tr(item);
-        if(item.front()=='"' || item.front()=='\\'') item = item.substr(1, item.length()-2);
+        if(item.front()=='"' || item.front()=='\\\'') item = item.substr(1, item.length()-2);
         res.push_back(item);
+    }
+    return res;
+}
+vector<vector<int>> _pvvi(string s) {
+    vector<vector<int>> res; s = _tr(s);
+    if(s.empty() || s=="[]" || s=="[[]]") return res;
+    if (s.front() == '[' && s.back() == ']') {
+        s = s.substr(1, s.length() - 2);
+    }
+    size_t i = 0;
+    while(i < s.length()) {
+        if(s[i] == '[') {
+            size_t start = i;
+            int depth = 1;
+            i++;
+            while(i < s.length() && depth > 0) {
+                if(s[i] == '[') depth++;
+                else if(s[i] == ']') depth--;
+                i++;
+            }
+            if(depth == 0) {
+                res.push_back(_pvi(s.substr(start, i - start)));
+            }
+        } else {
+            i++;
+        }
     }
     return res;
 }

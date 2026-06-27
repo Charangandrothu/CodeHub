@@ -37,6 +37,8 @@ const userSchema = new mongoose.Schema({
     codeforces: { type: String, default: "" }, // Added
     skills: { type: [String], default: [] },
     dsaRoadmap: { type: Object, default: null }, // Store roadmap state (isLocked, days, sections, etc.)
+    aptitudeRoadmap: { type: Object, default: null }, // Store aptitude roadmap state (isLocked, days, sections, etc.)
+    mockRoadmap: { type: Object, default: null }, // Store mock tests roadmap state (isLocked, days, sections, etc.)
 
     // Company Prep Progress — key: "company_section" (e.g. "tcs_aptitude")
     // Each value tracks answered/correct/skipped question IDs for no-repeat filtering
@@ -95,6 +97,24 @@ const userSchema = new mongoose.Schema({
         progress: { type: Number, default: null },
         issuedAt: { type: Date, default: null }
     },
+
+    // Referral and Rewards System additions
+    referralCode: { type: String, unique: true, sparse: true },
+    referredBy: { type: String, default: null },
+    referralStats: {
+        totalReferrals: { type: Number, default: 0 },
+        activeReferrals: { type: Number, default: 0 },
+        pendingReferrals: { type: Number, default: 0 },
+        rejectedReferrals: { type: Number, default: 0 }
+    },
+    xp: { type: Number, default: 0 },
+    badges: { type: [String], default: [] },
+    activeDates: { type: [String], default: [] },
+    notifications: [{
+        message: { type: String, required: true },
+        read: { type: Boolean, default: false },
+        createdAt: { type: Date, default: Date.now }
+    }],
 
     updatedAt: { type: Date, default: Date.now }
 });

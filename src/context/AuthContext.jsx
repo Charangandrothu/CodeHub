@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { auth } from '../firebase';
+import { auth, db } from '../firebase';
+import { doc, setDoc } from 'firebase/firestore';
 import { getUserDocument } from '../services/userService';
 import LoadingScreen from '../components/LoadingScreen';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -60,6 +61,7 @@ export const AuthProvider = ({ children }) => {
 
                 // 1. Try Sync (Create/Update based on Firebase Auth)
                 try {
+                    const referredBy = localStorage.getItem('referredBy');
                     const res = await fetch(`${API_URL}/api/users/sync`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -67,12 +69,16 @@ export const AuthProvider = ({ children }) => {
                             uid: user.uid,
                             email: user.email,
                             displayName: user.displayName,
-                            photoURL: user.photoURL
+                            photoURL: user.photoURL,
+                            referredBy: referredBy || undefined
                         })
                     });
 
                     if (res.ok) {
                         fetchedData = await res.json();
+                        if (referredBy) {
+                            localStorage.removeItem('referredBy');
+                        }
                     } else {
                         let syncError = `User sync failed with status ${res.status}`;
                         try {
@@ -103,6 +109,14 @@ export const AuthProvider = ({ children }) => {
 
                 if (isMounted.current) {
                     setUserData(fetchedData || null);
+                }
+                
+                if (fetchedData) {
+                    try {
+                        await setDoc(doc(db, "users", user.uid), { role: fetchedData.role || "user" }, { merge: true });
+                    } catch (e) {
+                        console.error("Failed to sync role to Firestore:", e);
+                    }
                 }
 
             } else {
@@ -142,6 +156,11 @@ export const AuthProvider = ({ children }) => {
                     const data = await res.json();
                     if (isMounted.current) {
                         setUserData(data);
+                        try {
+                            await setDoc(doc(db, "users", currentUser.uid), { role: data.role || "user" }, { merge: true });
+                        } catch (e) {
+                            console.error("Failed to sync role to Firestore in refresh:", e);
+                        }
                     }
                 }
             } catch (err) {

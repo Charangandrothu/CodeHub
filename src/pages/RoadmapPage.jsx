@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, BrainCircuit, Code, Construction, FileText, Lock, Crown, Sparkles } from 'lucide-react';
 import DSARoadmap from './RoadmapDSA';
+import AptitudeRoadmap from './RoadmapAptitude';
+import MockRoadmap from './RoadmapMock';
 import { useAuth } from '../context/AuthContext';
 
 const RoadmapPage = () => {
@@ -147,9 +149,8 @@ const RoadmapPage = () => {
                 <AnimatePresence mode="wait">
                     {activeView === 'menu' && <SelectionMenu onSelect={handleNavigate} key="menu" isMobile={isMobile} />}
                     {activeView === 'dsa' && <DSARoadmap onBack={() => handleNavigate('menu')} key="dsa" />}
-                    {(activeView === 'mock' || activeView === 'aptitude') && (
-                        <MaintenanceView title={activeView === 'mock' ? 'Mock Tests' : 'Aptitude'} onBack={() => handleNavigate('menu')} key="maintenance" />
-                    )}
+                    {activeView === 'aptitude' && <AptitudeRoadmap onBack={() => handleNavigate('menu')} key="aptitude" />}
+                    {activeView === 'mock' && <MockRoadmap onBack={() => handleNavigate('menu')} key="mock" />}
                 </AnimatePresence>
             </div>
         </div>

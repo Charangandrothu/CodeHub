@@ -1,0 +1,1059 @@
+
+==================================================
+SLUG: minimum-swaps-to-group-all-1s-together
+TITLE: Minimum Swaps to Group All 1s Together
+STARTER CODE JS: function solve(nums) {
+  // Write your code here
+  return 0;
+}
+OPTIMAL JS SOLUTION: function solve(nums) {
+  let totalOnes = 0;
+
+  for (let num of nums) {
+    if (num === 1) {
+      totalOnes++;
+    }
+  }
+
+  if (totalOnes <= 1) {
+    return 0;
+  }
+
+  let currentOnes = 0;
+
+  for (let i = 0; i < totalOnes; i++) {
+    if (nums[i] === 1) {
+      currentOnes++;
+    }
+  }
+
+  let maxOnes = currentOnes;
+
+  for (let i = totalOnes; i < nums.length; i++) {
+    if (nums[i] === 1) {
+      currentOnes++;
+    }
+
+    if (nums[i - totalOnes] === 1) {
+      currentOnes--;
+    }
+
+    maxOnes = Math.max(maxOnes, currentOnes);
+  }
+
+  return totalOnes - maxOnes;
+}
+TEST CASES (VISIBLE, count=2):
+[
+  {
+    "input": "nums = [1,0,1,0,1]",
+    "output": "1",
+    "_id": "6a1468f8eb3b6344a930f610"
+  },
+  {
+    "input": "nums = [0,0,0,1,0]",
+    "output": "0",
+    "_id": "6a1468f8eb3b6344a930f611"
+  }
+]
+TEST CASES (HIDDEN, count=50):
+[
+  {
+    "input": "nums = [1]",
+    "output": "0",
+    "_id": "6a1468f8eb3b6344a930f5de"
+  },
+  {
+    "input": "nums = [0]",
+    "output": "0",
+    "_id": "6a1468f8eb3b6344a930f5df"
+  }
+]
+
+==================================================
+SLUG: degree-of-an-array
+TITLE: Degree of an Array
+STARTER CODE JS: function solve(nums) {
+  // Write your code here
+  return 0;
+}
+OPTIMAL JS SOLUTION: function solve(nums) {
+  let count = new Map();
+  let first = new Map();
+  let last = new Map();
+
+  for (let i = 0; i < nums.length; i++) {
+    let num = nums[i];
+
+    if (!first.has(num)) {
+      first.set(num, i);
+    }
+
+    last.set(num, i);
+    count.set(num, (count.get(num) || 0) + 1);
+  }
+
+  let degree = 0;
+
+  for (let freq of count.values()) {
+    degree = Math.max(degree, freq);
+  }
+
+  let minLength = nums.length;
+
+  for (let [num, freq] of count.entries()) {
+    if (freq === degree) {
+      minLength = Math.min(minLength, last.get(num) - first.get(num) + 1);
+    }
+  }
+
+  return minLength;
+}
+TEST CASES (VISIBLE, count=2):
+[
+  {
+    "input": "nums = [1,2,2,3,1]",
+    "output": "2",
+    "_id": "6a14690ceb3b6344a930f681"
+  },
+  {
+    "input": "nums = [1,2,2,3,1,4,2]",
+    "output": "6",
+    "_id": "6a14690ceb3b6344a930f682"
+  }
+]
+TEST CASES (HIDDEN, count=50):
+[
+  {
+    "input": "nums = [1]",
+    "output": "1",
+    "_id": "6a14690ceb3b6344a930f64f"
+  },
+  {
+    "input": "nums = [1,1]",
+    "output": "2",
+    "_id": "6a14690ceb3b6344a930f650"
+  }
+]
+
+==================================================
+SLUG: container-with-most-water
+TITLE: Container With Most Water
+STARTER CODE JS: function solve(height) {
+  // Write your code here
+  return 0;
+}
+OPTIMAL JS SOLUTION: function solve(height) {
+  let left = 0;
+  let right = height.length - 1;
+  let maxArea = 0;
+
+  while (left < right) {
+    let width = right - left;
+    let currentHeight = Math.min(height[left], height[right]);
+    let area = width * currentHeight;
+
+    maxArea = Math.max(maxArea, area);
+
+    if (height[left] < height[right]) {
+      left++;
+    } else {
+      right--;
+    }
+  }
+
+  return maxArea;
+}
+TEST CASES (VISIBLE, count=2):
+[
+  {
+    "input": "height = [1,8,6,2,5,4,8,3,7]",
+    "output": "49",
+    "_id": "6a146914eb3b6344a930f6b9"
+  },
+  {
+    "input": "height = [1,1]",
+    "output": "1",
+    "_id": "6a146914eb3b6344a930f6ba"
+  }
+]
+TEST CASES (HIDDEN, count=50):
+[
+  {
+    "input": "height = [1,2]",
+    "output": "1",
+    "_id": "6a146914eb3b6344a930f687"
+  },
+  {
+    "input": "height = [2,1]",
+    "output": "1",
+    "_id": "6a146914eb3b6344a930f688"
+  }
+]
+
+==================================================
+SLUG: 3sum
+TITLE: 3Sum
+STARTER CODE JS: function solve(nums) {
+  // Write your code here
+  return [];
+}
+OPTIMAL JS SOLUTION: function solve(nums) {
+  nums.sort((a, b) => a - b);
+  let result = [];
+
+  for (let i = 0; i < nums.length - 2; i++) {
+    if (i > 0 && nums[i] === nums[i - 1]) {
+      continue;
+    }
+
+    let left = i + 1;
+    let right = nums.length - 1;
+
+    while (left < right) {
+      let sum = nums[i] + nums[left] + nums[right];
+
+      if (sum === 0) {
+        result.push([nums[i], nums[left], nums[right]]);
+
+        while (left < right && nums[left] === nums[left + 1]) {
+          left++;
+        }
+
+        while (left < right && nums[right] === nums[right - 1]) {
+          right--;
+        }
+
+        left++;
+        right--;
+      }
+      else if (sum < 0) {
+        left++;
+      }
+      else {
+        right--;
+      }
+    }
+  }
+
+  return result;
+}
+TEST CASES (VISIBLE, count=2):
+[
+  {
+    "input": "nums = [-1,0,1,2,-1,-4]",
+    "output": "[[-1,-1,2],[-1,0,1]]",
+    "_id": "6a14691deb3b6344a930f6f2"
+  },
+  {
+    "input": "nums = [0,1,1]",
+    "output": "[]",
+    "_id": "6a14691deb3b6344a930f6f3"
+  }
+]
+TEST CASES (HIDDEN, count=51):
+[
+  {
+    "input": "nums = [0,0,0]",
+    "output": "[[0,0,0]]",
+    "_id": "6a14691deb3b6344a930f6bf"
+  },
+  {
+    "input": "nums = [0,0,0,0]",
+    "output": "[[0,0,0]]",
+    "_id": "6a14691deb3b6344a930f6c0"
+  }
+]
+
+==================================================
+SLUG: maximum-product-subarray
+TITLE: Maximum Product Subarray
+STARTER CODE JS: function solve(nums) {
+  // Write your code here
+  return 0;
+}
+OPTIMAL JS SOLUTION: function solve(nums) {
+  let currentMax = nums[0];
+  let currentMin = nums[0];
+  let answer = nums[0];
+
+  for (let i = 1; i < nums.length; i++) {
+    let num = nums[i];
+
+    if (num < 0) {
+      [currentMax, currentMin] = [currentMin, currentMax];
+    }
+
+    currentMax = Math.max(num, currentMax * num);
+    currentMin = Math.min(num, currentMin * num);
+
+    answer = Math.max(answer, currentMax);
+  }
+
+  return answer;
+}
+TEST CASES (VISIBLE, count=2):
+[
+  {
+    "input": "nums = [2,3,-2,4]",
+    "output": "6",
+    "_id": "6a146961eb3b6344a930f76a"
+  },
+  {
+    "input": "nums = [-2,0,-1]",
+    "output": "0",
+    "_id": "6a146961eb3b6344a930f76b"
+  }
+]
+TEST CASES (HIDDEN, count=50):
+[
+  {
+    "input": "nums = [1]",
+    "output": "1",
+    "_id": "6a146961eb3b6344a930f738"
+  },
+  {
+    "input": "nums = [-1]",
+    "output": "-1",
+    "_id": "6a146961eb3b6344a930f739"
+  }
+]
+
+==================================================
+SLUG: subarray-sum-equals-k
+TITLE: Subarray Sum Equals K
+STARTER CODE JS: function solve(nums, k) {
+  // Write your code here
+  return 0;
+}
+OPTIMAL JS SOLUTION: function solve(nums, k) {
+  let prefixSum = 0;
+  let count = 0;
+  let map = new Map();
+
+  map.set(0, 1);
+
+  for (let num of nums) {
+    prefixSum += num;
+
+    if (map.has(prefixSum - k)) {
+      count += map.get(prefixSum - k);
+    }
+
+    map.set(prefixSum, (map.get(prefixSum) || 0) + 1);
+  }
+
+  return count;
+}
+TEST CASES (VISIBLE, count=2):
+[
+  {
+    "input": "nums = [1,1,1], k = 2",
+    "output": "2",
+    "_id": "6a146967eb3b6344a930f7a2"
+  },
+  {
+    "input": "nums = [1,2,3], k = 3",
+    "output": "2",
+    "_id": "6a146967eb3b6344a930f7a3"
+  }
+]
+TEST CASES (HIDDEN, count=50):
+[
+  {
+    "input": "nums = [1], k = 1",
+    "output": "1",
+    "_id": "6a146967eb3b6344a930f770"
+  },
+  {
+    "input": "nums = [1], k = 0",
+    "output": "0",
+    "_id": "6a146967eb3b6344a930f771"
+  }
+]
+
+==================================================
+SLUG: 3sum-closest
+TITLE: 3Sum Closest
+STARTER CODE JS: function solve(nums, target) {
+  // Write your code here
+  return 0;
+}
+OPTIMAL JS SOLUTION: function solve(nums, target) {
+  nums.sort((a, b) => a - b);
+
+  let closest = nums[0] + nums[1] + nums[2];
+
+  for (let i = 0; i < nums.length - 2; i++) {
+    let left = i + 1;
+    let right = nums.length - 1;
+
+    while (left < right) {
+      let sum = nums[i] + nums[left] + nums[right];
+
+      if (Math.abs(target - sum) < Math.abs(target - closest)) {
+        closest = sum;
+      }
+
+      if (sum < target) {
+        left++;
+      }
+      else if (sum > target) {
+        right--;
+      }
+      else {
+        return sum;
+      }
+    }
+  }
+
+  return closest;
+}
+TEST CASES (VISIBLE, count=2):
+[
+  {
+    "input": "nums = [-1,2,1,-4], target = 1",
+    "output": "2",
+    "_id": "6a14698deb3b6344a930f8f3"
+  },
+  {
+    "input": "nums = [0,0,0], target = 1",
+    "output": "0",
+    "_id": "6a14698deb3b6344a930f8f4"
+  }
+]
+TEST CASES (HIDDEN, count=50):
+[
+  {
+    "input": "nums = [1,1,1], target = 0",
+    "output": "3",
+    "_id": "6a14698deb3b6344a930f8c1"
+  },
+  {
+    "input": "nums = [1,2,3], target = 6",
+    "output": "6",
+    "_id": "6a14698deb3b6344a930f8c2"
+  }
+]
+
+==================================================
+SLUG: subarray-with-exactly-k-distinct-integers
+TITLE: Subarray with Exactly K Distinct Integers
+STARTER CODE JS: function solve(nums, k) {
+  // Write your code here
+  return 0;
+}
+OPTIMAL JS SOLUTION: function atMost(nums, k) {
+  let map = new Map();
+  let left = 0;
+  let count = 0;
+
+  for (let right = 0; right < nums.length; right++) {
+    map.set(nums[right], (map.get(nums[right]) || 0) + 1);
+
+    while (map.size > k) {
+      map.set(nums[left], map.get(nums[left]) - 1);
+
+      if (map.get(nums[left]) === 0) {
+        map.delete(nums[left]);
+      }
+
+      left++;
+    }
+
+    count += right - left + 1;
+  }
+
+  return count;
+}
+
+function solve(nums, k) {
+  return atMost(nums, k) - atMost(nums, k - 1);
+}
+TEST CASES (VISIBLE, count=2):
+[
+  {
+    "input": "nums = [1,2,1,2,3], k = 2",
+    "output": "7",
+    "_id": "6a146994eb3b6344a930f92b"
+  },
+  {
+    "input": "nums = [1,2,1,3,4], k = 3",
+    "output": "3",
+    "_id": "6a146994eb3b6344a930f92c"
+  }
+]
+TEST CASES (HIDDEN, count=50):
+[
+  {
+    "input": "nums = [1], k = 1",
+    "output": "1",
+    "_id": "6a146994eb3b6344a930f8f9"
+  },
+  {
+    "input": "nums = [1,1,1], k = 1",
+    "output": "6",
+    "_id": "6a146994eb3b6344a930f8fa"
+  }
+]
+
+==================================================
+SLUG: smallest-subarray-with-sum-greater-than-or-equal-k
+TITLE: Smallest Subarray with Sum ≥ K
+STARTER CODE JS: function solve(nums, k) {
+  // Write your code here
+  return 0;
+}
+OPTIMAL JS SOLUTION: function solve(nums, k) {
+  let left = 0;
+  let sum = 0;
+  let minLen = Infinity;
+
+  for (let right = 0; right < nums.length; right++) {
+    sum += nums[right];
+
+    while (sum >= k) {
+      minLen = Math.min(minLen, right - left + 1);
+      sum -= nums[left];
+      left++;
+    }
+  }
+
+  return minLen === Infinity ? 0 : minLen;
+}
+TEST CASES (VISIBLE, count=2):
+[
+  {
+    "input": "nums = [2,3,1,2,4,3], k = 7",
+    "output": "2",
+    "_id": "6a14699ceb3b6344a930f964"
+  },
+  {
+    "input": "nums = [1,4,4], k = 4",
+    "output": "1",
+    "_id": "6a14699ceb3b6344a930f965"
+  }
+]
+TEST CASES (HIDDEN, count=50):
+[
+  {
+    "input": "nums = [1], k = 1",
+    "output": "1",
+    "_id": "6a14699ceb3b6344a930f932"
+  },
+  {
+    "input": "nums = [1], k = 2",
+    "output": "0",
+    "_id": "6a14699ceb3b6344a930f933"
+  }
+]
+
+==================================================
+SLUG: maximum-chunks-to-make-sorted
+TITLE: Maximum Chunks to Make Sorted
+STARTER CODE JS: function solve(arr) {
+  // Write your code here
+  return 0;
+}
+OPTIMAL JS SOLUTION: function solve(arr) {
+  let maxSeen = 0;
+  let chunks = 0;
+
+  for (let i = 0; i < arr.length; i++) {
+    maxSeen = Math.max(maxSeen, arr[i]);
+
+    if (maxSeen === i) {
+      chunks++;
+    }
+  }
+
+  return chunks;
+}
+TEST CASES (VISIBLE, count=2):
+[
+  {
+    "input": "arr = [4,3,2,1,0]",
+    "output": "1",
+    "_id": "6a1469a3eb3b6344a930f99c"
+  },
+  {
+    "input": "arr = [1,0,2,3,4]",
+    "output": "4",
+    "_id": "6a1469a3eb3b6344a930f99d"
+  }
+]
+TEST CASES (HIDDEN, count=50):
+[
+  {
+    "input": "arr = [0]",
+    "output": "1",
+    "_id": "6a1469a3eb3b6344a930f96a"
+  },
+  {
+    "input": "arr = [0,1,2,3,4]",
+    "output": "5",
+    "_id": "6a1469a3eb3b6344a930f96b"
+  }
+]
+
+==================================================
+SLUG: minimum-operations-to-make-array-continuous
+TITLE: Minimum Operations to Make Array Continuous
+STARTER CODE JS: function solve(nums) {
+  // Write your code here
+  return 0;
+}
+OPTIMAL JS SOLUTION: function solve(nums) {
+  let n = nums.length;
+
+  nums = [...new Set(nums)].sort((a, b) => a - b);
+
+  let maxWindow = 0;
+  let left = 0;
+
+  for (let right = 0; right < nums.length; right++) {
+    while (nums[right] - nums[left] >= n) {
+      left++;
+    }
+
+    maxWindow = Math.max(maxWindow, right - left + 1);
+  }
+
+  return n - maxWindow;
+}
+TEST CASES (VISIBLE, count=2):
+[
+  {
+    "input": "nums = [4,2,5,3]",
+    "output": "0",
+    "_id": "6a1469abeb3b6344a930f9d4"
+  },
+  {
+    "input": "nums = [1,2,3,5,6]",
+    "output": "1",
+    "_id": "6a1469abeb3b6344a930f9d5"
+  }
+]
+TEST CASES (HIDDEN, count=50):
+[
+  {
+    "input": "nums = [1]",
+    "output": "0",
+    "_id": "6a1469abeb3b6344a930f9a2"
+  },
+  {
+    "input": "nums = [1,2]",
+    "output": "0",
+    "_id": "6a1469abeb3b6344a930f9a3"
+  }
+]
+
+==================================================
+SLUG: find-all-duplicates-in-an-array
+TITLE: Find All Duplicates in an Array
+STARTER CODE JS: function solve(nums) {
+  // Write your code here
+  return [];
+}
+OPTIMAL JS SOLUTION: function solve(nums) {
+  let result = [];
+
+  for (let i = 0; i < nums.length; i++) {
+    let index = Math.abs(nums[i]) - 1;
+
+    if (nums[index] < 0) {
+      result.push(index + 1);
+    }
+    else {
+      nums[index] = -nums[index];
+    }
+  }
+
+  return result;
+}
+TEST CASES (VISIBLE, count=2):
+[
+  {
+    "input": "nums = [4,3,2,7,8,2,3,1]",
+    "output": "[2,3]",
+    "_id": "6a1469c9eb3b6344a930fa12"
+  },
+  {
+    "input": "nums = [1,1,2]",
+    "output": "[1]",
+    "_id": "6a1469c9eb3b6344a930fa13"
+  }
+]
+TEST CASES (HIDDEN, count=50):
+[
+  {
+    "input": "nums = [1,1]",
+    "output": "[1]",
+    "_id": "6a1469c9eb3b6344a930f9e0"
+  },
+  {
+    "input": "nums = [1,2,3,4]",
+    "output": "[]",
+    "_id": "6a1469c9eb3b6344a930f9e1"
+  }
+]
+
+==================================================
+SLUG: maximum-points-you-can-obtain-from-cards
+TITLE: Maximum Points You Can Obtain from Cards
+STARTER CODE JS: function solve(cardPoints, k) {
+  // Write your code here
+  return 0;
+}
+OPTIMAL JS SOLUTION: function solve(cardPoints, k) {
+  let n = cardPoints.length;
+
+  let totalSum = cardPoints.reduce((a, b) => a + b, 0);
+
+  if (k === n) {
+    return totalSum;
+  }
+
+  let windowSize = n - k;
+
+  let windowSum = 0;
+
+  for (let i = 0; i < windowSize; i++) {
+    windowSum += cardPoints[i];
+  }
+
+  let minWindow = windowSum;
+
+  for (let i = windowSize; i < n; i++) {
+    windowSum += cardPoints[i] - cardPoints[i - windowSize];
+    minWindow = Math.min(minWindow, windowSum);
+  }
+
+  return totalSum - minWindow;
+}
+TEST CASES (VISIBLE, count=2):
+[
+  {
+    "input": "cardPoints = [1,2,3,4,5,6,1], k = 3",
+    "output": "12",
+    "_id": "6a1469d0eb3b6344a930fa4a"
+  },
+  {
+    "input": "cardPoints = [2,2,2], k = 2",
+    "output": "4",
+    "_id": "6a1469d0eb3b6344a930fa4b"
+  }
+]
+TEST CASES (HIDDEN, count=50):
+[
+  {
+    "input": "cardPoints = [1], k = 1",
+    "output": "1",
+    "_id": "6a1469d0eb3b6344a930fa18"
+  },
+  {
+    "input": "cardPoints = [1,2,3,4,5], k = 5",
+    "output": "15",
+    "_id": "6a1469d0eb3b6344a930fa19"
+  }
+]
+
+==================================================
+SLUG: trapping-rain-water
+TITLE: Trapping Rain Water
+STARTER CODE JS: function solve(height) {
+  // Write your code here
+  return 0;
+}
+OPTIMAL JS SOLUTION: function solve(height) {
+  let left = 0;
+  let right = height.length - 1;
+
+  let leftMax = 0;
+  let rightMax = 0;
+
+  let water = 0;
+
+  while (left < right) {
+    if (height[left] < height[right]) {
+      if (height[left] >= leftMax) {
+        leftMax = height[left];
+      } else {
+        water += leftMax - height[left];
+      }
+
+      left++;
+    }
+    else {
+      if (height[right] >= rightMax) {
+        rightMax = height[right];
+      } else {
+        water += rightMax - height[right];
+      }
+
+      right--;
+    }
+  }
+
+  return water;
+}
+TEST CASES (VISIBLE, count=2):
+[
+  {
+    "input": "height = [0,1,0,2,1,0,1,3,2,1,2,1]",
+    "output": "6",
+    "_id": "6a1469d6eb3b6344a930fa83"
+  },
+  {
+    "input": "height = [4,2,0,3,2,5]",
+    "output": "9",
+    "_id": "6a1469d6eb3b6344a930fa84"
+  }
+]
+TEST CASES (HIDDEN, count=50):
+[
+  {
+    "input": "height = [1]",
+    "output": "0",
+    "_id": "6a1469d6eb3b6344a930fa51"
+  },
+  {
+    "input": "height = [1,2]",
+    "output": "0",
+    "_id": "6a1469d6eb3b6344a930fa52"
+  }
+]
+
+==================================================
+SLUG: reverse-pairs
+TITLE: Reverse Pairs
+STARTER CODE JS: function solve(nums) {
+  // Write your code here
+  return 0;
+}
+OPTIMAL JS SOLUTION: function mergeSort(nums, low, high) {
+  if (low >= high) return 0;
+
+  let mid = Math.floor((low + high) / 2);
+
+  let count = 0;
+
+  count += mergeSort(nums, low, mid);
+  count += mergeSort(nums, mid + 1, high);
+
+  let right = mid + 1;
+
+  for (let i = low; i <= mid; i++) {
+    while (right <= high && nums[i] > 2 * nums[right]) {
+      right++;
+    }
+
+    count += right - (mid + 1);
+  }
+
+  let temp = [];
+  let left = low;
+  right = mid + 1;
+
+  while (left <= mid && right <= high) {
+    if (nums[left] <= nums[right]) {
+      temp.push(nums[left++]);
+    } else {
+      temp.push(nums[right++]);
+    }
+  }
+
+  while (left <= mid) temp.push(nums[left++]);
+  while (right <= high) temp.push(nums[right++]);
+
+  for (let i = low; i <= high; i++) {
+    nums[i] = temp[i - low];
+  }
+
+  return count;
+}
+
+function solve(nums) {
+  return mergeSort(nums, 0, nums.length - 1);
+}
+TEST CASES (VISIBLE, count=2):
+[
+  {
+    "input": "nums = [1,3,2,3,1]",
+    "output": "2",
+    "_id": "6a1469dceb3b6344a930fabb"
+  },
+  {
+    "input": "nums = [2,4,3,5,1]",
+    "output": "3",
+    "_id": "6a1469dceb3b6344a930fabc"
+  }
+]
+TEST CASES (HIDDEN, count=50):
+[
+  {
+    "input": "nums = [1]",
+    "output": "0",
+    "_id": "6a1469dceb3b6344a930fa89"
+  },
+  {
+    "input": "nums = [1,2]",
+    "output": "0",
+    "_id": "6a1469dceb3b6344a930fa8a"
+  }
+]
+
+==================================================
+SLUG: largest-rectangle-in-histogram
+TITLE: Largest Rectangle in Histogram
+STARTER CODE JS: function solve(heights) {
+  // Write your code here
+  return 0;
+}
+OPTIMAL JS SOLUTION: function solve(heights) {
+  let stack = [];
+  let maxArea = 0;
+
+  heights.push(0);
+
+  for (let i = 0; i < heights.length; i++) {
+    while (stack.length && heights[stack[stack.length - 1]] > heights[i]) {
+      let height = heights[stack.pop()];
+
+      let width;
+
+      if (stack.length === 0) {
+        width = i;
+      } else {
+        width = i - stack[stack.length - 1] - 1;
+      }
+
+      maxArea = Math.max(maxArea, height * width);
+    }
+
+    stack.push(i);
+  }
+
+  return maxArea;
+}
+TEST CASES (VISIBLE, count=2):
+[
+  {
+    "input": "heights = [2,1,5,6,2,3]",
+    "output": "10",
+    "_id": "6a1469e1eb3b6344a930faf3"
+  },
+  {
+    "input": "heights = [2,4]",
+    "output": "4",
+    "_id": "6a1469e1eb3b6344a930faf4"
+  }
+]
+TEST CASES (HIDDEN, count=50):
+[
+  {
+    "input": "heights = [1]",
+    "output": "1",
+    "_id": "6a1469e1eb3b6344a930fac1"
+  },
+  {
+    "input": "heights = [0]",
+    "output": "0",
+    "_id": "6a1469e1eb3b6344a930fac2"
+  }
+]
+
+==================================================
+SLUG: maximum-sum-of-3-non-overlapping-subarrays
+TITLE: Maximum Sum of 3 Non-Overlapping Subarrays
+STARTER CODE JS: function solve(nums, k) {
+  // Write your code here
+  return [];
+}
+OPTIMAL JS SOLUTION: function solve(nums, k) {
+  const n = nums.length;
+
+  let windowSums = [];
+
+  let sum = 0;
+
+  for (let i = 0; i < n; i++) {
+    sum += nums[i];
+
+    if (i >= k) {
+      sum -= nums[i - k];
+    }
+
+    if (i >= k - 1) {
+      windowSums.push(sum);
+    }
+  }
+
+  let left = Array(windowSums.length).fill(0);
+  let best = 0;
+
+  for (let i = 0; i < windowSums.length; i++) {
+    if (windowSums[i] > windowSums[best]) {
+      best = i;
+    }
+
+    left[i] = best;
+  }
+
+  let right = Array(windowSums.length).fill(0);
+  best = windowSums.length - 1;
+
+  for (let i = windowSums.length - 1; i >= 0; i--) {
+    if (windowSums[i] >= windowSums[best]) {
+      best = i;
+    }
+
+    right[i] = best;
+  }
+
+  let answer = [];
+  let maxTotal = 0;
+
+  for (let middle = k; middle < windowSums.length - k; middle++) {
+    let leftIndex = left[middle - k];
+    let rightIndex = right[middle + k];
+
+    let total =
+      windowSums[leftIndex] +
+      windowSums[middle] +
+      windowSums[rightIndex];
+
+    if (total > maxTotal) {
+      maxTotal = total;
+      answer = [leftIndex, middle, rightIndex];
+    }
+  }
+
+  return answer;
+}
+TEST CASES (VISIBLE, count=2):
+[
+  {
+    "input": "nums = [1,2,1,2,6,7,5,1], k = 2",
+    "output": "[0,3,5]",
+    "_id": "6a1469eceb3b6344a930fb63"
+  },
+  {
+    "input": "nums = [1,2,1,2,1,2,1,2,1], k = 2",
+    "output": "[0,2,4]",
+    "_id": "6a1469eceb3b6344a930fb64"
+  }
+]
+TEST CASES (HIDDEN, count=50):
+[
+  {
+    "input": "nums = [1,2,3,4,5,6], k = 1",
+    "output": "[3,4,5]",
+    "_id": "6a1469eceb3b6344a930fb31"
+  },
+  {
+    "input": "nums = [1,1,1,1,1,1], k = 1",
+    "output": "[0,1,2]",
+    "_id": "6a1469eceb3b6344a930fb32"
+  }
+]

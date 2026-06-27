@@ -39,7 +39,7 @@ const ProfileSidebar = ({
 }) => {
     return (
         <aside className={cn(
-            "relative w-full max-w-[320px] overflow-hidden rounded-3xl",
+            "relative w-full max-w-md lg:max-w-none mx-auto overflow-hidden rounded-3xl",
             "bg-white/[0.03] backdrop-blur-xl border border-white/[0.08]",
             "shadow-[0_8px_32px_0_rgba(0,0,0,0.36)]",
             className

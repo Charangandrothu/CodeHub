@@ -18,8 +18,7 @@ const FractionalPicker = ({ min = 30, max = 365, value, onChange, disabled, clas
     useEffect(() => {
         if (containerRef.current) {
             const index = (value - min) / step;
-            const centerOffset = containerRef.current.clientWidth / 2;
-            containerRef.current.scrollLeft = index * itemWidth - centerOffset + itemWidth / 2;
+            containerRef.current.scrollLeft = index * itemWidth + itemWidth / 2;
         }
     }, []);
 
@@ -27,10 +26,8 @@ const FractionalPicker = ({ min = 30, max = 365, value, onChange, disabled, clas
     useEffect(() => {
         if (!isDragging && containerRef.current) {
             const index = (value - min) / step;
-            const centerOffset = containerRef.current.clientWidth / 2;
-            // Check if significantly off to avoid jitter
-            const targetScroll = index * itemWidth - centerOffset + itemWidth / 2;
-            if (Math.abs(containerRef.current.scrollLeft - targetScroll) > itemWidth) {
+            const targetScroll = index * itemWidth + itemWidth / 2;
+            if (Math.abs(containerRef.current.scrollLeft - targetScroll) > itemWidth / 2) {
                 containerRef.current.scrollTo({ left: targetScroll, behavior: 'smooth' });
             }
         }
@@ -40,8 +37,7 @@ const FractionalPicker = ({ min = 30, max = 365, value, onChange, disabled, clas
     const handleScroll = () => {
         if (containerRef.current) {
             const scrollLeft = containerRef.current.scrollLeft;
-            const centerOffset = containerRef.current.clientWidth / 2;
-            const rawIndex = (scrollLeft + centerOffset) / itemWidth;
+            const rawIndex = (scrollLeft - itemWidth / 2) / itemWidth;
             const index = Math.max(0, Math.min(ticks.length - 1, Math.round(rawIndex)));
             const newValue = ticks[index];
 
@@ -68,11 +64,10 @@ const FractionalPicker = ({ min = 30, max = 365, value, onChange, disabled, clas
         // Snap to nearest tick on release
         if (containerRef.current) {
             const scrollLeft = containerRef.current.scrollLeft;
-            const centerOffset = containerRef.current.clientWidth / 2;
-            const rawIndex = (scrollLeft + centerOffset) / itemWidth;
+            const rawIndex = (scrollLeft - itemWidth / 2) / itemWidth;
             const index = Math.max(0, Math.min(ticks.length - 1, Math.round(rawIndex)));
 
-            const targetScroll = index * itemWidth - centerOffset + itemWidth / 2;
+            const targetScroll = index * itemWidth + itemWidth / 2;
             containerRef.current.scrollTo({ left: targetScroll, behavior: 'smooth' });
         }
     };

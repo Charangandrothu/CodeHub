@@ -1,0 +1,103 @@
+
+==================================================
+SLUG: minimum-swaps-to-group-all-1s-together
+TITLE: Minimum Swaps to Group All 1s Together
+DESCRIPTION:
+Given a binary array `nums`, return the minimum number of swaps required to group all `1s` together.
+
+A swap can occur between any two elements in the array.
+
+The goal is to place all `1s` in a contiguous subarray with minimum swaps.
+
+==================================================
+SLUG: degree-of-an-array
+TITLE: Degree of an Array
+DESCRIPTION:
+Given a non-empty array of non-negative integers `nums`, the degree of the array is defined as the maximum frequency of any one of its elements.
+
+Your task is to find the smallest possible length of a contiguous subarray of `nums` that has the same degree as `nums`.
+
+Return the length of the shortest subarray.
+
+==================================================
+SLUG: container-with-most-water
+TITLE: Container With Most Water
+DESCRIPTION:
+You are given an integer array `height` where each element represents the height of a vertical line drawn at that index.
+
+Find two lines that together with the x-axis form a container such that the container contains the maximum amount of water.
+
+Return the maximum water that can be stored.
+
+The amount of water stored between two lines is calculated as:
+
+Area = min(height[left], height[right]) * (right - left)
+
+==================================================
+SLUG: 3sum
+TITLE: 3Sum
+DESCRIPTION:
+Given an integer array `nums`, return all the unique triplets `[nums[i], nums[j], nums[k]]` such that:
+
+- `i != j`
+- `i != k`
+- `j != k`
+- `nums[i] + nums[j] + nums[k] == 0`
+
+The solution set must not contain duplicate triplets.
+
+You may return the answer in any order.
+
+==================================================
+SLUG: maximum-product-subarray
+TITLE: Maximum Product Subarray
+DESCRIPTION:
+Given an integer array `nums`, find the contiguous subarray within the array that has the largest product, and return the product.
+
+A subarray is a contiguous non-empty part of the array.
+
+==================================================
+SLUG: maximum-chunks-to-make-sorted
+TITLE: Maximum Chunks to Make Sorted
+DESCRIPTION:
+You are given an integer array `arr` consisting of a permutation of integers from `0` to `n - 1`.
+
+We split the array into some number of chunks and individually sort each chunk.
+
+After concatenating all sorted chunks, the result should equal the fully sorted array.
+
+Return the maximum number of chunks we can make.
+
+==================================================
+SLUG: minimum-operations-to-make-array-continuous
+TITLE: Minimum Operations to Make Array Continuous
+DESCRIPTION:
+You are given an integer array `nums`.
+
+In one operation, you can replace any element in the array with any integer.
+
+The array is considered continuous if:
+1. All elements are unique.
+2. The difference between maximum and minimum element equals `n - 1`, where `n` is the array size.
+
+Return the minimum number of operations required to make the array continuous.
+
+==================================================
+SLUG: find-all-duplicates-in-an-array
+TITLE: Find All Duplicates in an Array
+DESCRIPTION:
+Given an integer array `nums` of length `n` where all integers are in the range `[1, n]`, and each integer appears either once or twice, return an array of all the integers that appear twice.
+
+You must solve the problem without using extra space and in O(n) time complexity if possible.
+
+==================================================
+SLUG: trapping-rain-water
+TITLE: Trapping Rain Water
+DESCRIPTION:
+Given `n` non-negative integers representing an elevation map where the width of each bar is 1, compute how much water it can trap after raining.
+
+==================================================
+SLUG: largest-rectangle-in-histogram
+TITLE: Largest Rectangle in Histogram
+DESCRIPTION:
+Given an array of integers `heights` representing the histogram's bar height where the width of each bar is 1, return the area of the largest rectangle in the histogram.

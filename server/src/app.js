@@ -56,11 +56,20 @@ app.use('/api/company-questions', companyQuestionRoutes);
 const platformRoutes = require("./routes/platform");
 app.use('/api/platform', platformRoutes);
 
+const mockTestRoutes = require("./routes/mockTestRoutes");
+app.use('/api/mock-tests', mockTestRoutes);
+
+const referralRoutes = require("./routes/referralRoutes");
+app.use('/api/referrals', referralRoutes);
+
 const announcementRoutes = require("./routes/announcementRoutes");
 app.use('/api/announcements', announcementRoutes);
 
 const webhookRoutes = require("./routes/webhookRoutes");
 app.use('/api/webhooks', webhookRoutes);
+
+const sarvamRoutes = require("./routes/sarvamRoutes");
+app.use('/api/sarvam', sarvamRoutes);
 
 // Certificate routes (PDFs are generated in-memory, no static file serving needed)
 const path = require("path");
