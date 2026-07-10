@@ -49,6 +49,7 @@ const MockTestWindow = () => {
 
     // References
     const timerRef = useRef(null);
+    const answersRef = useRef(answers); // Always holds latest answers for timer auto-submit
 
     // 1. Initial Load: Resume or Start test via Node API
     useEffect(() => {
@@ -70,6 +71,11 @@ const MockTestWindow = () => {
         window.addEventListener('beforeunload', handleBeforeUnload);
         return () => window.removeEventListener('beforeunload', handleBeforeUnload);
     }, []);
+
+    // Sync answersRef whenever answers state changes
+    useEffect(() => {
+        answersRef.current = answers;
+    }, [answers]);
 
     // 3. Auto-save answers dynamically
     useEffect(() => {
@@ -146,7 +152,8 @@ const MockTestWindow = () => {
 
             if (time <= 0) {
                 clearInterval(timerRef.current);
-                submitTest(attId, answers);
+                // Use answersRef.current to avoid stale closure capturing empty initial answers
+                submitTest(attId, answersRef.current);
             }
         }, 1000);
     };

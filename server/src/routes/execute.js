@@ -429,6 +429,102 @@ router.post("/submit", async (req, res) => {
     }
 });
 
+// MOCK TEST RUN Route - POST /api/execute
+// Used by MockTestWindow to run DSA code against visible test cases
+router.post("/", async (req, res) => {
+    const { code, language, problemSlug } = req.body;
+
+    if (!code || !language || !problemSlug) {
+        return res.status(400).json({ error: "Missing required fields: code, language, problemSlug" });
+    }
+
+    try {
+        // Fetch the problem by slug to get visible test cases
+        const problem = await Problem.findOne({ slug: problemSlug });
+        if (!problem) {
+            return res.status(404).json({ error: "Problem not found" });
+        }
+
+        const visibleCases = problem.testCases?.visible || [];
+        if (visibleCases.length === 0) {
+            return res.json({ results: [], message: "No visible test cases defined for this problem." });
+        }
+
+        const cpuTimeLimit = timeLimits[language] || 2;
+        const results = [];
+
+        // Try batch execution first
+        const batchDriver = buildBatchDriver(code, language);
+        if (batchDriver) {
+            const batchCpuLimit = Math.min(cpuTimeLimit * visibleCases.length, 10);
+            const combinedStdin = buildBatchCombinedStdin(visibleCases);
+
+            const result = await executeWithPolling(batchDriver, languageIds[language], combinedStdin, batchCpuLimit);
+
+            const statusId = result.status?.id;
+            if (statusId === 6 || result.compile_output) {
+                return res.json({ compileError: result.compile_output || result.stderr || "Compilation Error" });
+            }
+            if (result.stderr && (statusId >= 7 && statusId <= 12)) {
+                return res.json({ runtimeError: result.stderr || result.status?.description });
+            }
+
+            const rawOutputs = (result.stdout || "").split(/\n?~---~\n?/);
+            for (let i = 0; i < visibleCases.length; i++) {
+                const expected = normalizeOutput(visibleCases[i].output);
+                const actual = normalizeOutput(rawOutputs[i] || "");
+                results.push({
+                    passed: actual === expected,
+                    input: visibleCases[i].input,
+                    expected: visibleCases[i].output,
+                    actual: (rawOutputs[i] || "").trim(),
+                    stdout: (rawOutputs[i] || "").trim()
+                });
+            }
+        } else {
+            // Parallel fallback for C++ / unrecognized signatures
+            const settled = await Promise.allSettled(
+                visibleCases.map(tc => {
+                    const src = generateLocalDriverCode(code, language, tc.input);
+                    const useStdin = (src === code);
+                    return executeWithPolling(src, languageIds[language], useStdin ? tc.input : "", cpuTimeLimit);
+                })
+            );
+
+            for (let i = 0; i < visibleCases.length; i++) {
+                const s = settled[i];
+                const tc = visibleCases[i];
+                if (s.status === "rejected") {
+                    results.push({ passed: false, input: tc.input, expected: tc.output, actual: "Runtime Error", stdout: "" });
+                    continue;
+                }
+                const result = s.value;
+                const statusId = result.status?.id;
+                if (statusId === 6 || result.compile_output) {
+                    return res.json({ compileError: result.compile_output || result.stderr });
+                }
+                if (result.stderr || (statusId >= 7 && statusId <= 12)) {
+                    return res.json({ runtimeError: result.stderr || result.status?.description });
+                }
+                const expected = normalizeOutput(tc.output);
+                const actual = normalizeOutput(result.stdout || "");
+                results.push({
+                    passed: actual === expected,
+                    input: tc.input,
+                    expected: tc.output,
+                    actual: (result.stdout || "").trim(),
+                    stdout: (result.stdout || "").trim()
+                });
+            }
+        }
+
+        return res.json({ results });
+    } catch (error) {
+        console.error("Mock test execute error:", error);
+        res.status(500).json({ error: "Execution failed", details: error.message });
+    }
+});
+
 // GET Submission Route (Unique per user/problem)
 router.get("/submission/:problemId", async (req, res) => {
     const { problemId } = req.params;

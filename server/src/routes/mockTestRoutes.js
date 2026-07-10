@@ -208,8 +208,14 @@ router.put('/progress/:attemptId', verifyUser, async (req, res) => {
         const attempt = await MockTestAttempt.findById(req.params.attemptId);
         if (!attempt) return res.status(404).json({ error: 'Attempt not found' });
 
-        if (answers) attempt.answers = answers;
-        if (questionStatuses) attempt.questionStatuses = questionStatuses;
+        if (answers) {
+            attempt.answers = answers;
+            attempt.markModified('answers');
+        }
+        if (questionStatuses) {
+            attempt.questionStatuses = questionStatuses;
+            attempt.markModified('questionStatuses');
+        }
 
         await attempt.save();
         res.json({ message: 'Progress saved successfully' });
@@ -226,7 +232,10 @@ router.post('/submit/:attemptId', verifyUser, async (req, res) => {
         if (!attempt) return res.status(404).json({ error: 'Attempt not found' });
 
         // Update final answers mapping
-        if (answers) attempt.answers = answers;
+        if (answers) {
+            attempt.answers = answers;
+            attempt.markModified('answers');
+        }
         const finalAnswers = attempt.answers;
 
         const aptList = attempt.questionsList.aptitude || [];
