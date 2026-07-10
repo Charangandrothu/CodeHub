@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bot, X, Send, User, Sparkles, MinusCircle, Maximize2, Code2, ChevronDown } from 'lucide-react';
+import { Bot, X, Send, User, Sparkles, MinusCircle, Maximize2, Minimize2, Code2, ChevronDown } from 'lucide-react';
 import axios from 'axios';
 import ReactMarkdown from 'react-markdown';
 import logo_img from '../assets/logo_img.png';
@@ -65,7 +65,7 @@ export default function SarvamAIBot() {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 20, scale: 0.95 }}
                         transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                        className={`bg-[#111827]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col mb-4 origin-bottom-right ${isExpanded ? 'w-[calc(100vw-48px)] h-[calc(100vh-100px)] md:w-[600px] md:h-[800px]' : 'w-[calc(100vw-48px)] sm:w-[400px] h-[600px] max-h-[80vh]'}`}
+                        className={`bg-[#111827]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col mb-4 origin-bottom-right transition-all duration-300 ease-in-out ${isExpanded ? 'w-[calc(100vw-48px)] h-[calc(100vh-120px)] md:w-[700px] max-h-[800px]' : 'w-[calc(100vw-48px)] sm:w-[400px] h-[600px] max-h-[80vh]'}`}
                     >
                         {/* Header */}
                         <div className="flex items-center justify-between px-5 py-3 border-b border-white/5 bg-gradient-to-r from-indigo-500/5 to-transparent shrink-0">

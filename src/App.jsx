@@ -248,6 +248,7 @@ const ConditionalNavbar = () => {
 };
 
 import AnnouncementBar from './components/AnnouncementBar';
+import SarvamAIBot from './components/SarvamAIBot';
 
 function App() {
   const [reduceMotion, setReduceMotion] = useState(false);
@@ -272,9 +273,10 @@ function App() {
       <MotionConfig reducedMotion={reduceMotion ? 'always' : 'never'}>
         <div className="bg-[#0a0a0a] min-h-screen text-white relative">
           <ScrollToTop />
-          <ErrorBoundary>
+            <ErrorBoundary>
             <AnnouncementBar />
             <ConditionalNavbar />
+            <SarvamAIBot />
             <Suspense fallback={
               <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a]">
                 <div className="w-8 h-8 rounded-full border-2 border-emerald-500 border-t-transparent animate-spin"></div>
