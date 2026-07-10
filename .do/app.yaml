@@ -1,0 +1,87 @@
+name: codehubx-backend
+region: sgp
+services:
+  - name: api
+    source_dir: /server
+    github:
+      repo: Charangandrothu/CodeHub
+      branch: deployment/setup
+      deploy_on_push: true
+    dockerfile_path: server/Dockerfile
+    instance_count: 1
+    instance_size_slug: apps-s-1vcpu-0.5gb
+    http_port: 5000
+    health_check:
+      http_path: /api/health
+      initial_delay_seconds: 30
+      period_seconds: 30
+    envs:
+      - key: MONGO_URI
+        scope: RUN_TIME
+        type: SECRET
+      - key: PORT
+        value: "5000"
+        scope: RUN_TIME
+      - key: RAZORPAY_KEY_ID
+        scope: RUN_TIME
+        type: SECRET
+      - key: RAZORPAY_KEY_SECRET
+        scope: RUN_TIME
+        type: SECRET
+      - key: RAZORPAY_PLAN_ID
+        scope: RUN_TIME
+        type: SECRET
+      - key: NVIDIA_API_KEY
+        scope: RUN_TIME
+        type: SECRET
+      - key: GEMINI_API_KEY
+        scope: RUN_TIME
+        type: SECRET
+      - key: CLAUDE_API_KEY
+        scope: RUN_TIME
+        type: SECRET
+      - key: DEEPSEEK_API_KEY
+        scope: RUN_TIME
+        type: SECRET
+      - key: ADMIN_PROMOTE_CODE
+        scope: RUN_TIME
+        type: SECRET
+      - key: PRO_PROMOTE_CODE
+        scope: RUN_TIME
+        type: SECRET
+      - key: ADMIN_JWT_SECRET
+        scope: RUN_TIME
+        type: SECRET
+      - key: SARVAM_API_KEY
+        scope: RUN_TIME
+        type: SECRET
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+        scope: RUN_TIME
+      - key: SMTP_PORT
+        value: "587"
+        scope: RUN_TIME
+      - key: SMTP_SECURE
+        value: "false"
+        scope: RUN_TIME
+      - key: SMTP_USER
+        scope: RUN_TIME
+        type: SECRET
+      - key: SMTP_PASS
+        scope: RUN_TIME
+        type: SECRET
+      - key: SMTP_FROM
+        scope: RUN_TIME
+        type: SECRET
+      - key: INITIAL_ADMIN_EMAIL
+        scope: RUN_TIME
+        type: SECRET
+      - key: INITIAL_ADMIN_PASSWORD
+        scope: RUN_TIME
+        type: SECRET
+      - key: RAZORPAY_WEBHOOK_SECRET
+        scope: RUN_TIME
+        type: SECRET
+      - key: NODE_ENV
+        value: production
+        scope: RUN_TIME
