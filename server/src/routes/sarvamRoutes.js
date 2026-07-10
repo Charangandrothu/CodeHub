@@ -188,4 +188,55 @@ Respond ONLY with the question text. Do not include any intro, conversational fi
     }
 });
 
+// ─── POST /api/sarvam/chat ───
+// General chat endpoint for the global AI assistant
+router.post('/chat', async (req, res) => {
+    try {
+        const { message, history } = req.body;
+
+        if (!message) {
+            return res.status(400).json({ message: "Missing message for chat" });
+        }
+
+        if (!process.env.SARVAM_API_KEY) {
+            return res.status(500).json({ message: "Sarvam API Key is not configured on the server" });
+        }
+
+        const systemPrompt = `You are a premium, highly knowledgeable AI Assistant for CodeHub, a placement preparation and coding platform.
+Your role is to help users understand coding concepts, DSA problems, and general platform queries.
+Provide clear, concise, and accurate explanations. Use markdown for code blocks.
+Maintain a professional yet encouraging tone.`;
+
+        // Format messages for the OpenAI-compatible Sarvam API
+        const messages = [{ role: 'system', content: systemPrompt }];
+        
+        if (history && Array.isArray(history)) {
+            history.forEach(h => {
+                messages.push({
+                    role: h.role === 'user' ? 'user' : 'assistant',
+                    content: h.text
+                });
+            });
+        }
+        
+        messages.push({ role: 'user', content: message });
+
+        const response = await axios.post('https://api.sarvam.ai/v1/chat/completions', {
+            model: 'sarvam-105b',
+            messages: messages
+        }, {
+            headers: {
+                'api-subscription-key': process.env.SARVAM_API_KEY,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        res.json({ reply: response.data.choices[0].message.content });
+
+    } catch (err) {
+        console.error("[Sarvam Chat Error]:", err.response?.data || err.message);
+        res.status(500).json({ message: "Failed to process chat request" });
+    }
+});
+
 module.exports = router;
