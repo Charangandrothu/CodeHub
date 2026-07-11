@@ -809,8 +809,15 @@ const buildBatchDriver = (userCode, language) => {
  * Each test case's key=value lines become the stdin consumed by the batch driver.
  */
 const buildBatchCombinedStdin = (hiddenCases) => {
-    const blocks = hiddenCases.map(tc => tc.input.trim()).join('\n');
-    return `${hiddenCases.length} \n${blocks} \n`;
+    const blocks = hiddenCases.map(tc => {
+        // Normalize multi-arg inputs: "arr = [1,2,3], x = 5" → two lines
+        // Split on ", key = " pattern (comma before a word followed by =)
+        const normalized = tc.input
+            .trim()
+            .replace(/,\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*=/g, '\n$1 =');
+        return normalized;
+    }).join('\n');
+    return `${hiddenCases.length}\n${blocks}\n`;
 };
 
 module.exports = {
