@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { generateRoadmap } from '../utils/roadmapGenerator';
-import { ChevronDown, Check, ArrowRight, Play, RefreshCw, Layers, Zap, Trophy, Flame, Target, Calendar, Lock, Unlock, Clock, AlertTriangle, ArrowLeft, Code, Settings, Shield, LogOut, Crown, Sparkles, MinusCircle, PlusCircle, Puzzle, Rocket, Filter, Box, Hash, Search, Database, GitMerge, Share2, ArrowUpDown, Rows, Type, Link, Repeat, BarChart3, GitBranch, Brain, Menu, X } from 'lucide-react';
+import { ChevronDown, Check, ArrowRight, Play, RefreshCw, Layers, Zap, Trophy, Flame, Target, Calendar, Lock, Unlock, Clock, AlertTriangle, ArrowLeft, Code, Settings, Shield, LogOut, Crown, Sparkles, MinusCircle, PlusCircle, Puzzle, Rocket, Filter, Box, Hash, Search, Database, GitMerge, Share2, ArrowUpDown, Rows, Type, Link, Repeat, BarChart3, GitBranch, Brain, Menu, X, Binary } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getAuth, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
 import logo_img from '../assets/logo_img.png';
@@ -174,6 +174,7 @@ const TOPIC_COLORS = {
     'hashing': '#eab308',
     'binary-search': '#06b6d4',
     'linked-list': '#14b8a6',
+    'bit-manipulation': '#8b5cf6',
     'stack-queue': '#6366f1',
     'recursion-backtracking': '#ef4444',
     'greedy': '#f59e0b',
@@ -194,6 +195,7 @@ const TOPIC_ICONS = {
     'hashing': Hash,
     'binary-search': Search,
     'linked-list': Link,
+    'bit-manipulation': Binary,
     'stack-queue': Layers,
     'recursion-backtracking': Repeat,
     'greedy': Zap,

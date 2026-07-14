@@ -4,6 +4,7 @@ export const TOPICS = [
     { name: "Hashing", slug: "hashing", full: 25, inter: 18, quick: 8, expert: 27 },
     { name: "Binary Search", slug: "binary-search", full: 20, inter: 15, quick: 8, expert: 22 },
     { name: "Linked List", slug: "linked-list", full: 25, inter: 18, quick: 8, expert: 27 },
+    { name: "Bit Manipulation", slug: "bit-manipulation", full: 15, inter: 10, quick: 5, expert: 18 },
     { name: "Stack & Queue", slug: "stack-queue", full: 25, inter: 18, quick: 8, expert: 27 },
     { name: "Recursion & Backtracking", slug: "recursion", full: 30, inter: 22, quick: 10, expert: 32 },
     { name: "Greedy", slug: "greedy", full: 20, inter: 15, quick: 6, expert: 22 },
@@ -43,8 +44,9 @@ export const generateRoadmap = (daysSelected, dbProblems = []) => {
             case 'arrays': return /array/i;
             case 'strings': return /string/i;
             case 'hashing': return /hash/i;
-            case 'binary-search': return /binary\s*search/i;
-            case 'linked-list': return /linked\s*list/i;
+            case 'binary-search': return /binary[\s-]*search/i;
+            case 'linked-list': return /linked[\s-]*list/i;
+            case 'bit-manipulation': return /bit[\s-]*manipulation/i;
             case 'stack-queue': return /stack|queue/i;
             case 'recursion-backtracking':
             case 'recursion': return /recursion|backtracking/i;
@@ -52,7 +54,7 @@ export const generateRoadmap = (daysSelected, dbProblems = []) => {
             case 'heaps': return /heap|priority\s*queue/i;
             case 'trees': return /tree/i;
             case 'graphs': return /graph/i;
-            case 'dynamic-programming': return /dynamic\s*programming|dp/i;
+            case 'dynamic-programming': return /dynamic[\s-]*programming|dp/i;
             default: return new RegExp(id.replace('-', '.*'), 'i');
         }
     };

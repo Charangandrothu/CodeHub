@@ -747,7 +747,7 @@ router.get('/next-task/:uid', async (req, res) => {
 
         const TOPIC_ORDER = [
             'patterns', 'beginner', 'sorting', 'arrays', 'strings', 'hashing',
-            'binary-search', 'linked-list', 'stack-queue', 'recursion-backtracking',
+            'binary-search', 'linked-list', 'bit-manipulation', 'stack-queue', 'recursion-backtracking',
             'greedy', 'heaps', 'trees', 'graphs', 'dynamic-programming'
         ];
 
@@ -755,6 +755,7 @@ router.get('/next-task/:uid', async (req, res) => {
             'patterns': 'Patterns', 'beginner': 'Beginner', 'sorting': 'Sorting',
             'arrays': 'Arrays', 'strings': 'Strings', 'hashing': 'Hashing',
             'binary-search': 'Binary Search', 'linked-list': 'Linked List',
+            'bit-manipulation': 'Bit Manipulation',
             'stack-queue': 'Stack & Queue', 'recursion-backtracking': 'Recursion & Backtracking',
             'greedy': 'Greedy', 'heaps': 'Heaps', 'trees': 'Trees', 'graphs': 'Graphs',
             'dynamic-programming': 'Dynamic Programming'
@@ -768,15 +769,16 @@ router.get('/next-task/:uid', async (req, res) => {
                 case 'arrays': return /array/i;
                 case 'strings': return /string/i;
                 case 'hashing': return /hash/i;
-                case 'binary-search': return /binary\s*search/i;
-                case 'linked-list': return /linked\s*list/i;
+                case 'binary-search': return /binary[\s-]*search/i;
+                case 'linked-list': return /linked[\s-]*list/i;
+                case 'bit-manipulation': return /bit[\s-]*manipulation/i;
                 case 'stack-queue': return /stack|queue/i;
                 case 'recursion-backtracking': return /recursion|backtracking/i;
                 case 'greedy': return /greedy/i;
                 case 'heaps': return /heap|priority\s*queue/i;
                 case 'trees': return /tree/i;
                 case 'graphs': return /graph/i;
-                case 'dynamic-programming': return /dynamic\s*programming|dp/i;
+                case 'dynamic-programming': return /dynamic[\s-]*programming|dp/i;
                 default: return new RegExp(id.replace('-', '.*'), 'i');
             }
         };
@@ -855,7 +857,7 @@ router.get('/topic-progress/:uid', async (req, res) => {
 
         const SIDEBAR_TOPICS = [
             'patterns', 'beginner', 'sorting', 'arrays', 'strings', 'hashing',
-            'binary-search', 'linked-list', 'stack-queue', 'recursion-backtracking',
+            'binary-search', 'linked-list', 'bit-manipulation', 'stack-queue', 'recursion-backtracking',
             'greedy', 'heaps', 'trees', 'graphs', 'dynamic-programming'
         ];
 
@@ -872,15 +874,16 @@ router.get('/topic-progress/:uid', async (req, res) => {
                 case 'arrays': return /array/i;
                 case 'strings': return /string/i;
                 case 'hashing': return /hash/i;
-                case 'binary-search': return /binary\s*search/i;
-                case 'linked-list': return /linked\s*list/i;
+                case 'binary-search': return /binary[\s-]*search/i;
+                case 'linked-list': return /linked[\s-]*list/i;
+                case 'bit-manipulation': return /bit[\s-]*manipulation/i;
                 case 'stack-queue': return /stack|queue/i;
                 case 'recursion-backtracking': return /recursion|backtracking/i;
                 case 'greedy': return /greedy/i;
                 case 'heaps': return /heap|priority\s*queue/i;
                 case 'trees': return /tree/i;
                 case 'graphs': return /graph/i;
-                case 'dynamic-programming': return /dynamic\s*programming|dp/i;
+                case 'dynamic-programming': return /dynamic[\s-]*programming|dp/i;
                 default: return new RegExp(id.replace('-', '.*'), 'i');
             }
         };
