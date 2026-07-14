@@ -37,19 +37,25 @@ const AccuracyRing = ({ correct, total, size = 80 }) => {
     );
 };
 
-const QuestionNav = ({ questions, currentIndex, onSelect, results, selectedAnswers }) => (
+const QuestionNav = ({ questions, currentIndex, onSelect, results, selectedAnswers, visited = {} }) => (
     <div className="grid grid-cols-5 gap-2">
         {questions.map((q, i) => {
             const r = results[q._id];
             const isSelected = selectedAnswers[q._id] !== undefined;
+            const isVisited = visited[q._id] === true;
             const isCurrent = i === currentIndex;
             let pillStyle = 'bg-white/5 border-white/10 text-zinc-500 hover:bg-white/10'; // Not visited
 
             if (r) {
-                if (r.skipped) pillStyle = 'bg-red-500/15 border-red-500/30 text-red-500 hover:bg-red-500/20'; // Skipped
-                else pillStyle = 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20'; // Submitted
-            } else if (isSelected) {
-                pillStyle = 'bg-yellow-500/15 border-yellow-500/30 text-yellow-500 hover:bg-yellow-500/20'; // Attempted
+                if (r.skipped) {
+                    pillStyle = 'bg-red-500/15 border-red-500/30 text-red-500 hover:bg-red-500/20'; // Skipped
+                } else if (r.isCorrect) {
+                    pillStyle = 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20'; // Correct
+                } else {
+                    pillStyle = 'bg-red-500/15 border-red-500/30 text-red-400 hover:bg-red-500/20'; // Incorrect
+                }
+            } else if (isSelected || isVisited) {
+                pillStyle = 'bg-yellow-500/15 border-yellow-500/30 text-yellow-500 hover:bg-yellow-500/20'; // Attempted or Visited
             }
             if (isCurrent) pillStyle += ' ring-2 ring-blue-500/50 ring-offset-1 ring-offset-[#0A0A0A] scale-110 z-10';
 
@@ -86,6 +92,7 @@ const CompanyPractice = () => {
     const [results, setResults] = useState({});
     const [showExplanations, setShowExplanations] = useState({});
     const [reviewMode, setReviewMode] = useState(false);
+    const [visited, setVisited] = useState({});
 
     const isSessionCompleted = questions.length > 0 && Object.keys(results).length === questions.length;
 
@@ -95,10 +102,10 @@ const CompanyPractice = () => {
     useEffect(() => {
         if (questions.length > 0) {
             localStorage.setItem(STATE_KEY, JSON.stringify({
-                questions, currentIndex, selectedAnswers, results, sessionStats, stats, showExplanations, reviewMode
+                questions, currentIndex, selectedAnswers, results, sessionStats, stats, showExplanations, reviewMode, visited
             }));
         }
-    }, [questions, currentIndex, selectedAnswers, results, sessionStats, stats, showExplanations, reviewMode, STATE_KEY]);
+    }, [questions, currentIndex, selectedAnswers, results, sessionStats, stats, showExplanations, reviewMode, visited, STATE_KEY]);
 
     const fetchQuestions = useCallback(async (force = false) => {
         if (!currentUser) return;
@@ -121,6 +128,7 @@ const CompanyPractice = () => {
                         setStats(parsed.stats || { totalQuestions: 0, totalAnswered: 0, totalRemaining: 0, progressPercent: 0 });
                         setShowExplanations(parsed.showExplanations || {});
                         setReviewMode(parsed.reviewMode || false);
+                        setVisited(parsed.visited || {});
                         setLoading(false);
                         return;
                     }
@@ -149,6 +157,7 @@ const CompanyPractice = () => {
             setCurrentIndex(0);
             setSelectedAnswers({});
             setResults({});
+            setVisited({});
             setShowExplanations({});
             setReviewMode(false);
             setDirection(1);
@@ -162,20 +171,7 @@ const CompanyPractice = () => {
 
     useEffect(() => { fetchQuestions(); }, [fetchQuestions]);
 
-    // Keyboard nav
-    useEffect(() => {
-        const handler = (e) => {
-            if (e.key === 'ArrowRight' && currentIndex < questions.length - 1) {
-                setDirection(1);
-                setCurrentIndex(i => i + 1);
-            } else if (e.key === 'ArrowLeft' && currentIndex > 0) {
-                setDirection(-1);
-                setCurrentIndex(i => i - 1);
-            }
-        };
-        window.addEventListener('keydown', handler);
-        return () => window.removeEventListener('keydown', handler);
-    }, [currentIndex, questions.length]);
+
 
     const topicDisplay = topic.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
     const sectionDisplay = section.charAt(0).toUpperCase() + section.slice(1);
@@ -296,6 +292,7 @@ const CompanyPractice = () => {
             if (!res.ok) throw new Error('Failed to reset progress');
             // Reset local states and re-fetch
             setSessionStats({ correct: 0, wrong: 0, skipped: 0 });
+            setVisited({});
             localStorage.removeItem(STATE_KEY);
             await fetchQuestions(true);
         } catch (err) {
@@ -304,6 +301,60 @@ const CompanyPractice = () => {
             setSubmitting(false);
         }
     };
+
+    // Keyboard navigation & shortcuts
+    useEffect(() => {
+        const handler = (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+            const key = e.key.toUpperCase();
+
+            // 1. Navigation: ArrowRight / ArrowLeft
+            if (e.key === 'ArrowRight' && currentIndex < questions.length - 1) {
+                setDirection(1);
+                setCurrentIndex(i => i + 1);
+            } else if (e.key === 'ArrowLeft' && currentIndex > 0) {
+                setDirection(-1);
+                setCurrentIndex(i => i - 1);
+            }
+
+            // 2. Option Selection: A, B, C, D or 1, 2, 3, 4
+            if (!currentResult && currentQ?.options) {
+                const foundOpt = currentQ.options.find(o => o.key.toUpperCase() === key);
+                if (foundOpt) {
+                    setSelectedAnswers(prev => ({ ...prev, [currentQ._id]: foundOpt.key }));
+                } else if (['1', '2', '3', '4'].includes(e.key)) {
+                    const idx = parseInt(e.key) - 1;
+                    if (currentQ.options[idx]) {
+                        setSelectedAnswers(prev => ({ ...prev, [currentQ._id]: currentQ.options[idx].key }));
+                    }
+                }
+            }
+
+            // 3. Submission / Next: Enter key
+            if (e.key === 'Enter') {
+                if (currentSelected && !currentResult && !submitting) {
+                    e.preventDefault();
+                    handleSubmit();
+                } else if (currentResult && !submitting) {
+                    e.preventDefault();
+                    goNext();
+                }
+            }
+        };
+        window.addEventListener('keydown', handler);
+        return () => window.removeEventListener('keydown', handler);
+    }, [currentIndex, questions.length, currentQ, currentResult, currentSelected, submitting, handleSubmit, goNext]);
+
+    // Track visited questions
+    useEffect(() => {
+        if (currentQ?._id) {
+            setVisited(prev => {
+                if (prev[currentQ._id]) return prev;
+                return { ...prev, [currentQ._id]: true };
+            });
+        }
+    }, [currentQ?._id]);
 
     /* ─── Loading / Error / Empty states ──────────── */
     if (loading && questions.length === 0) {
@@ -346,8 +397,8 @@ const CompanyPractice = () => {
                             <p className="text-zinc-400 text-sm">We are still adding questions for <span className="text-white font-semibold">{topicDisplay}</span>. Check back later!</p>
                         </div>
                         <div className="flex justify-center mt-6">
-                            <button onClick={() => navigate(`/companies/${company}`)} className="inline-flex justify-center items-center gap-2 px-6 py-3 bg-white/10 border border-white/15 rounded-2xl text-white text-sm font-semibold hover:bg-white/15 transition-all">
-                                <ArrowLeft size={14} /> Back to {company.toUpperCase()}
+                            <button onClick={() => navigate(company === 'all' ? '/aptitude' : `/companies/${company}`)} className="inline-flex justify-center items-center gap-2 px-6 py-3 bg-white/10 border border-white/15 rounded-2xl text-white text-sm font-semibold hover:bg-white/15 transition-all">
+                                <ArrowLeft size={14} /> Back to {company === 'all' ? 'Aptitude' : company.toUpperCase()}
                             </button>
                         </div>
                     </motion.div>
@@ -387,10 +438,10 @@ const CompanyPractice = () => {
                             {submitting ? <Loader2 size={16} className="animate-spin" /> : <RotateCcw size={16} />} Reset Topic Progress
                         </button>
                         <button
-                            onClick={() => navigate(`/companies/${company}/${section}`)}
+                            onClick={() => navigate(company === 'all' ? '/aptitude' : `/companies/${company}/${section}`)}
                             className="inline-flex justify-center items-center gap-2 px-6 py-3 bg-white/10 border border-white/15 rounded-2xl text-white text-sm font-semibold hover:bg-white/15 transition-all"
                         >
-                            <ArrowLeft size={14} /> Back to {company.toUpperCase()}
+                            <ArrowLeft size={14} /> Back to {company === 'all' ? 'Aptitude' : company.toUpperCase()}
                         </button>
                     </div>
                 </motion.div>
@@ -421,21 +472,25 @@ const CompanyPractice = () => {
                 {/* ── Breadcrumb Header ──────────────────────── */}
                 <div className="flex items-center justify-between mb-6">
                     <button
-                        onClick={() => navigate(`/companies/${company}/${section}`)}
+                        onClick={() => navigate(company === 'all' ? '/aptitude' : `/companies/${company}/${section}`)}
                         className="flex items-center gap-2 text-zinc-400 hover:text-white transition-all group bg-white/5 px-4 py-2 rounded-full border border-white/10 hover:border-white/20 text-sm font-medium"
                     >
                         <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" />
                         Back
                     </button>
                     <div className="hidden sm:flex items-center gap-1.5 text-xs text-zinc-500 font-medium">
-                        <span className="text-zinc-400 hover:text-white cursor-pointer transition-colors" onClick={() => navigate(`/companies/${company}`)}>{company.toUpperCase()}</span>
+                        <span className="text-zinc-400 hover:text-white cursor-pointer transition-colors" onClick={() => navigate(company === 'all' ? '/aptitude' : `/companies/${company}`)}>
+                            {company === 'all' ? 'General Practice' : company.toUpperCase()}
+                        </span>
                         <ChevronRight size={12} />
                         <span className="text-zinc-400">{sectionDisplay}</span>
                         <ChevronRight size={12} />
                         <span className="text-white font-semibold">{topicDisplay}</span>
                     </div>
                     <div className="sm:hidden text-right">
-                        <p className="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold">{company.toUpperCase()} · {sectionDisplay}</p>
+                        <p className="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold">
+                            {company === 'all' ? 'General Practice' : company.toUpperCase()} · {sectionDisplay}
+                        </p>
                         <p className="text-white font-bold text-sm">{topicDisplay}</p>
                     </div>
                 </div>
@@ -565,7 +620,7 @@ const CompanyPractice = () => {
                                     animate="center"
                                     exit="exit"
                                     transition={{ duration: 0.25, ease: 'easeInOut' }}
-                                    className="rounded-2xl border border-white/[0.07] bg-[#0A0A0A]/80 overflow-hidden shadow-2xl"
+                                    className="relative rounded-2xl border border-white/[0.07] bg-[#0A0A0A]/80 shadow-2xl"
                                 >
                                     {/* Question text */}
                                     <div className="p-4 sm:p-6 border-b border-white/[0.05]">
@@ -707,8 +762,8 @@ const CompanyPractice = () => {
                                         )}
                                     </AnimatePresence>
 
-                                    {/* Action buttons */}
-                                    <div className="p-6 sm:p-8 border-t border-white/[0.05] flex items-center gap-3">
+                                    {/* Action buttons (sticky glassmorphism bar) */}
+                                    <div className="sticky bottom-0 left-0 right-0 p-4 sm:p-6 border-t border-white/[0.08] bg-[#0A0A0A]/90 backdrop-blur-md flex items-center gap-3 z-20 rounded-b-2xl">
                                         {!currentResult ? (
                                             <>
                                                 <button
@@ -755,7 +810,9 @@ const CompanyPractice = () => {
                                 </div>
                                 <div>
                                     <h3 className="text-white font-bold text-sm">{topicDisplay}</h3>
-                                    <p className="text-[11px] text-zinc-500">{company.toUpperCase()} · {sectionDisplay}</p>
+                                    <p className="text-[11px] text-zinc-500">
+                                        {company === 'all' ? 'General Practice' : company.toUpperCase()} · {sectionDisplay}
+                                    </p>
                                 </div>
                             </div>
                             <div className="grid grid-cols-2 gap-2">
@@ -820,6 +877,7 @@ const CompanyPractice = () => {
                                 onSelect={(i) => { setDirection(i > currentIndex ? 1 : -1); setCurrentIndex(i); }}
                                 results={results}
                                 selectedAnswers={selectedAnswers}
+                                visited={visited}
                             />
                         </div>
 

@@ -17,12 +17,15 @@ const QuestionPage = lazy(() => import('./pages/QuestionPage'))
 const RoadmapPage = lazy(() => import('./pages/RoadmapPage'))
 const Pricing = lazy(() => import('./pages/Pricing'))
 const MockTests = lazy(() => import('./pages/MockTests'))
+const MockTestWindow = lazy(() => import('./pages/MockTestWindow'))
+const MockTestResult = lazy(() => import('./pages/MockTestResult'))
 const Aptitude = lazy(() => import('./pages/Aptitude'))
 const Companies = lazy(() => import('./pages/Companies'))
 const CompanyDetail = lazy(() => import('./pages/CompanyDetail'))
 const CompanyPractice = lazy(() => import('./pages/CompanyPractice'))
 const Profile = lazy(() => import('./pages/Profile'))
 const Settings = lazy(() => import('./pages/Settings'))
+const Referrals = lazy(() => import('./pages/Referrals'))
 
 const Unauthorized = lazy(() => import('./pages/Unauthorized'))
 const NotFound = lazy(() => import('./pages/NotFound'))
@@ -34,6 +37,9 @@ const Contact = lazy(() => import('./pages/Contact'))
 const Articles = lazy(() => import('./pages/Articles'))
 const ArticleView = lazy(() => import('./pages/ArticleView'))
 const Maintenance = lazy(() => import('./pages/Maintenance'))
+const InterviewDashboard = lazy(() => import('./pages/InterviewDashboard'))
+const InterviewLive = lazy(() => import('./pages/InterviewLive'))
+const InterviewReport = lazy(() => import('./pages/InterviewReport'))
 
 // Admin Imports
 import AdminLayout from './layouts/AdminLayout'
@@ -45,6 +51,8 @@ const CompanyQuestions = lazy(() => import('./pages/admin/CompanyQuestions'))
 const Categories = lazy(() => import('./pages/admin/Categories'))
 const AdminSettings = lazy(() => import('./pages/admin/Settings'))
 const Announcements = lazy(() => import('./pages/admin/Announcements'))
+const MockTestsManagement = lazy(() => import('./pages/admin/MockTestsManagement'))
+const ReferralsManagement = lazy(() => import('./pages/admin/ReferralsManagement'))
 
 const SecureAdminLogin = lazy(() => import('./pages/admin/SecureAdminLogin'))
 const SecureAdminPricing = lazy(() => import('./pages/admin/SecureAdminPricing'))
@@ -56,6 +64,15 @@ import ProtectedRoute from './components/routes/ProtectedRoute';
 function AppRoutes() {
   const { userData, platformSettings } = useAuth();
   const location = useLocation();
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const refCode = params.get('ref');
+    if (refCode) {
+      localStorage.setItem('referredBy', refCode);
+      console.log('Saved referral code to localStorage:', refCode);
+    }
+  }, [location]);
 
   if (platformSettings?.maintenanceMode) {
     const isAdmin = userData?.role === 'admin';
@@ -125,6 +142,16 @@ function AppRoutes() {
           <MockTests />
         </ProtectedRoute>
       } />
+      <Route path="/mock-tests/test/:testId" element={
+        <ProtectedRoute>
+          <MockTestWindow />
+        </ProtectedRoute>
+      } />
+      <Route path="/mock-tests/result/:attemptId" element={
+        <ProtectedRoute>
+          <MockTestResult />
+        </ProtectedRoute>
+      } />
       <Route path="/aptitude" element={
         <ProtectedRoute>
           <Aptitude />
@@ -133,6 +160,11 @@ function AppRoutes() {
       <Route path="/companies" element={
         <ProtectedRoute>
           <Companies />
+        </ProtectedRoute>
+      } />
+      <Route path="/referrals" element={
+        <ProtectedRoute>
+          <Referrals />
         </ProtectedRoute>
       } />
       <Route path="/companies/:slug" element={
@@ -160,6 +192,21 @@ function AppRoutes() {
           <Profile />
         </ProtectedRoute>
       } />
+      <Route path="/interview" element={
+        <ProtectedRoute>
+          <InterviewDashboard />
+        </ProtectedRoute>
+      } />
+      <Route path="/interview/live" element={
+        <ProtectedRoute>
+          <InterviewLive />
+        </ProtectedRoute>
+      } />
+      <Route path="/interview/report/:id" element={
+        <ProtectedRoute>
+          <InterviewReport />
+        </ProtectedRoute>
+      } />
 
       {/* Admin Routes */}
       <Route path="/unauthorized" element={<Unauthorized />} />
@@ -174,9 +221,9 @@ function AppRoutes() {
         <Route path="categories" element={<Categories />} />
         <Route path="announcements" element={<Announcements />} />
         <Route path="settings" element={<AdminSettings />} />
+        <Route path="mock-tests" element={<MockTestsManagement />} />
+        <Route path="referrals" element={<ReferralsManagement />} />
       </Route>
-
-      {/* 404 Not Found */}
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
@@ -186,18 +233,22 @@ const ConditionalNavbar = () => {
   const location = useLocation();
   const isDSAPage = location.pathname.startsWith('/dsa');
   const isAdminPage = location.pathname.startsWith('/admin');
-  const isRoadmapDSAPage = location.pathname.startsWith('/roadmap/dsa');
+  const isRoadmapSubPage = location.pathname.startsWith('/roadmap/dsa') || location.pathname.startsWith('/roadmap/aptitude');
   const isLoginPage = location.pathname === '/login';
   const isCompanyPracticePage = location.pathname.includes('/practice/');
+  const isAptitudePage = location.pathname.startsWith('/aptitude');
+  const isMockTestWindow = location.pathname.startsWith('/mock-tests/test/');
+  const isInterviewPage = location.pathname.startsWith('/interview');
 
   return (
     <AnimatePresence>
-      {!isDSAPage && !isAdminPage && !isRoadmapDSAPage && !isLoginPage && !isCompanyPracticePage && <Navbar key="navbar" />}
+      {!isDSAPage && !isAdminPage && !isRoadmapSubPage && !isLoginPage && !isCompanyPracticePage && !isAptitudePage && !isMockTestWindow && !isInterviewPage && <Navbar key="navbar" />}
     </AnimatePresence>
   );
 };
 
 import AnnouncementBar from './components/AnnouncementBar';
+import SarvamAIBot from './components/SarvamAIBot';
 
 function App() {
   const [reduceMotion, setReduceMotion] = useState(false);
@@ -222,9 +273,10 @@ function App() {
       <MotionConfig reducedMotion={reduceMotion ? 'always' : 'never'}>
         <div className="bg-[#0a0a0a] min-h-screen text-white relative">
           <ScrollToTop />
-          <ErrorBoundary>
+            <ErrorBoundary>
             <AnnouncementBar />
             <ConditionalNavbar />
+            <SarvamAIBot />
             <Suspense fallback={
               <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a]">
                 <div className="w-8 h-8 rounded-full border-2 border-emerald-500 border-t-transparent animate-spin"></div>

@@ -11,7 +11,9 @@ import {
     LogOut,
     ArrowLeft,
     Megaphone,
-    Building2
+    Building2,
+    ClipboardList,
+    Gift
 } from 'lucide-react';
 import LoadingScreen from '../components/LoadingScreen';
 
@@ -73,8 +75,10 @@ const AdminLayout = () => {
                         <SidebarItem to="/admin/payments" icon={CreditCard} label="Payments" />
                         <SidebarItem to="/admin/problems" icon={FileText} label="Problems" />
                         <SidebarItem to="/admin/company-questions" icon={Building2} label="Company Prep" />
+                        <SidebarItem to="/admin/mock-tests" icon={ClipboardList} label="Mock Tests" />
                         <SidebarItem to="/admin/categories" icon={Layers} label="Categories" />
                         <SidebarItem to="/admin/announcements" icon={Megaphone} label="Announcements" />
+                        <SidebarItem to="/admin/referrals" icon={Gift} label="Referrals" />
                         <SidebarItem to="/admin/settings" icon={Settings} label="Settings" />
                     </nav>
                 </div>

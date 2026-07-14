@@ -2,15 +2,58 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
+    // Helper function to check if user is admin
+    function isAdmin() {
+      return request.auth != null && (
+        request.auth.token.email == 'admin@codehub.com' ||
+        request.auth.token.email == 'charangandrothu7@gmail.com' ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
+      );
+    }
+
     // Users collection rules
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
     
-    // Allow listing all users for username check.
-    // Note: This is separate from /{userId} rule.
+    // Allow listing all users for username check
     match /users {
       allow list: if request.auth != null;
+    }
+
+    // Mock Tests rules
+    match /mock_tests/{testId} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+    }
+
+    // DSA Questions rules
+    match /dsa_questions/{questionId} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+    }
+
+    // Aptitude Questions rules
+    match /aptitude_questions/{questionId} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+    }
+
+    // Mock Test Attempts rules
+    match /mock_test_attempts/{attemptId} {
+      allow read, write: if request.auth != null && (
+        resource == null || 
+        resource.data.userId == request.auth.uid || 
+        request.resource.data.userId == request.auth.uid || 
+        isAdmin()
+      );
+    }
+
+    // Analytics rules
+    match /mock_test_analytics/{analyticId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null; // Allow writing score updates/analytics on completion
     }
 
     // Default deny

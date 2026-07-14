@@ -161,9 +161,9 @@ export default function ContentArea() {
                         <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center mb-4 rotate-3 transform transition-transform hover:rotate-6">
                             <FileCode2 className="text-slate-400" size={32} />
                         </div>
-                        <h3 className="text-xl font-medium text-white mb-2">No problems found</h3>
+                        <h3 className="text-xl font-medium text-white mb-2">Coming Soon!</h3>
                         <p className="text-slate-500 text-center max-w-md px-4">
-                            We couldn't find any problems at the moment. Check back later or add some via the backend API.
+                            We are curating a premium selection of DSA challenges for this topic. Stay tuned!
                         </p>
                     </div>
                 ) : (
@@ -178,7 +178,7 @@ export default function ContentArea() {
                                 <div className="flex-1 min-w-0 mb-4 sm:mb-0">
                                     <div className="flex items-center gap-3 mb-2">
                                         <h3 className="text-lg font-semibold text-slate-200 group-hover:text-white truncate transition-colors">
-                                            {problem.title}
+                                            {index + 1}. {problem.title}
                                         </h3>
                                         <span className={`px-2.5 py-0.5 rounded-full text-[10px] uppercase font-bold tracking-wider border ${getDifficultyColor(problem.difficulty)}`}>
                                             {problem.difficulty}

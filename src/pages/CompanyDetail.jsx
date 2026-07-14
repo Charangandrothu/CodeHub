@@ -9,9 +9,10 @@ import {
     Shuffle, Anchor, Binary, Compass, KeyRound, GitBranch, Lightbulb,
     CircleDot, PuzzleIcon, Database, AlarmClock, AlertTriangle,
     BookMarked, PenLine, SpellCheck, ListOrdered, MessageCircle, Link2,
-    Info, ShieldCheck, Repeat, Flame, Rocket, Sparkles
+    Info, ShieldCheck, Repeat, Flame, Rocket, Sparkles, Play, X
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { API_URL } from '../config';
 
 /* ─── Letter-mark logo ──────────────────────────── */
 const CompanyLogo = ({ abbr, gradient, size = 'md', image }) => {
@@ -46,7 +47,7 @@ const COMPANY_CONFIG = {
             { key: 'reasoning', label: 'Reasoning Ability', icon: Brain, color: 'purple', totalTopics: 10, totalQuestions: 150, description: 'Seating Arrangements, Syllogisms, Coding-Decoding, Blood Relations', isLive: true },
             { key: 'verbal', label: 'Verbal Ability', icon: MessageSquare, color: 'emerald', totalTopics: 8, totalQuestions: 150, description: 'Reading Comprehension, Error Identification, Sentence Completion', isLive: true },
             { key: 'coding', label: 'Coding Problems', icon: Code2, color: 'orange', totalTopics: 5, totalQuestions: 30, description: 'Arrays, Strings, Math, Recursion — 2 problems in 90 min', isLive: false },
-            { key: 'mocks', label: 'Mock Tests', icon: FileText, color: 'pink', totalTopics: 0, totalQuestions: 0, description: 'Full-length simulated TCS NQT tests with detailed analysis', isLive: false },
+            { key: 'mocks', label: 'Mock Tests', icon: FileText, color: 'pink', totalTopics: 0, totalQuestions: 0, description: 'Full-length simulated TCS NQT tests with detailed analysis', isLive: true },
             { key: 'experiences', label: 'Interview Experiences', icon: Users, color: 'yellow', totalTopics: 0, totalQuestions: 0, description: 'Real interview stories from students placed in TCS', isLive: false },
         ],
         sprintDays: 30,
@@ -73,7 +74,7 @@ const COMPANY_CONFIG = {
             { key: 'infosysVerbal', label: 'Verbal Ability', icon: MessageSquare, color: 'emerald', totalTopics: 6, totalQuestions: 100, description: 'Reading Comprehension, Sentence Correction, Para Jumbles', isLive: true },
             { key: 'pseudocode', label: 'Pseudo Code', icon: Code2, color: 'pink', totalTopics: 4, totalQuestions: 100, description: 'Trace & Output, Loop Tracing, Array Operations, String Manipulation', isLive: true },
             { key: 'coding', label: 'Coding Problems', icon: Code2, color: 'orange', totalTopics: 5, totalQuestions: 30, description: 'Arrays, Strings, Greedy, Recursion — 2 problems in 58 min', isLive: false },
-            { key: 'mocks', label: 'Mock Tests', icon: FileText, color: 'yellow', totalTopics: 0, totalQuestions: 0, description: 'Full-length simulated IRT tests with detailed analysis', isLive: false },
+            { key: 'mocks', label: 'Mock Tests', icon: FileText, color: 'yellow', totalTopics: 0, totalQuestions: 0, description: 'Full-length simulated IRT tests with detailed analysis', isLive: true },
             { key: 'experiences', label: 'Interview Experiences', icon: Users, color: 'blue', totalTopics: 0, totalQuestions: 0, description: 'Real interview stories from students placed in Infosys', isLive: false },
         ],
         sprintDays: 30,
@@ -341,7 +342,11 @@ const CompanyDetail = () => {
                     )}
                     {company.sections.map(section =>
                         activeTab === section.key && (
-                            <SectionTab key={section.key} section={section} colorMap={colorMap} company={company} />
+                            section.key === 'mocks' ? (
+                                <MockTestsTab key="mocks" section={section} colorMap={colorMap} company={company} />
+                            ) : (
+                                <SectionTab key={section.key} section={section} colorMap={colorMap} company={company} />
+                            )
                         )
                     )}
                 </AnimatePresence>
@@ -633,6 +638,302 @@ const priorityColors = {
     'High': 'text-orange-400 bg-orange-500/10 border-orange-500/20',
     'Medium': 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20',
     'Low': 'text-gray-400 bg-white/5 border-white/10',
+};
+
+const MockTestsTab = ({ section, colorMap, company }) => {
+    const navigate = useNavigate();
+    const { currentUser } = useAuth();
+    const colors = colorMap[section.color] || colorMap.blue;
+    const Icon = section.icon;
+
+    const [mockTests, setMockTests] = React.useState([]);
+    const [attempts, setAttempts] = React.useState([]);
+    const [loading, setLoading] = React.useState(true);
+
+    const [activeAttempt, setActiveAttempt] = React.useState(null);
+    const [pendingTestId, setPendingTestId] = React.useState(null);
+    const [showWarningModal, setShowWarningModal] = React.useState(false);
+
+    React.useEffect(() => {
+        if (currentUser) {
+            fetchData();
+        }
+    }, [currentUser]);
+
+    const fetchData = async () => {
+        setLoading(true);
+        try {
+            const headers = { 'x-user-uid': currentUser.uid };
+            // Fetch mock tests
+            const testsRes = await fetch(`${API_URL}/api/mock-tests`, { headers });
+            if (!testsRes.ok) throw new Error("Failed to fetch mock tests");
+            const testsList = await testsRes.json();
+            setMockTests(testsList.filter(t => t.isActive !== false));
+
+            // Fetch attempts
+            const attemptsRes = await fetch(`${API_URL}/api/mock-tests/attempts/user/${currentUser.uid}`, { headers });
+            if (!attemptsRes.ok) throw new Error("Failed to fetch user attempts");
+            const attemptsList = await attemptsRes.json();
+            setAttempts(attemptsList);
+
+            // Active incomplete attempt
+            const activeTest = attemptsList.find(a => a.isCompleted === false);
+            if (activeTest) {
+                setActiveAttempt(activeTest);
+            } else {
+                setActiveAttempt(null);
+            }
+        } catch (error) {
+            console.error("Error fetching mock tests for company:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleStartTest = (testId) => {
+        if (activeAttempt) {
+            setPendingTestId(testId);
+            setShowWarningModal(true);
+        } else {
+            navigate(`/mock-tests/test/${testId}`);
+        }
+    };
+
+    const handleConfirmStart = () => {
+        setShowWarningModal(false);
+        if (pendingTestId) {
+            navigate(`/mock-tests/test/${pendingTestId}`);
+        }
+    };
+
+    // Filter logic
+    const companyKey = company.name.toLowerCase();
+    const companyAbbr = company.abbr.toLowerCase();
+    const filteredMocks = mockTests.filter(test => {
+        const nameLower = test.name.toLowerCase();
+        const descLower = test.description.toLowerCase();
+        return nameLower.includes(companyKey) || 
+               nameLower.includes(companyAbbr) || 
+               descLower.includes(companyKey) || 
+               descLower.includes(companyAbbr) ||
+               (companyKey === 'tcs' && (nameLower.includes('nqt') || descLower.includes('nqt'))) ||
+               (companyKey === 'infosys' && (nameLower.includes('irt') || descLower.includes('irt')));
+    });
+
+    const getDifficultyColor = (diff) => {
+        switch(diff) {
+            case 'Easy': return 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20';
+            case 'Medium': return 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20';
+            case 'Hard': return 'text-red-400 bg-red-500/10 border-red-500/20';
+            default: return 'text-purple-400 bg-purple-500/10 border-purple-500/20';
+        }
+    };
+
+    const containerVariants = {
+        hidden: { opacity: 0 },
+        visible: { opacity: 1, transition: { staggerChildren: 0.05 } }
+    };
+
+    const cardVariants = {
+        hidden: { opacity: 0, y: 15 },
+        visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 260, damping: 25 } }
+    };
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="space-y-5"
+        >
+            {/* Section header */}
+            <div className={`relative overflow-hidden p-5 rounded-2xl border ${colors.border} bg-[#0A0A0A]/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg`}>
+                <div className={`absolute top-0 right-0 w-32 h-32 ${colors.bg} rounded-full blur-[60px] pointer-events-none`} />
+                <div className="relative z-10 flex items-center gap-4">
+                    <div className={`w-11 h-11 rounded-2xl ${colors.bg} border ${colors.border} ${colors.accent} flex items-center justify-center shrink-0`}>
+                        <Icon size={20} />
+                    </div>
+                    <div className="flex-1">
+                        <h3 className="text-white font-bold text-base">{section.label}</h3>
+                        <p className="text-xs text-zinc-500">{section.description}</p>
+                    </div>
+                </div>
+                <div className="relative z-10 flex items-center gap-2">
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold border ${colors.active}`}>
+                        {filteredMocks.length} Available
+                    </span>
+                </div>
+            </div>
+
+            {/* Active Test Warning Banner */}
+            {activeAttempt && (
+                <motion.div 
+                    initial={{ opacity: 0, scale: 0.98 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="p-5 rounded-2xl bg-gradient-to-r from-purple-900/20 via-blue-900/10 to-transparent border border-purple-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg shadow-purple-500/5 relative overflow-hidden"
+                >
+                    <div className="absolute top-0 right-0 w-64 h-64 rounded-full bg-purple-500/5 blur-[80px] pointer-events-none" />
+                    <div className="flex items-center gap-4 relative z-10">
+                        <div className="w-10 h-10 rounded-xl bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-purple-400 animate-pulse">
+                            <Zap size={20} />
+                        </div>
+                        <div>
+                            <h4 className="text-sm font-bold text-white">Active Test In Progress!</h4>
+                            <p className="text-zinc-400 text-[11px] mt-0.5">
+                                You have an active session for <span className="text-purple-300 font-semibold">{activeAttempt.testName}</span>. Your answers and remaining time are saved.
+                            </p>
+                        </div>
+                    </div>
+                    <button 
+                        onClick={() => navigate(`/mock-tests/test/${activeAttempt.testId}`)}
+                        className="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all shadow-md cursor-pointer relative z-10 shrink-0"
+                    >
+                        Resume Session <Play size={10} className="fill-white" />
+                    </button>
+                </motion.div>
+            )}
+
+            {/* Mock Tests Grid */}
+            {loading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {[...Array(3)].map((_, i) => (
+                        <div key={i} className="h-44 rounded-2xl border border-white/5 bg-white/[0.01] animate-pulse" />
+                    ))}
+                </div>
+            ) : (
+                <motion.div 
+                    variants={containerVariants}
+                    initial="hidden"
+                    animate="visible"
+                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+                >
+                    {filteredMocks.map(test => {
+                        const userAttempts = attempts.filter(a => a.testId === test._id && a.isCompleted);
+                        const hasCompleted = userAttempts.length > 0;
+                        const bestScoreOnTest = hasCompleted ? Math.max(...userAttempts.map(a => a.score)) : null;
+                        const isActiveTestThis = activeAttempt && activeAttempt.testId === test._id;
+
+                        return (
+                            <motion.div
+                                key={test._id}
+                                variants={cardVariants}
+                                whileHover={{ y: -4, borderColor: 'rgba(255, 255, 255, 0.15)' }}
+                                className="p-6 rounded-2xl border border-white/[0.06] bg-[#0A0A0A]/85 hover:bg-[#0c0c0c] transition-all duration-300 flex flex-col justify-between group shadow-lg"
+                            >
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <span className={`text-[9px] px-2.5 py-0.5 rounded-full border font-bold uppercase tracking-wider ${getDifficultyColor(test.difficulty)}`}>
+                                            {test.difficulty}
+                                        </span>
+                                        {hasCompleted && (
+                                            <span className="text-[10px] text-emerald-400 font-bold flex items-center gap-1">
+                                                <CheckCircle2 size={12} /> Best: {bestScoreOnTest}%
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <h3 className="text-base font-bold text-white tracking-tight group-hover:text-white transition-colors duration-300">
+                                            {test.name}
+                                        </h3>
+                                        <p className="text-zinc-500 text-[11px] mt-1.5 leading-relaxed line-clamp-2">
+                                            {test.description}
+                                        </p>
+                                    </div>
+
+                                    <div className="flex items-center gap-4 border-t border-white/[0.04] pt-4">
+                                        <div className="flex items-center gap-1.5 text-[10px] text-zinc-400 font-medium">
+                                            <Code2 size={13} className="text-purple-400" />
+                                            <span>{test.dsaCount} Coding Qs</span>
+                                        </div>
+                                        <div className="flex items-center gap-1.5 text-[10px] text-zinc-400 font-medium">
+                                            <Brain size={13} className="text-blue-400" />
+                                            <span>{test.aptitudeCount} Aptitude Qs</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="flex items-center gap-1.5 text-[10px] text-zinc-400 font-medium pt-1">
+                                        <Clock size={12} className="text-zinc-500" />
+                                        <span>Duration: {test.timeLimit} mins</span>
+                                    </div>
+                                </div>
+
+                                <button
+                                    onClick={() => handleStartTest(test._id)}
+                                    className={`w-full mt-6 py-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 shadow-md cursor-pointer transition-all ${
+                                        isActiveTestThis
+                                            ? 'bg-purple-500/10 border-purple-500/30 text-purple-300 hover:bg-purple-600 hover:text-white'
+                                            : 'bg-white/5 border-white/10 text-zinc-300 hover:bg-white hover:text-black'
+                                    }`}
+                                >
+                                    {isActiveTestThis ? (
+                                        <>Resume Session <Play size={10} className="fill-current" /></>
+                                    ) : (
+                                        <>Start Practice Test <ArrowRight size={11} className="group-hover:translate-x-0.5 transition-transform" /></>
+                                    )}
+                                </button>
+                            </motion.div>
+                        );
+                    })}
+
+                    {filteredMocks.length === 0 && (
+                        <div className="col-span-full py-16 text-center text-zinc-500 border border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center gap-4">
+                            <BookMarked size={36} className="text-zinc-600" />
+                            <div>
+                                <h4 className="text-sm font-bold text-zinc-400">No mock tests found</h4>
+                                <p className="text-xs text-zinc-600 mt-1">Try adjusting your filters or search keywords.</p>
+                            </div>
+                        </div>
+                    )}
+                </motion.div>
+            )}
+
+            {/* ACTIVE TEST WARNING MODAL */}
+            <AnimatePresence>
+                {showWarningModal && (
+                    <div className="fixed inset-0 flex items-center justify-center z-[150] p-4 bg-black/80 backdrop-blur-sm">
+                        <motion.div
+                            initial={{ scale: 0.95, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.95, opacity: 0 }}
+                            className="w-full max-w-md bg-[#0D0F12]/90 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl space-y-6"
+                        >
+                            <div className="flex items-center justify-between pb-2 border-b border-white/5">
+                                <h3 className="text-base font-bold text-white flex items-center gap-2">
+                                    <AlertTriangle className="text-amber-500 w-5 h-5" /> Active Test In Progress
+                                </h3>
+                                <button onClick={() => setShowWarningModal(false)} className="p-1 hover:bg-white/5 rounded-lg text-zinc-400 hover:text-white cursor-pointer"><X className="w-5 h-5" /></button>
+                            </div>
+                            <div className="text-xs text-zinc-400 space-y-3 leading-relaxed">
+                                <p>
+                                    You currently have another mock test in progress: <strong className="text-purple-300 font-bold">{activeAttempt?.testName}</strong>.
+                                </p>
+                                <p>
+                                    Starting a new test will <strong className="text-amber-400 font-semibold">automatically submit</strong> your active session and calculate its results.
+                                </p>
+                                <p>Are you sure you want to continue?</p>
+                            </div>
+
+                            <div className="flex items-center justify-end gap-2 pt-4 border-t border-white/5">
+                                <button
+                                    onClick={() => setShowWarningModal(false)}
+                                    className="px-4 py-2 border border-white/10 rounded-lg hover:bg-white/5 text-zinc-300 cursor-pointer font-medium text-xs transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleConfirmStart}
+                                    className="px-4 py-2 bg-white hover:bg-zinc-100 text-zinc-950 font-bold rounded-lg text-[10px] uppercase tracking-wider cursor-pointer transition-all shadow-md"
+                                >
+                                    Yes, Continue
+                                </button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+        </motion.div>
+    );
 };
 
 const SectionTab = ({ section, colorMap, company }) => {

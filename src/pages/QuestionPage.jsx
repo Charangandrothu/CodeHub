@@ -320,6 +320,15 @@ export default function QuestionPage() {
     const [leftWidth, setLeftWidth] = useState(550); // Default approx 45%
     const [editorHeightPercent, setEditorHeightPercent] = useState(65); // Editor uses 65%, Testcases use 35%
     const [isDragging, setIsDragging] = useState(false);
+    const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth < 768);
+        };
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     // Refs for constraints
     const containerRef = useRef(null);
@@ -1068,7 +1077,7 @@ export default function QuestionPage() {
             {/* Main Content Split - Dark Glass Panels */}
             <div
                 ref={containerRef}
-                className={`flex-1 flex overflow-hidden p-4 pt-2 gap-4 ${isDragging ? 'select-none cursor-col-resize' : ''}`}
+                className={`flex-1 flex flex-col md:flex-row overflow-y-auto md:overflow-hidden p-4 pt-2 gap-4 ${isDragging ? 'select-none cursor-col-resize' : ''}`}
             >
 
                 {/* Left Panel: Problem Description */}
@@ -1076,8 +1085,8 @@ export default function QuestionPage() {
                     initial={{ opacity: 0, x: -24 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.32, ease: [0.25, 0.46, 0.45, 0.94] }}
-                    style={{ width: leftWidth, flexShrink: 0 }}
-                    className="flex flex-col bg-[#1e1e1e] rounded-2xl border border-white/10 shadow-2xl relative overflow-hidden"
+                    style={isMobile ? { width: '100%', height: '450px', flexShrink: 0 } : { width: leftWidth, flexShrink: 0 }}
+                    className="flex flex-col bg-[#1e1e1e] rounded-2xl border border-white/10 shadow-2xl relative overflow-hidden shrink-0"
                 >
                     {/* Tabs - Glass Header */}
                     <div className="flex items-center border-b border-white/5 px-2 bg-[#1e1e1e] sticky top-0 z-20">
@@ -1846,7 +1855,7 @@ export default function QuestionPage() {
 
                 {/* Resizer Handle (Horizontal) */}
                 <div
-                    className="w-4 hover:bg-emerald-500/10 active:bg-emerald-500/20 cursor-col-resize transition-colors flex items-center justify-center -ml-2 -mr-2 z-50 group relative"
+                    className="hidden md:flex w-4 hover:bg-emerald-500/10 active:bg-emerald-500/20 cursor-col-resize transition-colors items-center justify-center -ml-2 -mr-2 z-50 group relative"
                     onMouseDown={startResizingLeft}
                 >
                     <div className="w-1 h-12 rounded-full bg-zinc-700/50 group-hover:bg-emerald-500/50 transition-all" />
@@ -1858,7 +1867,7 @@ export default function QuestionPage() {
                     initial={{ opacity: 0, x: 24 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.32, ease: [0.25, 0.46, 0.45, 0.94], delay: 0.06 }}
-                    className={`relative flex-1 flex flex-col bg-[#181b21] rounded-2xl border border-white/10 shadow-2xl overflow-hidden min-w-0 transition-[box-shadow,border-color,ring] duration-300 ${isEditorFocused ? 'ring-1 ring-emerald-500/30 shadow-[0_0_30px_rgba(16,185,129,0.1)] z-40' : 'hover:border-white/20'
+                    className={`relative flex-1 flex flex-col h-[650px] md:h-full bg-[#181b21] rounded-2xl border border-white/10 shadow-2xl overflow-hidden min-w-0 transition-[box-shadow,border-color,ring] duration-300 ${isEditorFocused ? 'ring-1 ring-emerald-500/30 shadow-[0_0_30px_rgba(16,185,129,0.1)] z-40' : 'hover:border-white/20'
                         }`}
                 >
                     {/* Top Section: Editor (Flexible Percent Height) */}
@@ -1965,7 +1974,7 @@ export default function QuestionPage() {
 
                     {/* Resizer Handle (Vertical) */}
                     <div
-                        className="absolute left-0 right-0 h-4 z-50 cursor-row-resize flex items-center justify-center hover:bg-emerald-500/10 active:bg-emerald-500/20 transition-colors group"
+                        className="hidden md:flex absolute left-0 right-0 h-4 z-50 cursor-row-resize items-center justify-center hover:bg-emerald-500/10 active:bg-emerald-500/20 transition-colors group"
                         style={{ top: `${editorHeightPercent}%`, transform: 'translateY(-50%)' }}
                         onMouseDown={startResizingBottom}
                     >
@@ -2052,7 +2061,7 @@ export default function QuestionPage() {
                         animate={{ y: 0, opacity: 1 }}
                         exit={{ y: "100%", opacity: 0 }}
                         transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                        className="fixed bottom-24 right-6 w-[400px] h-[620px] max-h-[80vh] bg-[#111827]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl z-[60] flex flex-col overflow-hidden font-sans origin-bottom-right"
+                        className="fixed bottom-24 right-4 sm:right-6 w-[calc(100vw-32px)] sm:w-[400px] h-[620px] max-h-[80vh] bg-[#111827]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl z-[60] flex flex-col overflow-hidden font-sans origin-bottom-right"
                     >
                         {/* Header with Model Selector */}
                         <div className="flex items-center justify-between px-5 py-3 border-b border-white/5 bg-gradient-to-r from-indigo-500/5 to-transparent">

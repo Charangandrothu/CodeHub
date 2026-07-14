@@ -195,10 +195,15 @@ router.get('/practice/:company/:section/:topic', verifyUser, async (req, res) =>
         const answeredIds = req.user.companyPrep?.get?.(mapKey)?.answeredIds || [];
 
         const filter = {
-            company, section, topic: topicFilter,
+            section, topic: topicFilter,
             isActive: true,
             _id: { $nin: answeredIds }
         };
+        if (company === 'all') {
+            filter.company = { $in: ['tcs', 'infosys'] };
+        } else {
+            filter.company = company;
+        }
 
         const total = await CompanyQuestion.countDocuments(filter);
         const questions = await CompanyQuestion
@@ -209,7 +214,13 @@ router.get('/practice/:company/:section/:topic', verifyUser, async (req, res) =>
             .select('-correctAnswer -questions.correctAnswer'); // never leak answer
 
         // Total questions in topic (including answered)
-        const topicTotal = await CompanyQuestion.countDocuments({ company, section, topic: topicFilter, isActive: true });
+        const topicTotalFilter = { section, topic: topicFilter, isActive: true };
+        if (company === 'all') {
+            topicTotalFilter.company = { $in: ['tcs', 'infosys'] };
+        } else {
+            topicTotalFilter.company = company;
+        }
+        const topicTotal = await CompanyQuestion.countDocuments(topicTotalFilter);
 
         res.json({
             questions,
@@ -351,8 +362,13 @@ router.delete('/progress/reset', verifyUser, async (req, res) => {
                 .replace(/(-and-|-)/g, '[\\s\\-&]*(and|&)*[\\s\\-&]*');
             const topicRegex = new RegExp(`^${topicPattern}$`, 'i');
             const topicFilter = topic.includes('-') ? topicRegex : { $in: [topic, topicRegex] };
-            
-            const topicQs = await CompanyQuestion.find({ company, section, topic: topicFilter }, '_id');
+            const topicQsFilter = { section, topic: topicFilter };
+            if (company === 'all') {
+                topicQsFilter.company = { $in: ['tcs', 'infosys'] };
+            } else {
+                topicQsFilter.company = company;
+            }
+            const topicQs = await CompanyQuestion.find(topicQsFilter, '_id');
             const topicIdStrings = topicQs.map(q => q._id.toString());
             
             let existing = req.user.companyPrep?.get?.(mapKey);

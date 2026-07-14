@@ -5,7 +5,7 @@ const PROVIDER_CONFIG = {
     nvidia: {
         name: 'NVIDIA',
         rpm: 40,
-        model: 'meta/llama-3.1-405b-instruct',
+        model: 'meta/llama-3.3-70b-instruct',
         endpoint: 'https://integrate.api.nvidia.com/v1/chat/completions',
         getHeaders: () => ({
             Authorization: `Bearer ${process.env.NVIDIA_API_KEY}`,

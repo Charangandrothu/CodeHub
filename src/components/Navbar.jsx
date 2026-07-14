@@ -6,7 +6,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 /* Icons */
-import { LogOut, User, Settings, LayoutDashboard, ChevronDown, Crown, Sparkles, Shield, Menu, X } from 'lucide-react';
+import { LogOut, User, Settings, LayoutDashboard, ChevronDown, Crown, Sparkles, Shield, Menu, X, Gift } from 'lucide-react';
 
 /* Animations */
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from 'framer-motion';
@@ -433,6 +433,14 @@ const Navbar = () => {
                             navigate('/settings');
                           }}
                         />
+                        <MenuLink
+                          icon={Gift}
+                          label="Refer & Earn"
+                          onClick={() => {
+                            setShowProfileMenu(false);
+                            navigate('/referrals');
+                          }}
+                        />
                         {userData?.role === 'admin' && (
                           <div className="pt-2 border-t border-white/5 space-y-1">
                             <MenuLink
@@ -536,6 +544,7 @@ const Navbar = () => {
                     />
                     <MenuLink icon={LayoutDashboard} label="Dashboard" onClick={() => { setShowMobileMenu(false); navigate('/dashboard'); }} />
                     <MenuLink icon={Settings} label="Settings" onClick={() => { setShowMobileMenu(false); navigate('/settings'); }} />
+                    <MenuLink icon={Gift} label="Refer & Earn" onClick={() => { setShowMobileMenu(false); navigate('/referrals'); }} />
                     {userData?.role === 'admin' && (
                       <MenuLink icon={Shield} label="Admin Panel" onClick={() => { setShowMobileMenu(false); navigate('/admin'); }} />
                     )}

@@ -231,7 +231,7 @@ const Profile = () => {
                 <div className="lg:col-span-8 xl:col-span-9 space-y-6">
 
                     {/* Stats Grid */}
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         {stats.map((stat, idx) => (
                             <div
                                 key={stat.label}
@@ -249,7 +249,7 @@ const Profile = () => {
                     </div>
 
                     {/* Submission Heatmap Section */}
-                    <div className="bg-white/[0.02] border border-white/10 rounded-3xl p-6 backdrop-blur-xl">
+                    <div className="bg-white/[0.02] border border-white/10 rounded-3xl p-4 sm:p-6 backdrop-blur-xl">
                         <div className="flex items-center justify-between mb-6">
                             <h2 className="text-lg font-bold text-white">Submission History</h2>
                             <div className="text-xs text-gray-500">
@@ -260,7 +260,7 @@ const Profile = () => {
                     </div>
 
                     {/* Recent Activity / Solved Problems */}
-                    <div className="bg-white/[0.02] border border-white/10 rounded-3xl p-6 backdrop-blur-xl min-h-[300px]">
+                    <div className="bg-white/[0.02] border border-white/10 rounded-3xl p-4 sm:p-6 backdrop-blur-xl min-h-[300px]">
                         <div className="flex items-center gap-3 mb-6">
                             <div className="p-2 rounded-lg bg-pink-500/10 text-pink-500">
                                 <Activity size={20} />
