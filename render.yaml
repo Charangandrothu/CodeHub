@@ -5,10 +5,57 @@ services:
     plan: free
     region: singapore
     rootDir: server
-    buildCommand: npm install
-    startCommand: npm start
+    buildCommand: npm install --only=production
+    startCommand: node src/server.js
+    healthCheckPath: /api/health
     envVars:
-      - key: MONGO_URI
-        sync: false
+      - key: NODE_ENV
+        value: production
       - key: PORT
         value: 10000
+      - key: MONGO_URI
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+      - key: RAZORPAY_PLAN_ID
+        sync: false
+      - key: RAZORPAY_WEBHOOK_SECRET
+        sync: false
+      - key: NVIDIA_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: CLAUDE_API_KEY
+        sync: false
+      - key: DEEPSEEK_API_KEY
+        sync: false
+      - key: SARVAM_API_KEY
+        sync: false
+      - key: ADMIN_PROMOTE_CODE
+        sync: false
+      - key: PRO_PROMOTE_CODE
+        sync: false
+      - key: ADMIN_JWT_SECRET
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: 587
+      - key: SMTP_SECURE
+        value: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: SMTP_FROM
+        sync: false
+      - key: INITIAL_ADMIN_EMAIL
+        sync: false
+      - key: INITIAL_ADMIN_PASSWORD
+        sync: false

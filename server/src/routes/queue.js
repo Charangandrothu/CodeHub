@@ -1,16 +1,22 @@
-const Queue = require('bull');
 const Problem = require("../models/Problem");
 const User = require("../models/User");
 const Submission = require("../models/Submission");
 const redis = require("../config/redis");
 const { generateDriverCode, executeWithPolling, normalizeOutput, languageIds, timeLimits } = require("../utils/judgeHelpers");
 
-// Create Queue
-const submissionQueue = new Queue('submission-queue', process.env.REDIS_URL || 'redis://127.0.0.1:6379');
+// ── Queue Setup ──────────────────────────────────────────────────────────────
+// Bull requires a real Redis connection. When REDIS_URL is not set (e.g. on
+// Render free tier) we skip Bull entirely and run jobs synchronously instead.
+let submissionQueue = null;
 
-// Process Jobs
-submissionQueue.process(async (job) => {
-    const { code, language, problemId, userId } = job.data;
+if (process.env.REDIS_URL) {
+    const Queue = require('bull');
+    submissionQueue = new Queue('submission-queue', process.env.REDIS_URL);
+}
+
+// ── Core Job Handler (shared between Bull and sync fallback) ─────────────────
+async function processSubmission(data) {
+    const { code, language, problemId, userId } = data;
 
     try {
         // 1. Fetch User & Check Credits
@@ -198,14 +204,23 @@ submissionQueue.process(async (job) => {
 
     } catch (error) {
         console.error("Queue Processing Error:", error);
-        // Save Failed Submission Record for visibility?
-        // Or just let Bull handle failure
         throw error;
     }
-});
+}
 
+// ── Wire up Bull processor (only when Redis is available) ────────────────────
+if (submissionQueue) {
+    submissionQueue.process(async (job) => processSubmission(job.data));
+}
+
+// ── addJob: queued (with Redis) or synchronous (without Redis) ───────────────
 const addJob = (data) => {
-    return submissionQueue.add(data);
+    if (submissionQueue) {
+        return submissionQueue.add(data);
+    }
+    // Sync fallback — run immediately, wrap in a promise to keep the same API
+    console.warn('[Queue] No REDIS_URL — running submission synchronously.');
+    return processSubmission(data);
 };
 
 module.exports = { addJob };
