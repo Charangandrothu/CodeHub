@@ -1,4 +1,4 @@
-import { useEffect, useState, lazy, Suspense } from 'react';
+import { useEffect, useState, lazy, Suspense, useCallback } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AnimatePresence, MotionConfig } from 'framer-motion';
 import ScrollToTop from './components/ScrollToTop';
@@ -252,6 +252,20 @@ import SarvamAIBot from './components/SarvamAIBot';
 
 function App() {
   const [reduceMotion, setReduceMotion] = useState(false);
+
+  // ── Server warm-up: ping backend immediately on load so Render never feels
+  // cold to users. Repeats every 10 min while the tab is open.
+  const warmUpServer = useCallback(() => {
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    fetch(`${apiUrl}/api/health`, { method: 'GET', cache: 'no-store' })
+      .catch(() => {}); // silent — never show errors to users
+  }, []);
+
+  useEffect(() => {
+    warmUpServer(); // fire immediately on mount
+    const keepAliveInterval = setInterval(warmUpServer, 10 * 60 * 1000); // every 10 min
+    return () => clearInterval(keepAliveInterval);
+  }, [warmUpServer]);
 
   useEffect(() => {
     const mobileQuery = window.matchMedia('(max-width: 768px)');
